@@ -1,790 +1,890 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MYGLÉS - Pro</title>
-    <style>
-        :root {
-            --bg: #f7f7f7;
-            --card-bg: #ffffff;
-            --text-main: #000000;
-            --text-sec: #666666;
-            --accent: #000000;
-            --neon-blue: #23a0ff;
-            --neon-pink: #ff1493;
-            --neon-green: #39ff14;
-            --neon-yellow: #e2ff00;
-            --success: #00c853;
-            --error: #ff3b30;
-        }
+import React, { useState, useEffect, useRef } from 'react';
+import { ShoppingCart, Plus, Trash2, Package, LogIn, Store, Phone, FileText, Loader2, ChevronLeft, ChevronRight, Edit2, X, User, Mail, MapPin, Search, Share2, Copy, Check } from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, updateDoc, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+// --- FIREBASE INIT ---
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'mi-peiperless-app';
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+// --- UTILIDADES PARA EXTRACCIÓN Y VARIANTES ---
+const parseSizes = (sizeStr) => {
+  const sizes = new Set();
+  let str = sizeStr.toLowerCase().replace(/y/g, ',');
+  const parts = str.split(',');
+  parts.forEach(part => {
+    part = part.trim();
+    if (part.includes('al')) {
+      const range = part.split('al');
+      const start = parseInt(range[0].trim());
+      const end = parseInt(range[1].trim());
+      if (!isNaN(start) && !isNaN(end)) {
+        for (let i = start; i <= end; i++) sizes.add(i);
+      }
+    } else {
+      const val = parseInt(part);
+      if (!isNaN(val)) sizes.add(val);
+    }
+  });
+  return Array.from(sizes).sort((a,b) => a - b);
+};
 
-        .app-container {
-            width: 100%;
-            max-width: 420px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+const getVariants = (description) => {
+  if (!description) return [];
+  const lines = description.split('\n').map(l => l.trim()).filter(l => l);
+  let variants = [];
+  let colors = [];
+  let globalSizes = [];
 
-        /* --- Auth View con Fondo Neón --- */
-        #auth-section { 
-            position: fixed;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #e2ff00;
-            background-image: url('rOAFsb4NMehLLZadBw3J5NAfnmY.avif'), 
-                              radial-gradient(circle at 0% 50%, #ff1493 0%, transparent 60%), 
-                              radial-gradient(circle at 100% 50%, #aaff00 0%, transparent 60%);
-            background-size: cover;
-            background-position: center;
-            z-index: 100;
-            padding: 20px;
-        }
+  lines.forEach(line => {
+    const lowerLine = line.toLowerCase();
+    if (lowerLine.includes('talla')) {
+      globalSizes = parseSizes(line.replace(/tallas?:/i, ''));
+    } else if (line.includes('/')) {
+      const parts = line.split('/');
+      const color = parts[0].trim();
+      const sizes = parseSizes(parts.slice(1).join('/'));
+      sizes.forEach(size => variants.push({ color, size }));
+    } else if (/^\d{2,3}\s*[a-zA-Z]/.test(line) || lowerLine.includes('negro') || lowerLine.includes('blanco') || lowerLine.includes('ivory') || lowerLine.includes('gris') || lowerLine.includes('coral') || lowerLine.includes('camel') || lowerLine.includes('beige')) {
+      colors.push(line);
+    }
+  });
 
-        .auth-card {
-            background: #ffffff;
-            padding: 45px 30px;
-            border-radius: 24px;
-            width: 100%;
-            max-width: 350px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            border: 2px solid #000000;
-            text-align: center;
+  if (colors.length > 0 && globalSizes.length > 0) {
+    colors.forEach(color => {
+      globalSizes.forEach(size => {
+        if (!variants.some(v => v.color === color && v.size === size)) {
+          variants.push({ color, size });
         }
+      });
+    });
+  }
+  return variants;
+};
 
-        .main-heading {
-            font-size: 3.8rem;
-            font-weight: 900;
-            letter-spacing: -2px;
-            line-height: 1;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            color: #000000;
-            text-align: center;
-        }
-        
-        .sub-heading {
-            color: #666666;
-            font-weight: 800;
-            font-size: 0.85rem;
-            margin-bottom: 35px;
-            letter-spacing: 0px;
-        }
+const extractProductsLocally = (items, pageNumber) => {
+  const codes = [];
+  const prices = [];
 
-        .input-group { margin: 0; width: 100%; }
-        
-        .auth-input {
-            width: 100%; padding: 16px 20px; border-radius: 12px; border: 1px solid #d1d1d6;
-            font-size: 1rem; outline: none; margin-bottom: 15px;
-            font-weight: 600; text-align: left; box-sizing: border-box;
-        }
-        
-        .auth-btn {
-            width: 100%; padding: 18px; border-radius: 30px; font-size: 1rem; font-weight: 800; 
-            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
-            background: #000000; color: #ffffff; border: none;
-        }
+  items.forEach(item => {
+    const txt = item.text.trim();
+    if (/^MM\d+/i.test(txt)) {
+      codes.push({ ...item, text: txt.toUpperCase() });
+    } else if (/Q\.?\s*(\d+)/i.test(txt)) {
+      const match = txt.match(/Q\.?\s*(\d+)/i);
+      prices.push({ ...item, price: parseFloat(match[1]) });
+    }
+  });
 
-        /* --- Header --- */
-        header { 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            margin-bottom: 20px; 
-            position: relative; 
-            padding-top: 10px; 
-        }
-        
-        .header-top-bar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
+  const products = [];
+  codes.forEach(codeItem => {
+    let bestPrice = 0;
+    let bestPriceY = codeItem.y + 20; 
+    let minDistance = Infinity;
 
-        .user-badge { 
-            font-size: 0.8rem; background: var(--text-main); color: white;
-            padding: 6px 14px; border-radius: 20px; font-weight: 800; text-transform: uppercase;
-        }
+    prices.forEach(priceItem => {
+      const dist = Math.sqrt(Math.pow(codeItem.x - priceItem.x, 2) + Math.pow(codeItem.y - priceItem.y, 2));
+      if (dist < minDistance && dist < 30) { 
+        minDistance = dist;
+        bestPrice = priceItem.price;
+        bestPriceY = priceItem.y;
+      }
+    });
 
-        .logout-btn {
-            background: #e0e0e0; border: none; color: var(--text-main);
-            font-size: 0.8rem; font-weight: 800; cursor: pointer; padding: 6px 14px;
-            border-radius: 20px; text-transform: uppercase;
-        }
+    const descItems = items.filter(it => 
+      it.y > codeItem.y + 0.5 &&       
+      it.y < bestPriceY + 0.5 &&       
+      Math.abs(it.x - codeItem.x) < 30 && 
+      !/^MM\d+/i.test(it.text) &&      
+      !/Q\.?\s*(\d+)/i.test(it.text)   
+    );
 
-        .view-title { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; margin-top: 10px; }
+    descItems.sort((a, b) => a.y - b.y);
+    const description = descItems.map(d => d.text).join('\n');
 
-        @keyframes floatChick {
-            0% { transform: translate(0, 0) scaleX(1); }
-            33% { transform: translate(15px, -15px) scaleX(1); }
-            66% { transform: translate(-10px, 15px) scaleX(-1); }
-            100% { transform: translate(0, 0) scaleX(1); }
-        }
+    products.push({
+      code: codeItem.text,
+      description: description || "",
+      price: bestPrice,
+      x: codeItem.x,
+      y: codeItem.y,
+      pageNumber: pageNumber
+    });
+  });
 
-        .chick-moving {
-            position: absolute;
-            font-size: 2.5rem;
-            z-index: 10;
-            animation: floatChick 6s ease-in-out infinite;
-        }
+  return products;
+};
 
-        /* --- Farm Scenery --- */
-        .chick-pen {
-            position: relative; 
-            width: 100%; 
-            height: 350px; 
-            /* Cielo azul claro 45%, pasto verde neón 55% */
-            background: linear-gradient(to bottom, #dff4ff 45%, var(--neon-green) 45%); 
-            border: 2px solid var(--text-main); 
-            border-radius: 32px; 
-            overflow: hidden; 
-            margin-bottom: 20px; 
-            box-shadow: inset 0 10px 20px rgba(0,0,0,0.05);
-        }
-        .scenery {
-            position: absolute;
-            user-select: none;
-            z-index: 1;
-        }
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [view, setView] = useState('store'); 
+  const [products, setProducts] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [hotspots, setHotspots] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  // Estados para Búsqueda y Paginación
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modales
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+  
+  const [secretClicks, setSecretClicks] = useState(0);
+  const clickTimeout = useRef(null);
 
-        /* --- Learning & Quiz Views --- */
-        .card-container { perspective: 1000px; width: 100%; height: 420px; margin-bottom: 20px; }
-        .card {
-            position: relative; width: 100%; height: 100%; cursor: pointer;
-            transform-style: preserve-3d; transition: transform 0.5s;
-            border-radius: 32px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        .card.is-flipped { transform: rotateY(180deg); }
-        .card-face {
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 35px 20px; background: var(--neon-green); border-radius: 32px; text-align: center;
-            color: var(--text-main);
-        }
-        .card-face.back { transform: rotateY(180deg); background: var(--neon-yellow); color: var(--text-main); }
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => document.body.removeChild(script);
+  }, []);
 
-        .word-tag {
-            position: absolute; top: 25px; font-size: 0.75rem; text-transform: uppercase;
-            font-weight: 900; color: white; background: var(--neon-blue); 
-            padding: 6px 16px; border-radius: 20px;
-        }
+  useEffect(() => {
+    const initAuth = async () => {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
 
-        .main-word { font-size: 3.5rem; font-weight: 900; margin-bottom: 5px; letter-spacing: -1.5px; line-height: 1.1;}
-        
-        /* CORRECCIÓN: Separaciones para que el audio quede abajo y nada se amontone */
-        .phonetic-container { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 8px; /* Tighter gap entre el texto y el botón */
-            margin-top: 10px;
-            margin-bottom: 20px; /* Margen antes del ejemplo */
-            width: 100%;
-        }
-        .phonetic { 
-            font-size: 1.4rem; color: var(--text-sec); font-weight: 600; margin: 0; line-height: 1;
-        }
-        .back .phonetic { color: rgba(0,0,0,0.6); }
+  useEffect(() => {
+    if (!user) return;
+    const unsubProds = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), (s) => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
+    const unsubPages = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), (s) => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)));
+    const unsubHotspots = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), (s) => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
+    const unsubOrders = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (s) => setOrders(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))));
+    return () => { unsubProds(); unsubPages(); unsubHotspots(); unsubOrders(); };
+  }, [user]);
 
-        .audio-btn { 
-            background: var(--bg); border: none; width: 64px; height: 64px; 
-            border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
-        }
-        .audio-btn:active { transform: scale(0.9); }
-        .audio-btn svg { width: 30px; height: 30px; fill: var(--text-main); display: block; }
-        .back .audio-btn { background: var(--text-main); }
-        .back .audio-btn svg { fill: var(--neon-yellow); }
+  const addToCart = (productVariant) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === productVariant.id);
+      if (existing) return prev.map(item => item.id === productVariant.id ? { ...item, qty: item.qty + 1 } : item);
+      return [...prev, { ...productVariant, qty: 1 }];
+    });
+  };
 
-        .example { 
-            font-size: 1.2rem; line-height: 1.4; font-weight: 600; font-style: italic; 
-            margin-top: 10px; padding: 0 10px;
-        }
+  const handleSecretClick = () => {
+    if (clickTimeout.current) clearTimeout(clickTimeout.current);
+    if (secretClicks + 1 >= 5) {
+      setShowLoginModal(true);
+      setSecretClicks(0);
+    } else {
+      setSecretClicks(prev => prev + 1);
+      clickTimeout.current = setTimeout(() => setSecretClicks(0), 1000);
+    }
+  };
 
-        /* --- Quiz Specific --- */
-        #quiz-section { display: none; width: 100%; text-align: center; }
-        .options-grid { display: grid; gap: 12px; width: 100%; }
-        .option-btn {
-            background: white; border: 2px solid #e0e0e0; padding: 18px;
-            border-radius: 20px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
-            transition: 0.2s;
-        }
-        .option-btn.correct { background: var(--success); color: white; border-color: var(--success); }
-        .option-btn.error { background: var(--error); color: white; border-color: var(--error); }
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if (adminPin === '1234') {
+      setView('admin');
+      setShowLoginModal(false);
+      setAdminPin('');
+      setPinError(false);
+    } else {
+      setPinError(true);
+    }
+  };
 
-        /* --- Reward Display --- */
-        .chick-container {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-            font-size: 3rem; margin: 20px 0;
-        }
+  const handleSearch = () => {
+    if(!searchQuery.trim()) return;
+    const foundProduct = products.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (foundProduct && foundProduct.pageNumber) {
+      let targetIndex = pages.findIndex(pg => pg.pageNumber === foundProduct.pageNumber);
+      if (targetIndex !== -1) {
+        if (targetIndex % 2 !== 0) targetIndex--;
+        setCurrentIndex(Math.max(0, targetIndex));
+        setSearchQuery('');
+      }
+    } else {
+      setSearchQuery('No encontrado');
+      setTimeout(() => setSearchQuery(''), 2000);
+    }
+  };
 
-        /* --- Progress UI --- */
-        .week-dots { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
-        .week-dot { 
-            width: 32px; height: 32px; border-radius: 10px; background: #e0e0e0; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 0.8rem; font-weight: 900; color: var(--text-sec); 
-        }
-        .week-dot.completed { background: var(--text-main); color: white; }
-        .week-dot.current { background: var(--neon-blue); color: white; transform: scale(1.1); }
-
-        .progress-dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 25px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: #e0e0e0; }
-        .dot.active { background: var(--text-main); width: 24px; border-radius: 6px; }
-
-        .controls { display: flex; gap: 12px; width: 100%; margin-top: auto; padding-bottom: 30px; }
-        button { flex: 1; padding: 20px; border: none; border-radius: 20px; font-size: 1.1rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-        .btn-sec { background: white; color: var(--text-main); border: 2px solid #e0e0e0; }
-        .btn-pri { background: var(--text-main); color: white; }
-
-        .status-screen { display: none; text-align: center; padding-top: 40px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body>
-
-<div class="app-container">
-    <!-- Pantalla de Login -->
-    <div id="auth-section">
-        <div class="auth-card">
-            <h1 class="main-heading">MYGLÉS</h1>
-            <p class="sub-heading">BY MYNOR GARCIA</p>
-            <div class="input-group">
-                <input type="text" id="username-input" class="auth-input" placeholder="Tu nombre" autocomplete="off">
-                <button onclick="login()" class="auth-btn" id="login-btn">ENTRAR</button>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-100 text-gray-900 font-sans relative">
+      <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
+        <div 
+          className="flex items-center gap-2 text-xl font-extrabold text-[#007cc2] select-none cursor-pointer"
+          onClick={handleSecretClick}
+        >
+          <Store className="w-6 h-6" /> MyCatálogo
         </div>
-    </div>
+        
+        {view === 'store' && (
+          <div className="flex-1 max-w-sm mx-4 hidden md:flex relative">
+            <input 
+              type="text" 
+              placeholder="Buscar código..." 
+              className={`w-full border rounded-full py-1.5 pl-4 pr-10 text-sm focus:outline-none focus:border-[#007cc2] ${searchQuery === 'No encontrado' ? 'bg-red-50 text-red-500 placeholder-red-400' : 'bg-gray-50'}`}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            />
+            <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#007cc2]">
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
-    <!-- Pantalla de App Principal -->
-    <div id="app-content" style="display: none;">
-        <header>
-            <div class="header-top-bar">
-                <div class="user-badge" id="display-user"></div>
+        <div className="flex items-center gap-2 md:gap-4">
+          {view === 'store' ? (
+            <>
+              <button onClick={() => setShowShareModal(true)} className="text-gray-500 hover:text-[#007cc2] transition p-2" title="Compartir Catálogo">
+                <Share2 className="w-5 h-5" />
+              </button>
+              <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition" title="Ver Carrito">
+                <ShoppingCart className="w-5 h-5" />
+                {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">{cart.reduce((s, i) => s + i.qty, 0)}</span>}
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setView('store')} className="text-sm font-bold text-gray-500 hover:text-[#007cc2] transition px-4 py-2 border rounded-full">
+              Salir de Admin
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Búsqueda en Móvil */}
+      {view === 'store' && (
+        <div className="md:hidden bg-white p-2 border-b flex relative">
+          <input 
+            type="text" 
+            placeholder="Buscar código..." 
+            className={`w-full border rounded-full py-1.5 pl-4 pr-10 text-sm focus:outline-none focus:border-[#007cc2] ${searchQuery === 'No encontrado' ? 'bg-red-50 text-red-500 placeholder-red-400' : 'bg-gray-50'}`}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+          />
+          <button onClick={handleSearch} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      <main className="p-2 md:p-4 max-w-6xl mx-auto">
+        {view === 'store' ? (
+          <FlipbookView pages={pages} products={products} hotspots={hotspots} onAdd={addToCart} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} />
+        ) : (
+          <AdminView products={products} orders={orders} pages={pages} hotspots={hotspots} />
+        )}
+      </main>
+
+      {isCartOpen && <CartDrawer cart={cart} setCart={setCart} total={cart.reduce((s, i) => s + (i.price * i.qty), 0)} onClose={() => setIsCartOpen(false)} />}
+
+      {/* Modal Compartir */}
+      {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
+
+      {/* Modal Login Admin */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleAdminLogin} className="bg-white rounded-xl p-6 w-full max-w-xs shadow-2xl animate-in fade-in zoom-in-95">
+            <h3 className="font-bold text-lg mb-2 text-center text-gray-800 flex flex-col items-center gap-2">
+              <LogIn className="w-8 h-8 text-[#007cc2]" /> Acceso Administrador
+            </h3>
+            <p className="text-xs text-gray-500 text-center mb-4">Ingresa la contraseña para entrar.</p>
+            <input 
+              type="password" 
+              autoFocus
+              value={adminPin} 
+              onChange={e => setAdminPin(e.target.value)} 
+              className={`w-full border p-2.5 rounded mb-2 outline-none focus:border-[#007cc2] ${pinError ? 'border-red-400 bg-red-50' : ''}`} 
+              placeholder="Contraseña..." 
+            />
+            {pinError && <p className="text-red-500 text-xs font-bold mb-3 text-center">Contraseña incorrecta.</p>}
+            <div className="flex gap-2 mt-4">
+              <button type="button" onClick={() => { setShowLoginModal(false); setPinError(false); setAdminPin(''); }} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded font-bold hover:bg-gray-200">Cancelar</button>
+              <button type="submit" className="flex-1 bg-[#007cc2] hover:bg-blue-700 text-white py-2 rounded font-bold">Entrar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+function ShareModal({ onClose }) {
+  const [copied, setCopied] = useState(false);
+  const shareLink = "https://misitio.com/catalogoXX"; // LINK DEFINIDO POR DEFECTO
+
+  const copyToClipboard = () => {
+    const el = document.createElement('textarea');
+    el.value = shareLink;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center relative animate-in fade-in zoom-in-95" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-gray-800"><X size={20}/></button>
+        <div className="bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Share2 className="w-6 h-6 text-[#007cc2]" />
+        </div>
+        <h3 className="font-extrabold text-xl mb-1 text-gray-800">Compartir Catálogo</h3>
+        <p className="text-sm text-gray-500 mb-6">Copia el siguiente enlace para compartirlo con tus clientes en WhatsApp o Redes Sociales.</p>
+        
+        <div className="flex gap-2 mb-2">
+          <input type="text" readOnly value={shareLink} className="w-full border bg-gray-50 px-3 py-2.5 rounded-lg text-sm outline-none font-medium text-gray-600" />
+          <button onClick={copyToClipboard} className={`px-4 py-2.5 rounded-lg font-bold flex items-center gap-1 transition text-white shadow-sm ${copied ? 'bg-green-500' : 'bg-[#007cc2] hover:bg-blue-700'}`}>
+            {copied ? <><Check size={16}/> Copiado</> : <><Copy size={16}/> Copiar</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlipbookView({ pages, products, hotspots, onAdd, currentIndex, setCurrentIndex }) {
+  const [activeHotspotId, setActiveHotspotId] = useState(null);
+  
+  // Touch Swiping logic
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // ESTADO VACÍO (CUANDO NO HAY PDF)
+  if (pages.length === 0) return (
+    <div className="flex flex-col items-center justify-center h-[70vh] text-center px-4">
+      <div className="bg-blue-50 p-6 rounded-full mb-6">
+        <Store className="w-16 h-16 text-[#007cc2]" />
+      </div>
+      <h2 className="text-3xl font-extrabold text-gray-800 mb-3">¡Catálogo en preparación!</h2>
+      <p className="text-lg text-gray-500 font-medium">Próximamente muchos estilos para toda la familia.</p>
+    </div>
+  );
+
+  const left = pages[currentIndex];
+  const right = currentIndex + 1 < pages.length ? pages[currentIndex + 1] : null;
+
+  const handleNext = () => setCurrentIndex(Math.min(pages.length - 1, currentIndex + 2));
+  const handlePrev = () => setCurrentIndex(Math.max(0, currentIndex - 2));
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 50 && currentIndex + 2 < pages.length) handleNext();
+    if (distance < -50 && currentIndex > 0) handlePrev();
+  };
+
+  const handleAddClick = (p, variant = null) => {
+    const item = {
+      id: variant ? `${p.id}_${variant.color}_${variant.size}` : p.id,
+      productId: p.id,
+      code: p.code,
+      color: variant?.color || '',
+      size: variant?.size || '',
+      price: p.price,
+    };
+    onAdd(item);
+    setActiveHotspotId(null);
+  };
+
+  const renderHotspots = (page) => {
+    if (!page || !hotspots) return null;
+    return hotspots.filter(h => h.pageId === page.id).map(h => {
+      const p = products.find(prod => prod.id === h.productId);
+      if (!p) return null;
+      
+      const isOpen = activeHotspotId === h.id;
+      const variants = getVariants(p.description);
+
+      const groupedVariants = variants.reduce((acc, v) => {
+        if (!acc[v.color]) acc[v.color] = [];
+        acc[v.color].push(v.size);
+        return acc;
+      }, {});
+
+      return (
+        <div 
+          key={h.id} 
+          className="absolute z-20 transform -translate-y-1/2" 
+          style={{ left: `calc(${h.x}% - 30px)`, top: `${h.y}%` }} 
+        >
+          <div 
+            onClick={(e) => { e.stopPropagation(); setActiveHotspotId(isOpen ? null : h.id); }}
+            className={`bg-[#007cc2] text-white rounded-full p-2 shadow-lg border-2 border-white cursor-pointer transition-transform ${isOpen ? 'scale-110' : 'hover:scale-110 animate-pulse hover:animate-none'}`}
+          >
+            <ShoppingCart className="w-4 h-4" />
+          </div>
+
+          {isOpen && (
+            <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded shadow-2xl border border-gray-100 min-w-[150px] max-w-[200px] overflow-hidden flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="bg-gray-50 px-2 py-1.5 border-b text-center">
+                <p className="text-[11px] font-extrabold text-gray-800 leading-none mb-1">{p.code}</p>
+                <p className="text-xs font-bold text-blue-600 leading-none">Q{p.price?.toFixed(2)}</p>
+              </div>
+              
+              <div className="flex flex-col p-1">
+                {Object.keys(groupedVariants).length > 0 ? (
+                  Object.entries(groupedVariants).map(([color, sizes], idx) => (
+                    <div key={idx} className="px-2 py-1.5 border-b border-gray-100 last:border-b-0">
+                      <p className="text-[10px] font-bold text-gray-700 mb-1">{color}:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {sizes.map(s => (
+                          <button 
+                            key={s}
+                            onClick={(e) => { e.stopPropagation(); handleAddClick(p, { color, size: s }); }}
+                            className="bg-gray-100 hover:bg-[#007cc2] hover:text-white text-gray-800 px-1.5 py-0.5 rounded text-[10px] font-semibold transition"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleAddClick(p); }}
+                    className="w-full text-center px-2 py-2 text-[10px] bg-white hover:bg-blue-50 font-bold text-[#007cc2] transition"
+                  >
+                    AGREGAR AL CARRITO
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
+
+  return (
+    <div 
+      className="flex items-center justify-center gap-1 md:gap-4 h-[75vh] md:h-[80vh]"
+      onClick={() => setActiveHotspotId(null)}
+    >
+      <button onClick={handlePrev} disabled={currentIndex === 0} className="p-1 md:p-3 disabled:opacity-20 hover:text-[#007cc2] transition text-gray-400 shrink-0">
+        <ChevronLeft className="w-8 h-8 md:w-14 md:h-14" />
+      </button>
+      
+      <div 
+        className="flex bg-white shadow-2xl h-full w-full max-w-5xl rounded-lg overflow-hidden relative select-none"
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+      >
+        <div className="w-1/2 h-full border-r relative bg-gray-50 flex items-center justify-center">
+          <img src={left?.imageUrl} className="w-full h-full object-contain pointer-events-none" alt="Left Page" />
+          {renderHotspots(left)}
+        </div>
+        <div className="w-1/2 h-full relative bg-gray-50 flex items-center justify-center">
+          {right && <>
+            <img src={right.imageUrl} className="w-full h-full object-contain pointer-events-none" alt="Right Page" />
+            {renderHotspots(right)}
+          </>}
+        </div>
+      </div>
+
+      <button onClick={handleNext} disabled={currentIndex + 2 >= pages.length} className="p-1 md:p-3 disabled:opacity-20 hover:text-[#007cc2] transition text-gray-400 shrink-0">
+        <ChevronRight className="w-8 h-8 md:w-14 md:h-14" />
+      </button>
+    </div>
+  );
+}
+
+function AdminView({ products, orders, pages, hotspots }) {
+  const [tab, setTab] = useState('pdf');
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState('');
+  const [editingPage, setEditingPage] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+
+  const processPDF = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const pdfjs = window['pdfjs-dist/build/pdf'];
+      pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+      const pdf = await pdfjs.getDocument(await file.arrayBuffer()).promise;
+      let lastPageCount = pages.length;
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        setProgress(`Procesando Página ${i}/${pdf.numPages}`);
+        try {
+          const page = await pdf.getPage(i);
+          const unscaledViewport = page.getViewport({ scale: 1.0 });
+          const viewport = page.getViewport({ scale: 0.8 }); 
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width; canvas.height = viewport.height;
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+          
+          const pageNum = lastPageCount + i;
+          const pageRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), {
+            imageUrl: canvas.toDataURL('image/jpeg', 0.5),
+            pageNumber: pageNum
+          });
+
+          const textContent = await page.getTextContent();
+          const items = textContent.items.map(it => ({
+            text: it.str.trim(),
+            x: (it.transform[4] / unscaledViewport.width) * 100,
+            y: (1 - (it.transform[5] / unscaledViewport.height)) * 100
+          })).filter(it => it.text.length > 0);
+
+          if (items.length > 0) {
+            const extractedProducts = extractProductsLocally(items, pageNum);
+            
+            for (const ep of extractedProducts) {
+              const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), {
+                name: ep.code,
+                code: ep.code, 
+                price: ep.price, 
+                description: ep.description,
+                pageNumber: ep.pageNumber
+              });
+              await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), {
+                pageId: pageRef.id, productId: pRef.id, x: ep.x, y: ep.y
+              });
+            }
+          }
+        } catch (pageError) {
+          console.error("Error aislando página", i, pageError);
+        }
+      }
+    } catch (err) { 
+      console.error(err);
+      alert('Error al procesar el archivo PDF.'); 
+    }
+    setLoading(false); setProgress('');
+  };
+
+  const clearAllPages = async () => {
+    if(!window.confirm("¿Seguro que deseas borrar todo el catálogo y los productos?")) return;
+    try {
+      const batch = writeBatch(db);
+      pages.forEach((p) => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id)));
+      hotspots.forEach((h) => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id)));
+      products.forEach((p) => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)));
+      await batch.commit();
+    } catch(err) { console.error(err); }
+  };
+
+  const updateProduct = async (e) => {
+    e.preventDefault();
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), {
+        code: editingProduct.code,
+        price: parseFloat(editingProduct.price),
+        description: editingProduct.description
+      });
+      setEditingProduct(null);
+    } catch (err) { console.error(err); }
+  };
+
+  const groupedProducts = products.reduce((acc, p) => {
+    const pageKey = p.pageNumber || 'Sin Página';
+    if (!acc[pageKey]) acc[pageKey] = [];
+    acc[pageKey].push(p);
+    return acc;
+  }, {});
+
+  if (editingPage) return (
+    <div className="bg-white p-6 rounded-xl shadow-sm">
+      <button onClick={() => setEditingPage(null)} className="mb-4 text-blue-600 font-bold underline">Volver a páginas</button>
+      <div className="relative inline-block border bg-gray-50">
+        <img src={editingPage.imageUrl} className="max-h-[70vh]" onClick={async (e) => {
+          const rect = e.target.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+          const pid = prompt("ID del producto:");
+          if(pid) await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: editingPage.id, productId: pid, x, y });
+        }} alt="Página" />
+        {hotspots.filter(h => h.pageId === editingPage.id).map(h => (
+          <div key={h.id} className="absolute w-4 h-4 bg-[#007cc2] rounded-full border-2 border-white transform -translate-x-1/2 -translate-y-1/2" style={{ left: `${h.x}%`, top: `${h.y}%` }} />
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-lg">
+      <div className="flex gap-4 border-b mb-6 overflow-x-auto pb-2">
+        {['pdf', 'productos', 'pedidos'].map(t => <button key={t} onClick={() => setTab(t)} className={`capitalize whitespace-nowrap ${tab === t ? 'border-b-2 border-[#007cc2] text-[#007cc2] font-bold' : 'text-gray-400 font-medium'}`}>{t === 'pdf' ? 'Catálogo PDF' : t}</button>)}
+      </div>
+
+      {tab === 'pdf' && (
+        <div className="bg-[#2D2D2D] p-6 rounded-xl shadow-inner min-h-[500px]">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-gray-600 pb-4">
+            <h3 className="text-white font-bold text-lg">Organizador de Páginas</h3>
+            <div className="flex gap-3">
+              {pages.length > 0 && <button onClick={clearAllPages} className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg font-bold hover:bg-red-500 hover:text-white transition">Borrar Todo</button>}
+              <input type="file" accept=".pdf" onChange={processPDF} className="hidden" id="pdf-up" />
+              <label htmlFor="pdf-up" className="bg-[#007cc2] text-white px-5 py-2 rounded-lg cursor-pointer font-bold shadow hover:bg-blue-600 transition flex items-center gap-2">
+                {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Plus className="w-4 h-4"/>} 
+                {loading ? progress : 'Subir Catálogo'}
+              </label>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+            {pages.map(p => (
+              <div key={p.id} className="flex flex-col items-center group relative">
+                <div className="relative rounded-lg overflow-hidden border-2 border-transparent hover:border-[#007cc2] transition-colors cursor-pointer bg-white w-full aspect-[1/1.4] shadow-md">
+                  <img src={p.imageUrl} className="w-full h-full object-cover" alt="página" />
+                  
+                  {/* Overlay con botones al hacer hover */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center gap-3">
+                    <button onClick={() => setEditingPage(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow hover:scale-110 transition" title="Editar Botones">
+                      <Edit2 size={16}/>
+                    </button>
+                    <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white p-2 rounded-full shadow hover:scale-110 transition" title="Eliminar Página">
+                      <Trash2 size={16}/>
+                    </button>
+                  </div>
+                </div>
+                <span className="text-gray-400 text-xs font-bold mt-2 bg-gray-800 px-2 py-0.5 rounded-full">{p.pageNumber}</span>
+              </div>
+            ))}
+            {pages.length === 0 && !loading && (
+              <div className="col-span-full text-center py-20 text-gray-500">
+                <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                No hay páginas cargadas.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'productos' && (
+        <div>
+          {editingProduct ? (
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md mb-6 max-w-lg mx-auto">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-[#007cc2]"><Edit2 size={20}/> Editar Producto Extraído</h3>
+              <form onSubmit={updateProduct} className="flex flex-col gap-4">
                 <div>
-                    <button class="logout-btn" onclick="openFarm()" style="background: var(--neon-yellow); margin-right: 5px;">🐥 GRANJA</button>
-                    <button class="logout-btn" onclick="logout()">SALIR</button>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Código</label>
+                  <input type="text" className="w-full border p-2.5 rounded mt-1 bg-gray-50 font-bold" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required />
                 </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Descripción (Colores y Tallas)</label>
+                  <textarea className="w-full border p-2.5 rounded mt-1 bg-gray-50 h-28 text-sm" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Precio (Q)</label>
+                  <input type="number" step="0.01" className="w-full border p-2.5 rounded mt-1 bg-gray-50 font-bold text-blue-600" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required />
+                </div>
+                <div className="flex gap-3 mt-2">
+                  <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold flex-1 hover:bg-gray-200 transition">Cancelar</button>
+                  <button type="submit" className="bg-[#007cc2] text-white px-4 py-2.5 rounded-lg font-bold flex-1 hover:bg-blue-700 transition shadow-md">Guardar Cambios</button>
+                </div>
+              </form>
             </div>
-            <div class="view-title" id="view-title">MODO MIXTO</div>
-            <div class="week-dots" id="week-dots"></div>
-            <div class="streak-info" id="streak-info"></div>
-        </header>
-
-        <!-- Sección de Aprendizaje -->
-        <div id="learning-section">
-            <div class="card-container">
-                <div class="card" id="main-card">
-                    <div class="card-face front">
-                        <span class="word-tag" id="mode-label">Traducir</span>
-                        <div class="main-word" id="front-word"></div>
-                        <div class="phonetic-container" id="front-phonetic-row">
-                            <span class="phonetic" id="front-phonetic"></span>
-                            <button class="audio-btn" id="front-audio">
-                                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                            </button>
+          ) : (
+            <div className="space-y-6">
+              {Object.keys(groupedProducts).sort((a,b)=>a-b).map(pageNum => (
+                <div key={pageNum} className="bg-white border rounded-xl overflow-hidden shadow-sm">
+                  <div className="bg-[#f0f4f8] px-5 py-3 font-bold text-gray-700 border-b flex justify-between items-center">
+                    <span>Página {pageNum}</span>
+                    <span className="text-xs bg-white px-2 py-1 rounded text-gray-500 border">{groupedProducts[pageNum].length} productos</span>
+                  </div>
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {groupedProducts[pageNum].map(p => (
+                      <div key={p.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 relative group hover:shadow-md transition">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-extrabold text-gray-800 text-lg">{p.code}</p>
+                          <p className="text-sm font-bold text-white bg-blue-500 px-2 py-0.5 rounded">Q{p.price}</p>
                         </div>
-                    </div>
-                    <div class="card-face back">
-                        <span class="word-tag" style="background: var(--neon-pink);">Respuesta</span>
-                        <div class="main-word" id="back-word"></div>
-                        <div class="phonetic-container" id="back-phonetic-row">
-                            <span class="phonetic" id="back-phonetic"></span>
-                            <button class="audio-btn" id="back-audio">
-                                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                            </button>
+                        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-2">{p.description}</p>
+                        
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-lg p-1 shadow-sm border">
+                          <button onClick={() => setEditingProduct(p)} className="text-[#007cc2] p-1.5 rounded hover:bg-blue-50"><Edit2 size={14}/></button>
+                          <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id))} className="text-red-500 p-1.5 rounded hover:bg-red-50"><Trash2 size={14}/></button>
                         </div>
-                        <div class="example" id="back-example"></div>
-                    </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              ))}
+              {products.length === 0 && <p className="text-gray-500 text-center py-10">Sube un PDF para extraer automáticamente los productos.</p>}
             </div>
-            <div class="progress-dots" id="dots-container"></div>
-            <div class="controls">
-                <button id="prev-btn" class="btn-sec">Anterior</button>
-                <button id="next-btn" class="btn-pri">Siguiente</button>
+          )}
+        </div>
+      )}
+
+      {tab === 'pedidos' && (
+        <div className="space-y-4">
+          {orders.map(o => (
+            <div key={o.id} className="p-5 border rounded-xl bg-green-50/50 shadow-sm">
+              <p className="font-bold text-lg">{o.customerName}</p>
+              <div className="text-sm text-gray-600 mb-3 space-y-1">
+                <p>📞 {o.customerPhone}</p>
+                <p>✉️ {o.customerEmail}</p>
+                <p>📍 {o.customerAddress}</p>
+              </div>
+              <div className="border-t pt-3 mt-3 border-green-100">
+                <p className="font-bold text-xs text-green-800 uppercase mb-2">Productos ({o.items.length}):</p>
+                {o.items.map((i, idx) => (
+                  <p key={idx} className="text-sm text-gray-700 font-medium">
+                    {i.qty}x {i.code} <span className="text-gray-500 font-normal">{(i.color || i.size) ? `(${i.color} Talla: ${i.size})` : ''}</span>
+                  </p>
+                ))}
+              </div>
+              <p className="font-extrabold text-green-700 text-right text-lg mt-2">Total: Q{o.total?.toFixed(2)}</p>
             </div>
+          ))}
+          {orders.length === 0 && <p className="text-gray-500 text-center py-10">Aún no has recibido pedidos.</p>}
         </div>
-
-        <!-- Sección de Quiz -->
-        <div id="quiz-section">
-            <div class="card-container" style="height: auto; min-height: 200px;">
-                <div class="auth-card" style="max-width: none; border-radius: 32px;">
-                    <h3 id="quiz-question" style="font-size: 1.5rem; margin-bottom: 20px;">Cargando...</h3>
-                    <div class="options-grid" id="quiz-options"></div>
-                </div>
-            </div>
-            <div class="progress-dots" id="quiz-progress"></div>
-        </div>
-
-        <!-- Sección de Fin de Día / Resultados -->
-        <div id="day-done-section" class="status-screen">
-            <div id="day-done-icon" style="font-size: 5rem; margin-bottom: 10px;">🏆</div>
-            <h2 id="day-done-title" style="font-size: 2.2rem; font-weight: 900; text-transform: uppercase;">Día terminado</h2>
-            <p id="day-done-msg" style="color: var(--text-sec); margin-bottom: 25px; font-weight: 600; font-size: 1.1rem;"></p>
-            
-            <!-- Contenedor de Pollitos Recompensa -->
-            <div id="reward-display" class="chick-container"></div>
-
-            <button id="start-quiz-btn" onclick="startWeeklyEvaluation()" class="btn-pri" style="width: 100%; margin-bottom: 15px; display: none;">INICIAR EVALUACIÓN</button>
-            <button id="repeat-btn" onclick="repeatDay()" class="btn-sec" style="width: 100%; margin-bottom: 15px;">REPASAR HOY</button>
-            <button id="reset-week-btn" onclick="resetWeek()" class="btn-pri" style="width: 100%; display: none;">EMPEZAR NUEVA SEMANA</button>
-            <button onclick="logout()" class="btn-pri" id="logout-final-btn" style="width: 100%;">CERRAR SESIÓN</button>
-        </div>
-
-        <!-- Sección de Granja (Pollitos) -->
-        <div id="farm-section" style="display: none; text-align: center;">
-            <div id="chick-pen" class="chick-pen">
-                <!-- Escenario Estático -->
-                <div class="scenery" style="top: 15px; right: 25px; font-size: 2.8rem;">☀️</div>
-                <div class="scenery" style="top: calc(45% - 2.2rem); left: 15px; font-size: 2.5rem;">🏡</div>
-                <div class="scenery" style="top: calc(45% - 2.5rem); right: 50px; font-size: 2.8rem;">🌳</div>
-                <div class="scenery" style="bottom: 15px; left: 20%; font-size: 1.8rem;">🌾</div>
-                <div class="scenery" style="bottom: 30px; right: 20%; font-size: 1.8rem;">🌾</div>
-                
-                <!-- Capa donde se inyectan los pollitos -->
-                <div id="chicks-layer" style="position: absolute; inset: 0;"></div>
-            </div>
-            <button onclick="closeFarm()" class="btn-pri" style="width: 100%;">VOLVER A LA LECCIÓN</button>
-        </div>
+      )}
     </div>
-</div>
+  );
+}
 
-<script>
-    const dictionary = [
-        { en: "Water", es: "Agua", ph: "uó-der", ex: "Drink some water." },
-        { en: "House", es: "Casa", ph: "jáus", ex: "My house is big." },
-        { en: "Red", es: "Rojo", ph: "red", ex: "The car is red." },
-        { en: "Bread", es: "Pan", ph: "bred", ex: "I like fresh bread." },
-        { en: "Always", es: "Siempre", ph: "ól-weis", ex: "I always study." },
-        { en: "Friend", es: "Amigo", ph: "frend", ex: "She is my friend." },
-        { en: "Today", es: "Hoy", ph: "tu-déi", ex: "Today is a sunny day." },
-        { en: "Happy", es: "Feliz", ph: "já-pi", ex: "I am very happy." },
-        { en: "Believe", es: "Creer", ph: "bi-lív", ex: "I believe in you." },
-        { en: "Through", es: "A través de", ph: "zru", ex: "Look through the window." },
-        { en: "Between", es: "Entre", ph: "bi-tuín", ex: "Between you and me." },
-        { en: "Healthy", es: "Saludable", ph: "jél-zi", ex: "Eat healthy food." },
-        { en: "Improve", es: "Mejorar", ph: "im-prúv", ex: "I want to improve." },
-        { en: "Challenge", es: "Reto", ph: "chá-len-dch", ex: "This is a big challenge." },
-        { en: "Schedule", es: "Horario", ph: "es-ké-dyul", ex: "Check your schedule." },
-        { en: "Better", es: "Mejor", ph: "bé-der", ex: "I feel much better." },
-        { en: "Simple", es: "Simple", ph: "sím-pel", ex: "It's a simple task." },
-        { en: "Success", es: "Éxito", ph: "sac-sés", ex: "Hard work brings success." },
-        { en: "Strong", es: "Fuerte", ph: "strong", ex: "You are very strong." },
-        { en: "Choice", es: "Elección", ph: "chois", ex: "It is your choice." },
-        { en: "Example", es: "Ejemplo", ph: "eg-sám-pel", ex: "Give me an example." },
-        { en: "Change", es: "Cambio", ph: "chéindch", ex: "Change is good." },
-        { en: "Focus", es: "Enfoque", ph: "fó-cas", ex: "Focus on your work." },
-        { en: "Quiet", es: "Quieto", ph: "kuái-et", ex: "Be quiet, please." },
-        { en: "Voice", es: "Voz", ph: "vois", ex: "I like your voice." },
-        { en: "Energy", es: "Energía", ph: "é-ner-dyi", ex: "Solar energy is clean." },
-        { en: "Mistake", es: "Error", ph: "mis-téik", ex: "Don't fear making a mistake." },
-        { en: "Learning", es: "Aprendizaje", ph: "lér-ning", ex: "Learning is a journey." }
-    ];
+function CartDrawer({ cart, setCart, total, onClose }) {
+  const [step, setStep] = useState('cart'); 
+  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '' });
 
-    let state = { 
-        daysCompleted: 0, 
-        lastDate: "", 
-        weeklyWords: [], 
-        quizCompleted: false,
-        score: 0,
-        totalChicks: 0,
-        foodItems: 0
-    };
+  const checkout = async (e) => {
+    e.preventDefault();
+    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), { 
+      customerName: form.name,
+      customerPhone: form.phone,
+      customerEmail: form.email,
+      customerAddress: form.address,
+      items: cart, 
+      total, 
+      createdAt: serverTimestamp() 
+    });
     
-    let activeUser = "";
-    let currentDailyList = [];
-    let currentIdx = 0;
-    let isRepeating = false;
-    let quizIdx = 0;
-    let currentQuizScore = 0;
-
-    function login() {
-        const userInput = document.getElementById('username-input').value.trim().toLowerCase();
-        if (!userInput) return;
-        
-        activeUser = userInput;
-        const savedData = localStorage.getItem('dailyEng_' + activeUser);
-        
-        if (savedData) {
-            state = JSON.parse(savedData);
-            // Compatibilidad para usuarios existentes
-            if (state.totalChicks === undefined) state.totalChicks = 0;
-            if (state.foodItems === undefined) state.foodItems = 0;
-        } else {
-            resetState();
-        }
-
-        // Verificación de consumo de comida e inactividad
-        if (state.lastDate) {
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const last = new Date(state.lastDate);
-            last.setHours(0,0,0,0);
-            const diffDays = Math.floor((today - last) / (1000 * 60 * 60 * 24));
-            
-            if (diffDays > 0) {
-                state.foodItems -= diffDays;
-                if (state.foodItems < 0) {
-                    const daysWithoutFood = Math.abs(state.foodItems);
-                    if (daysWithoutFood >= 2 && state.totalChicks > 0) {
-                        alert("¡Oh no! Tu granjita se quedó sin comida por 2 días o más y la mitad de tus pollitos no sobrevivió 😢.");
-                        state.totalChicks = Math.floor(state.totalChicks / 2);
-                    } else if (daysWithoutFood === 1 && state.totalChicks > 0) {
-                        alert("¡Cuidado! Tus pollitos pasaron un día entero sin comer. ¡Completa tu lección hoy para alimentarlos o algunos no sobrevivirán!");
-                    }
-                    state.foodItems = 0; // Evita que la comida sea negativa en la interfaz
-                }
-                saveProgress();
-            }
-        }
-
-        document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('app-content').style.display = 'block';
-        document.getElementById('display-user').innerText = userInput;
-        
-        checkProgress();
-    }
-
-    function resetState() {
-        state = { 
-            daysCompleted: 0, 
-            lastDate: "", 
-            weeklyWords: [],
-            quizCompleted: false,
-            score: 0,
-            totalChicks: 0,
-            foodItems: 0
-        };
-        saveProgress();
-    }
-
-    function saveProgress() {
-        if (activeUser) localStorage.setItem('dailyEng_' + activeUser, JSON.stringify(state));
-    }
-
-    function checkProgress() {
-        const today = new Date().toDateString();
-        
-        if (state.daysCompleted === 7 && state.quizCompleted) {
-            showDayDone(false, true); 
-        } else if (state.lastDate === today) {
-            showDayDone(true);
-        } else {
-            isRepeating = false;
-            startLearningFlow();
-        }
-    }
-
-    function startLearningFlow() {
-        document.getElementById('learning-section').style.display = 'block';
-        document.getElementById('quiz-section').style.display = 'none';
-        document.getElementById('day-done-section').style.display = 'none';
-        document.getElementById('view-title').innerText = "MODO MIXTO";
-        generateDaily();
-        renderUI();
-    }
-
-    function generateDaily() {
-        currentDailyList = [];
-        const sessionDay = isRepeating ? Math.max(0, state.daysCompleted - 1) : state.daysCompleted;
-        const start = (sessionDay * 4) % dictionary.length;
-        
-        for (let i = 0; i < 5; i++) {
-            const word = dictionary[(start + i) % dictionary.length];
-            const isEnToEs = Math.random() > 0.5;
-            currentDailyList.push({ ...word, isEnToEs, type: i < 4 ? "NUEVA" : "REPASO" });
-        }
-        currentIdx = 0;
-    }
-
-    function renderUI() {
-        const item = currentDailyList[currentIdx];
-        const card = document.getElementById('main-card');
-        
-        card.style.transition = 'none';
-        card.classList.remove('is-flipped');
-        void card.offsetWidth; 
-        card.style.transition = ''; 
-        
-        const weekDots = document.getElementById('week-dots');
-        weekDots.innerHTML = "";
-        const sessionDay = isRepeating ? Math.max(0, state.daysCompleted - 1) : state.daysCompleted;
-        const dayInWeek = (sessionDay % 7) + 1;
-        
-        for(let i=1; i<=7; i++) {
-            const d = document.createElement('div');
-            d.className = `week-dot ${i < dayInWeek ? 'completed' : ''} ${i === dayInWeek ? 'current' : ''}`;
-            d.innerText = i;
-            weekDots.appendChild(d);
-        }
-
-        const dots = document.getElementById('dots-container');
-        dots.innerHTML = "";
-        currentDailyList.forEach((_, i) => {
-            const d = document.createElement('div');
-            d.className = `dot ${i === currentIdx ? 'active' : ''}`;
-            dots.appendChild(d);
-        });
-
-        document.getElementById('mode-label').innerText = item.isEnToEs ? "ENTENDER" : "HABLAR";
-        document.getElementById('mode-label').style.background = item.isEnToEs ? "var(--neon-blue)" : "var(--success)";
-        
-        document.getElementById('front-word').innerText = item.isEnToEs ? item.en : item.es;
-        document.getElementById('front-phonetic').innerText = item.ph;
-        document.getElementById('front-phonetic-row').style.display = item.isEnToEs ? "flex" : "none";
-        
-        document.getElementById('back-word').innerText = item.isEnToEs ? item.es : item.en;
-        document.getElementById('back-phonetic').innerText = item.ph;
-        document.getElementById('back-phonetic-row').style.display = item.isEnToEs ? "none" : "flex";
-        document.getElementById('back-example').innerText = item.isEnToEs ? `"${item.ex}"` : item.ex.replace(new RegExp(item.en, 'gi'), '_____');
-
-        document.getElementById('streak-info').innerText = `DÍA GLOBAL: ${sessionDay + 1}`;
-        document.getElementById('prev-btn').disabled = currentIdx === 0;
-        document.getElementById('next-btn').innerText = currentIdx === 4 ? "TERMINAR DÍA" : "SIGUIENTE";
-    }
-
-    function playAudio(word) {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.85; 
-            window.speechSynthesis.speak(utterance);
-        }
-    }
-
-    document.getElementById('front-audio').onclick = (e) => { e.stopPropagation(); playAudio(currentDailyList[currentIdx].en); };
-    document.getElementById('back-audio').onclick = (e) => { e.stopPropagation(); playAudio(currentDailyList[currentIdx].en); };
-    document.getElementById('main-card').onclick = () => document.getElementById('main-card').classList.toggle('is-flipped');
+    let msg = `*NUEVO PEDIDO*\n\n*👤 Datos del cliente:*\nNombre: ${form.name}\nTel: ${form.phone}\nEmail: ${form.email}\nDirección: ${form.address}\n\n*🛍️ Detalle del pedido:*\n`;
+    cart.forEach(i => {
+      const variantStr = (i.color || i.size) ? `[Color: ${i.color} - Talla: ${i.size}]` : '';
+      msg += `- ${i.qty}x ${i.code} ${variantStr} (Q${i.price})\n`;
+    });
+    msg += `\n*TOTAL: Q${total.toFixed(2)}*`;
     
-    document.getElementById('next-btn').onclick = () => {
-        if (currentIdx < 4) { 
-            currentIdx++; 
-            renderUI(); 
-        } else {
-            if (!isRepeating) {
-                currentDailyList.forEach(w => {
-                    if (!state.weeklyWords.some(exist => exist.en === w.en)) {
-                        state.weeklyWords.push(w);
-                    }
-                });
-                state.daysCompleted++;
-                state.totalChicks += 1;
-                state.foodItems += 2;
-                state.lastDate = new Date().toDateString();
-                saveProgress();
-            }
-            isRepeating = false;
-            showDayDone();
-        }
-    };
-    
-    document.getElementById('prev-btn').onclick = () => { if (currentIdx > 0) { currentIdx--; renderUI(); }};
+    window.open(`https://wa.me/50237733402?text=${encodeURIComponent(msg)}`, '_blank');
+    setCart([]); 
+    onClose();
+  };
 
-    function showDayDone(isWelcomeBack = false, isFinal = false) {
-        document.getElementById('learning-section').style.display = 'none';
-        document.getElementById('quiz-section').style.display = 'none';
-        document.getElementById('day-done-section').style.display = 'block';
-        
-        const titleEl = document.getElementById('day-done-title');
-        const msgEl = document.getElementById('day-done-msg');
-        const repeatBtn = document.getElementById('repeat-btn');
-        const iconEl = document.getElementById('day-done-icon');
-        const startQuizBtn = document.getElementById('start-quiz-btn');
-        const rewardDiv = document.getElementById('reward-display');
-        const resetBtn = document.getElementById('reset-week-btn');
+  const updateQty = (id, delta) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = Math.max(1, item.qty + delta);
+        return { ...item, qty: newQty };
+      }
+      return item;
+    }));
+  };
 
-        rewardDiv.innerHTML = "";
-        startQuizBtn.style.display = "none";
-        resetBtn.style.display = "none";
-        repeatBtn.style.display = "block";
-
-        if (isFinal || (state.daysCompleted === 7 && state.quizCompleted)) {
-            iconEl.innerText = "🐥";
-            titleEl.innerText = "¡RECOMPENSA!";
-            const earnedChicks = Math.floor(state.score / 2);
-            msgEl.innerText = `Sacaste ${state.score}/10 en tu examen semanal. ¡Ganaste ${earnedChicks} pollitos!`;
-            repeatBtn.style.display = "none";
-            resetBtn.style.display = "block";
-            for(let i=0; i<earnedChicks; i++) rewardDiv.innerHTML += "🐥";
-            return;
-        }
-
-        if (state.daysCompleted === 7 && !state.quizCompleted) {
-            iconEl.innerText = "📝";
-            titleEl.innerText = "EXAMEN SEMANAL";
-            msgEl.innerText = "¡Has completado los 7 días! Es hora de tu evaluación final.";
-            startQuizBtn.style.display = "block";
-            repeatBtn.style.display = "none";
-            return;
-        }
-
-        if (state.lastDate === new Date().toDateString()) {
-            if (isWelcomeBack) {
-                iconEl.innerText = "🔄";
-                titleEl.innerText = "REPASAR EL DÍA";
-                msgEl.innerText = `Ya completaste tu lección. ¿Quieres volver a repasar las palabras de hoy?`;
-            } else {
-                iconEl.innerText = "🏆";
-                titleEl.innerText = "DÍA TERMINADO";
-                msgEl.innerText = `¡Excelente! Ganaste 1 🐥 y 2 🌾. Mañana seguiremos con el día ${state.daysCompleted + 1}.`;
-            }
-        }
-    }
-
-    // --- Evaluación Semanal ---
-    function startWeeklyEvaluation() {
-        document.getElementById('day-done-section').style.display = 'none';
-        document.getElementById('quiz-section').style.display = 'block';
-        document.getElementById('view-title').innerText = "EVALUACIÓN";
-        quizIdx = 0;
-        currentQuizScore = 0;
-        showQuestion();
-    }
-
-    function showQuestion() {
-        if (quizIdx >= 10) {
-            state.quizCompleted = true;
-            state.score = currentQuizScore;
-            const earnedChicks = Math.floor(currentQuizScore / 2);
-            state.totalChicks += earnedChicks;
-            saveProgress();
-            showDayDone(false, true);
-            return;
-        }
-
-        const target = state.weeklyWords[quizIdx % state.weeklyWords.length];
-        const questionEl = document.getElementById('quiz-question');
-        questionEl.innerText = `¿Qué significa "${target.en}"?`;
-
-        const optionsGrid = document.getElementById('quiz-options');
-        optionsGrid.innerHTML = "";
-
-        let options = [target.es];
-        while (options.length < 4) {
-            let rand = dictionary[Math.floor(Math.random() * dictionary.length)].es;
-            if (!options.includes(rand)) options.push(rand);
-        }
-        options = options.sort(() => Math.random() - 0.5);
-
-        options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = "option-btn";
-            btn.innerText = opt;
-            btn.onclick = () => handleAnswer(opt === target.es, btn);
-            optionsGrid.appendChild(btn);
-        });
-
-        const qProg = document.getElementById('quiz-progress');
-        qProg.innerHTML = "";
-        for(let i=0; i<10; i++) {
-            const d = document.createElement('div');
-            d.className = `dot ${i === quizIdx ? 'active' : ''}`;
-            qProg.appendChild(d);
-        }
-    }
-
-    function handleAnswer(isCorrect, btn) {
-        const allBtns = document.querySelectorAll('.option-btn');
-        allBtns.forEach(b => b.disabled = true);
-
-        if (isCorrect) {
-            btn.classList.add('correct');
-            currentQuizScore++;
-        } else {
-            btn.classList.add('error');
-        }
-
-        setTimeout(() => {
-            quizIdx++;
-            showQuestion();
-        }, 1000);
-    }
-
-    function resetWeek() {
-        if (confirm("¿Estás seguro de que quieres reiniciar la semana?")) {
-            // Reiniciamos pero mantenemos pollitos y comida
-            const chicks = state.totalChicks;
-            const food = state.foodItems;
-            resetState();
-            state.totalChicks = chicks;
-            state.foodItems = food;
-            saveProgress();
-            location.reload();
-        }
-    }
-
-    function logout() {
-        state = { daysCompleted: 0, lastDate: "", totalChicks: 0, foodItems: 0 };
-        activeUser = "";
-        currentIdx = 0;
-        isRepeating = false;
-        document.getElementById('username-input').value = "";
-        document.getElementById('app-content').style.display = 'none';
-        document.getElementById('auth-section').style.display = 'flex';
-    }
-
-    window.repeatDay = function() {
-        isRepeating = true;
-        generateDaily();
-        document.getElementById('day-done-section').style.display = 'none';
-        document.getElementById('learning-section').style.display = 'block';
-        renderUI();
-    };
-
-    function openFarm() {
-        document.getElementById('learning-section').style.display = 'none';
-        document.getElementById('quiz-section').style.display = 'none';
-        document.getElementById('day-done-section').style.display = 'none';
-        document.getElementById('farm-section').style.display = 'block';
-        
-        document.getElementById('view-title').innerText = "MIS POLLITOS";
-        document.getElementById('week-dots').style.display = 'none';
-        document.getElementById('streak-info').innerText = `Pollitos: ${state.totalChicks} 🐥 | Comida: ${state.foodItems} 🌾`;
-
-        const layer = document.getElementById('chicks-layer');
-        layer.innerHTML = '';
-        for(let i=0; i<state.totalChicks; i++) {
-            const chick = document.createElement('div');
-            chick.innerText = '🐥';
-            chick.className = 'chick-moving';
-            // Restringimos los pollitos a la zona del "pasto" (mitad inferior)
-            chick.style.left = (10 + Math.random() * 70) + '%';
-            chick.style.top = (50 + Math.random() * 30) + '%';
-            chick.style.animationDuration = (4 + Math.random() * 4) + 's';
-            chick.style.animationDelay = '-' + (Math.random() * 5) + 's';
-            layer.appendChild(chick);
-        }
-    }
-
-    function closeFarm() {
-        document.getElementById('farm-section').style.display = 'none';
-        document.getElementById('week-dots').style.display = 'flex';
-        checkProgress();
-    }
-</script>
-</body>
-</html>
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex justify-end">
+      {step === 'cart' ? (
+        <div className="bg-white w-full max-w-sm h-full p-6 flex flex-col shadow-2xl animate-in slide-in-from-right">
+          <div className="flex justify-between items-center mb-6 border-b pb-4">
+            <h2 className="font-extrabold text-xl flex items-center gap-2"><ShoppingCart className="text-[#007cc2]"/> Tu Carrito</h2>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full"><X/></button>
+          </div>
+          <div className="flex-grow space-y-4 overflow-auto">
+            {cart.map(i => (
+              <div key={i.id} className="flex justify-between items-center border-b pb-3">
+                <div className="flex-1">
+                  <p className="font-bold text-sm text-gray-800">{i.code}</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    {i.color && <span>{i.color} </span>}
+                    {i.size && <span>(Talla: {i.size})</span>}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Q{i.price?.toFixed(2)} c/u</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center border border-gray-200 rounded-md">
+                    <button onClick={() => updateQty(i.id, -1)} className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 font-bold">-</button>
+                    <span className="px-2 text-xs font-bold text-gray-700 min-w-[20px] text-center">{i.qty}</span>
+                    <button onClick={() => updateQty(i.id, 1)} className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 font-bold">+</button>
+                  </div>
+                  <p className="font-bold text-[#007cc2] w-14 text-right">Q{(i.price * i.qty).toFixed(2)}</p>
+                  <button onClick={() => setCart(cart.filter(item => item.id !== i.id))} className="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded ml-1"><Trash2 size={16}/></button>
+                </div>
+              </div>
+            ))}
+            {cart.length === 0 && <div className="text-center mt-20 text-gray-400"><ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50"/>Carrito vacío</div>}
+          </div>
+          {cart.length > 0 && (
+            <div className="pt-4 border-t mt-4">
+              <div className="flex justify-between items-end mb-4">
+                <span className="font-bold text-gray-500">Total a pagar:</span>
+                <span className="text-2xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span>
+              </div>
+              <button onClick={() => setStep('checkout')} className="w-full bg-[#007cc2] hover:bg-blue-700 text-white p-3.5 rounded-xl font-bold shadow-lg transition">
+                Enviar a mi asesor(a)
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="bg-[#f8f9fa] p-4 border-b flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800">Finalizar Pedido</h3>
+              <button onClick={() => setStep('cart')} className="text-gray-500 hover:text-gray-800 text-sm font-bold underline">Volver</button>
+            </div>
+            <form onSubmit={checkout} className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 flex justify-center text-gray-500"><User size={20}/></div>
+                <div className="flex-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Nombre completo</label>
+                  <input required className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 flex justify-center text-gray-500"><Phone size={20}/></div>
+                <div className="flex-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Teléfono</label>
+                  <input required placeholder="Ejemplo: 1125456587" className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 flex justify-center text-gray-500"><Mail size={20}/></div>
+                <div className="flex-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Email</label>
+                  <input type="email" required className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 flex justify-center text-gray-500"><MapPin size={20}/></div>
+                <div className="flex-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Dirección</label>
+                  <input required className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+                </div>
+              </div>
+              <div className="pt-6">
+                <button type="submit" className="w-3/4 mx-auto flex items-center justify-center gap-2 bg-[#128C7E] hover:bg-[#075E54] text-white p-3 rounded-lg font-bold shadow-md transition">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                  Enviar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

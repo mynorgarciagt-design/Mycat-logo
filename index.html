@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MYGLÉS - Pro</title>
+    <style>
+        :root {
+            --bg: #f7f7f7;
+            --card-bg: #ffffff;
+            --text-main: #000000;
+            --text-sec: #666666;
+            --accent: #000000;
+            --neon-blue: #23a0ff;
+            --neon-pink: #ff1493;
+            --neon-green: #39ff14;
+            --neon-yellow: #e2ff00;
+            --success: #00c853;
+            --error: #ff3b30;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- Auth View con Fondo Neón --- */
+        #auth-section { 
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #e2ff00;
+            background-image: url('rOAFsb4NMehLLZadBw3J5NAfnmY.avif'), 
+                              radial-gradient(circle at 0% 50%, #ff1493 0%, transparent 60%), 
+                              radial-gradient(circle at 100% 50%, #aaff00 0%, transparent 60%);
+            background-size: cover;
+            background-position: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: #ffffff;
+            padding: 45px 30px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 2px solid #000000;
+            text-align: center;
+        }
+
+        .main-heading {
+            font-size: 3.8rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: #000000;
+            text-align: center;
+        }
+        
+        .sub-heading {
+            color: #666666;
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 35px;
+            letter-spacing: 0px;
+        }
+
+        .input-group { margin: 0; width: 100%; }
+        
+        .auth-input {
+            width: 100%; padding: 16px 20px; border-radius: 12px; border: 1px solid #d1d1d6;
+            font-size: 1rem; outline: none; margin-bottom: 15px;
+            font-weight: 600; text-align: left; box-sizing: border-box;
+        }
+        
+        .auth-btn {
+            width: 100%; padding: 18px; border-radius: 30px; font-size: 1rem; font-weight: 800; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            background: #000000; color: #ffffff; border: none;
+        }
+
+        /* --- Header --- */
+        header { 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            margin-bottom: 20px; 
+            position: relative; 
+            padding-top: 10px; 
+        }
+        
+        .header-top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .user-badge { 
+            font-size: 0.8rem; background: var(--text-main); color: white;
+            padding: 6px 14px; border-radius: 20px; font-weight: 800; text-transform: uppercase;
+        }
+
+        .logout-btn {
+            background: #e0e0e0; border: none; color: var(--text-main);
+            font-size: 0.8rem; font-weight: 800; cursor: pointer; padding: 6px 14px;
+            border-radius: 20px; text-transform: uppercase;
+        }
+
+        .view-title { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; margin-top: 10px; }
+
+        @keyframes floatChick {
+            0% { transform: translate(0, 0) scaleX(1); }
+            33% { transform: translate(15px, -15px) scaleX(1); }
+            66% { transform: translate(-10px, 15px) scaleX(-1); }
+            100% { transform: translate(0, 0) scaleX(1); }
+        }
+
+        .chick-moving {
+            position: absolute;
+            font-size: 2.5rem;
+            z-index: 10;
+            animation: floatChick 6s ease-in-out infinite;
+        }
+
+        /* --- Farm Scenery --- */
+        .chick-pen {
+            position: relative; 
+            width: 100%; 
+            height: 350px; 
+            /* Cielo azul claro 45%, pasto verde neón 55% */
+            background: linear-gradient(to bottom, #dff4ff 45%, var(--neon-green) 45%); 
+            border: 2px solid var(--text-main); 
+            border-radius: 32px; 
+            overflow: hidden; 
+            margin-bottom: 20px; 
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.05);
+        }
+        .scenery {
+            position: absolute;
+            user-select: none;
+            z-index: 1;
+        }
+
+        /* --- Learning & Quiz Views --- */
+        .card-container { perspective: 1000px; width: 100%; height: 420px; margin-bottom: 20px; }
+        .card {
+            position: relative; width: 100%; height: 100%; cursor: pointer;
+            transform-style: preserve-3d; transition: transform 0.5s;
+            border-radius: 32px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .card.is-flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 35px 20px; background: var(--neon-green); border-radius: 32px; text-align: center;
+            color: var(--text-main);
+        }
+        .card-face.back { transform: rotateY(180deg); background: var(--neon-yellow); color: var(--text-main); }
+
+        .word-tag {
+            position: absolute; top: 25px; font-size: 0.75rem; text-transform: uppercase;
+            font-weight: 900; color: white; background: var(--neon-blue); 
+            padding: 6px 16px; border-radius: 20px;
+        }
+
+        .main-word { font-size: 3.5rem; font-weight: 900; margin-bottom: 5px; letter-spacing: -1.5px; line-height: 1.1;}
+        
+        /* CORRECCIÓN: Separaciones para que el audio quede abajo y nada se amontone */
+        .phonetic-container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 8px; /* Tighter gap entre el texto y el botón */
+            margin-top: 10px;
+            margin-bottom: 20px; /* Margen antes del ejemplo */
+            width: 100%;
+        }
+        .phonetic { 
+            font-size: 1.4rem; color: var(--text-sec); font-weight: 600; margin: 0; line-height: 1;
+        }
+        .back .phonetic { color: rgba(0,0,0,0.6); }
+
+        .audio-btn { 
+            background: var(--bg); border: none; width: 64px; height: 64px; 
+            border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        .audio-btn:active { transform: scale(0.9); }
+        .audio-btn svg { width: 30px; height: 30px; fill: var(--text-main); display: block; }
+        .back .audio-btn { background: var(--text-main); }
+        .back .audio-btn svg { fill: var(--neon-yellow); }
+
+        .example { 
+            font-size: 1.2rem; line-height: 1.4; font-weight: 600; font-style: italic; 
+            margin-top: 10px; padding: 0 10px;
+        }
+
+        /* --- Quiz Specific --- */
+        #quiz-section { display: none; width: 100%; text-align: center; }
+        .options-grid { display: grid; gap: 12px; width: 100%; }
+        .option-btn {
+            background: white; border: 2px solid #e0e0e0; padding: 18px;
+            border-radius: 20px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            transition: 0.2s;
+        }
+        .option-btn.correct { background: var(--success); color: white; border-color: var(--success); }
+        .option-btn.error { background: var(--error); color: white; border-color: var(--error); }
+
+        /* --- Reward Display --- */
+        .chick-container {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+            font-size: 3rem; margin: 20px 0;
+        }
+
+        /* --- Progress UI --- */
+        .week-dots { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
+        .week-dot { 
+            width: 32px; height: 32px; border-radius: 10px; background: #e0e0e0; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 0.8rem; font-weight: 900; color: var(--text-sec); 
+        }
+        .week-dot.completed { background: var(--text-main); color: white; }
+        .week-dot.current { background: var(--neon-blue); color: white; transform: scale(1.1); }
+
+        .progress-dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 25px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #e0e0e0; }
+        .dot.active { background: var(--text-main); width: 24px; border-radius: 6px; }
+
+        .controls { display: flex; gap: 12px; width: 100%; margin-top: auto; padding-bottom: 30px; }
+        button { flex: 1; padding: 20px; border: none; border-radius: 20px; font-size: 1.1rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .btn-sec { background: white; color: var(--text-main); border: 2px solid #e0e0e0; }
+        .btn-pri { background: var(--text-main); color: white; }
+
+        .status-screen { display: none; text-align: center; padding-top: 40px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Pantalla de Login -->
+    <div id="auth-section">
+        <div class="auth-card">
+            <h1 class="main-heading">MYGLÉS</h1>
+            <p class="sub-heading">BY MYNOR GARCIA</p>
+            <div class="input-group">
+                <input type="text" id="username-input" class="auth-input" placeholder="Tu nombre" autocomplete="off">
+                <button onclick="login()" class="auth-btn" id="login-btn">ENTRAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de App Principal -->
+    <div id="app-content" style="display: none;">
+        <header>
+            <div class="header-top-bar">
+                <div class="user-badge" id="display-user"></div>
+                <div>
+                    <button class="logout-btn" onclick="openFarm()" style="background: var(--neon-yellow); margin-right: 5px;">🐥 GRANJA</button>
+                    <button class="logout-btn" onclick="logout()">SALIR</button>
+                </div>
+            </div>
+            <div class="view-title" id="view-title">MODO MIXTO</div>
+            <div class="week-dots" id="week-dots"></div>
+            <div class="streak-info" id="streak-info"></div>
+        </header>
+
+        <!-- Sección de Aprendizaje -->
+        <div id="learning-section">
+            <div class="card-container">
+                <div class="card" id="main-card">
+                    <div class="card-face front">
+                        <span class="word-tag" id="mode-label">Traducir</span>
+                        <div class="main-word" id="front-word"></div>
+                        <div class="phonetic-container" id="front-phonetic-row">
+                            <span class="phonetic" id="front-phonetic"></span>
+                            <button class="audio-btn" id="front-audio">
+                                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-face back">
+                        <span class="word-tag" style="background: var(--neon-pink);">Respuesta</span>
+                        <div class="main-word" id="back-word"></div>
+                        <div class="phonetic-container" id="back-phonetic-row">
+                            <span class="phonetic" id="back-phonetic"></span>
+                            <button class="audio-btn" id="back-audio">
+                                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                            </button>
+                        </div>
+                        <div class="example" id="back-example"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-dots" id="dots-container"></div>
+            <div class="controls">
+                <button id="prev-btn" class="btn-sec">Anterior</button>
+                <button id="next-btn" class="btn-pri">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- Sección de Quiz -->
+        <div id="quiz-section">
+            <div class="card-container" style="height: auto; min-height: 200px;">
+                <div class="auth-card" style="max-width: none; border-radius: 32px;">
+                    <h3 id="quiz-question" style="font-size: 1.5rem; margin-bottom: 20px;">Cargando...</h3>
+                    <div class="options-grid" id="quiz-options"></div>
+                </div>
+            </div>
+            <div class="progress-dots" id="quiz-progress"></div>
+        </div>
+
+        <!-- Sección de Fin de Día / Resultados -->
+        <div id="day-done-section" class="status-screen">
+            <div id="day-done-icon" style="font-size: 5rem; margin-bottom: 10px;">🏆</div>
+            <h2 id="day-done-title" style="font-size: 2.2rem; font-weight: 900; text-transform: uppercase;">Día terminado</h2>
+            <p id="day-done-msg" style="color: var(--text-sec); margin-bottom: 25px; font-weight: 600; font-size: 1.1rem;"></p>
+            
+            <!-- Contenedor de Pollitos Recompensa -->
+            <div id="reward-display" class="chick-container"></div>
+
+            <button id="start-quiz-btn" onclick="startWeeklyEvaluation()" class="btn-pri" style="width: 100%; margin-bottom: 15px; display: none;">INICIAR EVALUACIÓN</button>
+            <button id="repeat-btn" onclick="repeatDay()" class="btn-sec" style="width: 100%; margin-bottom: 15px;">REPASAR HOY</button>
+            <button id="reset-week-btn" onclick="resetWeek()" class="btn-pri" style="width: 100%; display: none;">EMPEZAR NUEVA SEMANA</button>
+            <button onclick="logout()" class="btn-pri" id="logout-final-btn" style="width: 100%;">CERRAR SESIÓN</button>
+        </div>
+
+        <!-- Sección de Granja (Pollitos) -->
+        <div id="farm-section" style="display: none; text-align: center;">
+            <div id="chick-pen" class="chick-pen">
+                <!-- Escenario Estático -->
+                <div class="scenery" style="top: 15px; right: 25px; font-size: 2.8rem;">☀️</div>
+                <div class="scenery" style="top: calc(45% - 2.2rem); left: 15px; font-size: 2.5rem;">🏡</div>
+                <div class="scenery" style="top: calc(45% - 2.5rem); right: 50px; font-size: 2.8rem;">🌳</div>
+                <div class="scenery" style="bottom: 15px; left: 20%; font-size: 1.8rem;">🌾</div>
+                <div class="scenery" style="bottom: 30px; right: 20%; font-size: 1.8rem;">🌾</div>
+                
+                <!-- Capa donde se inyectan los pollitos -->
+                <div id="chicks-layer" style="position: absolute; inset: 0;"></div>
+            </div>
+            <button onclick="closeFarm()" class="btn-pri" style="width: 100%;">VOLVER A LA LECCIÓN</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dictionary = [
+        { en: "Water", es: "Agua", ph: "uó-der", ex: "Drink some water." },
+        { en: "House", es: "Casa", ph: "jáus", ex: "My house is big." },
+        { en: "Red", es: "Rojo", ph: "red", ex: "The car is red." },
+        { en: "Bread", es: "Pan", ph: "bred", ex: "I like fresh bread." },
+        { en: "Always", es: "Siempre", ph: "ól-weis", ex: "I always study." },
+        { en: "Friend", es: "Amigo", ph: "frend", ex: "She is my friend." },
+        { en: "Today", es: "Hoy", ph: "tu-déi", ex: "Today is a sunny day." },
+        { en: "Happy", es: "Feliz", ph: "já-pi", ex: "I am very happy." },
+        { en: "Believe", es: "Creer", ph: "bi-lív", ex: "I believe in you." },
+        { en: "Through", es: "A través de", ph: "zru", ex: "Look through the window." },
+        { en: "Between", es: "Entre", ph: "bi-tuín", ex: "Between you and me." },
+        { en: "Healthy", es: "Saludable", ph: "jél-zi", ex: "Eat healthy food." },
+        { en: "Improve", es: "Mejorar", ph: "im-prúv", ex: "I want to improve." },
+        { en: "Challenge", es: "Reto", ph: "chá-len-dch", ex: "This is a big challenge." },
+        { en: "Schedule", es: "Horario", ph: "es-ké-dyul", ex: "Check your schedule." },
+        { en: "Better", es: "Mejor", ph: "bé-der", ex: "I feel much better." },
+        { en: "Simple", es: "Simple", ph: "sím-pel", ex: "It's a simple task." },
+        { en: "Success", es: "Éxito", ph: "sac-sés", ex: "Hard work brings success." },
+        { en: "Strong", es: "Fuerte", ph: "strong", ex: "You are very strong." },
+        { en: "Choice", es: "Elección", ph: "chois", ex: "It is your choice." },
+        { en: "Example", es: "Ejemplo", ph: "eg-sám-pel", ex: "Give me an example." },
+        { en: "Change", es: "Cambio", ph: "chéindch", ex: "Change is good." },
+        { en: "Focus", es: "Enfoque", ph: "fó-cas", ex: "Focus on your work." },
+        { en: "Quiet", es: "Quieto", ph: "kuái-et", ex: "Be quiet, please." },
+        { en: "Voice", es: "Voz", ph: "vois", ex: "I like your voice." },
+        { en: "Energy", es: "Energía", ph: "é-ner-dyi", ex: "Solar energy is clean." },
+        { en: "Mistake", es: "Error", ph: "mis-téik", ex: "Don't fear making a mistake." },
+        { en: "Learning", es: "Aprendizaje", ph: "lér-ning", ex: "Learning is a journey." }
+    ];
+
+    let state = { 
+        daysCompleted: 0, 
+        lastDate: "", 
+        weeklyWords: [], 
+        quizCompleted: false,
+        score: 0,
+        totalChicks: 0,
+        foodItems: 0
+    };
+    
+    let activeUser = "";
+    let currentDailyList = [];
+    let currentIdx = 0;
+    let isRepeating = false;
+    let quizIdx = 0;
+    let currentQuizScore = 0;
+
+    function login() {
+        const userInput = document.getElementById('username-input').value.trim().toLowerCase();
+        if (!userInput) return;
+        
+        activeUser = userInput;
+        const savedData = localStorage.getItem('dailyEng_' + activeUser);
+        
+        if (savedData) {
+            state = JSON.parse(savedData);
+            // Compatibilidad para usuarios existentes
+            if (state.totalChicks === undefined) state.totalChicks = 0;
+            if (state.foodItems === undefined) state.foodItems = 0;
+        } else {
+            resetState();
+        }
+
+        // Verificación de consumo de comida e inactividad
+        if (state.lastDate) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const last = new Date(state.lastDate);
+            last.setHours(0,0,0,0);
+            const diffDays = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 0) {
+                state.foodItems -= diffDays;
+                if (state.foodItems < 0) {
+                    const daysWithoutFood = Math.abs(state.foodItems);
+                    if (daysWithoutFood >= 2 && state.totalChicks > 0) {
+                        alert("¡Oh no! Tu granjita se quedó sin comida por 2 días o más y la mitad de tus pollitos no sobrevivió 😢.");
+                        state.totalChicks = Math.floor(state.totalChicks / 2);
+                    } else if (daysWithoutFood === 1 && state.totalChicks > 0) {
+                        alert("¡Cuidado! Tus pollitos pasaron un día entero sin comer. ¡Completa tu lección hoy para alimentarlos o algunos no sobrevivirán!");
+                    }
+                    state.foodItems = 0; // Evita que la comida sea negativa en la interfaz
+                }
+                saveProgress();
+            }
+        }
+
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('app-content').style.display = 'block';
+        document.getElementById('display-user').innerText = userInput;
+        
+        checkProgress();
+    }
+
+    function resetState() {
+        state = { 
+            daysCompleted: 0, 
+            lastDate: "", 
+            weeklyWords: [],
+            quizCompleted: false,
+            score: 0,
+            totalChicks: 0,
+            foodItems: 0
+        };
+        saveProgress();
+    }
+
+    function saveProgress() {
+        if (activeUser) localStorage.setItem('dailyEng_' + activeUser, JSON.stringify(state));
+    }
+
+    function checkProgress() {
+        const today = new Date().toDateString();
+        
+        if (state.daysCompleted === 7 && state.quizCompleted) {
+            showDayDone(false, true); 
+        } else if (state.lastDate === today) {
+            showDayDone(true);
+        } else {
+            isRepeating = false;
+            startLearningFlow();
+        }
+    }
+
+    function startLearningFlow() {
+        document.getElementById('learning-section').style.display = 'block';
+        document.getElementById('quiz-section').style.display = 'none';
+        document.getElementById('day-done-section').style.display = 'none';
+        document.getElementById('view-title').innerText = "MODO MIXTO";
+        generateDaily();
+        renderUI();
+    }
+
+    function generateDaily() {
+        currentDailyList = [];
+        const sessionDay = isRepeating ? Math.max(0, state.daysCompleted - 1) : state.daysCompleted;
+        const start = (sessionDay * 4) % dictionary.length;
+        
+        for (let i = 0; i < 5; i++) {
+            const word = dictionary[(start + i) % dictionary.length];
+            const isEnToEs = Math.random() > 0.5;
+            currentDailyList.push({ ...word, isEnToEs, type: i < 4 ? "NUEVA" : "REPASO" });
+        }
+        currentIdx = 0;
+    }
+
+    function renderUI() {
+        const item = currentDailyList[currentIdx];
+        const card = document.getElementById('main-card');
+        
+        card.style.transition = 'none';
+        card.classList.remove('is-flipped');
+        void card.offsetWidth; 
+        card.style.transition = ''; 
+        
+        const weekDots = document.getElementById('week-dots');
+        weekDots.innerHTML = "";
+        const sessionDay = isRepeating ? Math.max(0, state.daysCompleted - 1) : state.daysCompleted;
+        const dayInWeek = (sessionDay % 7) + 1;
+        
+        for(let i=1; i<=7; i++) {
+            const d = document.createElement('div');
+            d.className = `week-dot ${i < dayInWeek ? 'completed' : ''} ${i === dayInWeek ? 'current' : ''}`;
+            d.innerText = i;
+            weekDots.appendChild(d);
+        }
+
+        const dots = document.getElementById('dots-container');
+        dots.innerHTML = "";
+        currentDailyList.forEach((_, i) => {
+            const d = document.createElement('div');
+            d.className = `dot ${i === currentIdx ? 'active' : ''}`;
+            dots.appendChild(d);
+        });
+
+        document.getElementById('mode-label').innerText = item.isEnToEs ? "ENTENDER" : "HABLAR";
+        document.getElementById('mode-label').style.background = item.isEnToEs ? "var(--neon-blue)" : "var(--success)";
+        
+        document.getElementById('front-word').innerText = item.isEnToEs ? item.en : item.es;
+        document.getElementById('front-phonetic').innerText = item.ph;
+        document.getElementById('front-phonetic-row').style.display = item.isEnToEs ? "flex" : "none";
+        
+        document.getElementById('back-word').innerText = item.isEnToEs ? item.es : item.en;
+        document.getElementById('back-phonetic').innerText = item.ph;
+        document.getElementById('back-phonetic-row').style.display = item.isEnToEs ? "none" : "flex";
+        document.getElementById('back-example').innerText = item.isEnToEs ? `"${item.ex}"` : item.ex.replace(new RegExp(item.en, 'gi'), '_____');
+
+        document.getElementById('streak-info').innerText = `DÍA GLOBAL: ${sessionDay + 1}`;
+        document.getElementById('prev-btn').disabled = currentIdx === 0;
+        document.getElementById('next-btn').innerText = currentIdx === 4 ? "TERMINAR DÍA" : "SIGUIENTE";
+    }
+
+    function playAudio(word) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85; 
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    document.getElementById('front-audio').onclick = (e) => { e.stopPropagation(); playAudio(currentDailyList[currentIdx].en); };
+    document.getElementById('back-audio').onclick = (e) => { e.stopPropagation(); playAudio(currentDailyList[currentIdx].en); };
+    document.getElementById('main-card').onclick = () => document.getElementById('main-card').classList.toggle('is-flipped');
+    
+    document.getElementById('next-btn').onclick = () => {
+        if (currentIdx < 4) { 
+            currentIdx++; 
+            renderUI(); 
+        } else {
+            if (!isRepeating) {
+                currentDailyList.forEach(w => {
+                    if (!state.weeklyWords.some(exist => exist.en === w.en)) {
+                        state.weeklyWords.push(w);
+                    }
+                });
+                state.daysCompleted++;
+                state.totalChicks += 1;
+                state.foodItems += 2;
+                state.lastDate = new Date().toDateString();
+                saveProgress();
+            }
+            isRepeating = false;
+            showDayDone();
+        }
+    };
+    
+    document.getElementById('prev-btn').onclick = () => { if (currentIdx > 0) { currentIdx--; renderUI(); }};
+
+    function showDayDone(isWelcomeBack = false, isFinal = false) {
+        document.getElementById('learning-section').style.display = 'none';
+        document.getElementById('quiz-section').style.display = 'none';
+        document.getElementById('day-done-section').style.display = 'block';
+        
+        const titleEl = document.getElementById('day-done-title');
+        const msgEl = document.getElementById('day-done-msg');
+        const repeatBtn = document.getElementById('repeat-btn');
+        const iconEl = document.getElementById('day-done-icon');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const rewardDiv = document.getElementById('reward-display');
+        const resetBtn = document.getElementById('reset-week-btn');
+
+        rewardDiv.innerHTML = "";
+        startQuizBtn.style.display = "none";
+        resetBtn.style.display = "none";
+        repeatBtn.style.display = "block";
+
+        if (isFinal || (state.daysCompleted === 7 && state.quizCompleted)) {
+            iconEl.innerText = "🐥";
+            titleEl.innerText = "¡RECOMPENSA!";
+            const earnedChicks = Math.floor(state.score / 2);
+            msgEl.innerText = `Sacaste ${state.score}/10 en tu examen semanal. ¡Ganaste ${earnedChicks} pollitos!`;
+            repeatBtn.style.display = "none";
+            resetBtn.style.display = "block";
+            for(let i=0; i<earnedChicks; i++) rewardDiv.innerHTML += "🐥";
+            return;
+        }
+
+        if (state.daysCompleted === 7 && !state.quizCompleted) {
+            iconEl.innerText = "📝";
+            titleEl.innerText = "EXAMEN SEMANAL";
+            msgEl.innerText = "¡Has completado los 7 días! Es hora de tu evaluación final.";
+            startQuizBtn.style.display = "block";
+            repeatBtn.style.display = "none";
+            return;
+        }
+
+        if (state.lastDate === new Date().toDateString()) {
+            if (isWelcomeBack) {
+                iconEl.innerText = "🔄";
+                titleEl.innerText = "REPASAR EL DÍA";
+                msgEl.innerText = `Ya completaste tu lección. ¿Quieres volver a repasar las palabras de hoy?`;
+            } else {
+                iconEl.innerText = "🏆";
+                titleEl.innerText = "DÍA TERMINADO";
+                msgEl.innerText = `¡Excelente! Ganaste 1 🐥 y 2 🌾. Mañana seguiremos con el día ${state.daysCompleted + 1}.`;
+            }
+        }
+    }
+
+    // --- Evaluación Semanal ---
+    function startWeeklyEvaluation() {
+        document.getElementById('day-done-section').style.display = 'none';
+        document.getElementById('quiz-section').style.display = 'block';
+        document.getElementById('view-title').innerText = "EVALUACIÓN";
+        quizIdx = 0;
+        currentQuizScore = 0;
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (quizIdx >= 10) {
+            state.quizCompleted = true;
+            state.score = currentQuizScore;
+            const earnedChicks = Math.floor(currentQuizScore / 2);
+            state.totalChicks += earnedChicks;
+            saveProgress();
+            showDayDone(false, true);
+            return;
+        }
+
+        const target = state.weeklyWords[quizIdx % state.weeklyWords.length];
+        const questionEl = document.getElementById('quiz-question');
+        questionEl.innerText = `¿Qué significa "${target.en}"?`;
+
+        const optionsGrid = document.getElementById('quiz-options');
+        optionsGrid.innerHTML = "";
+
+        let options = [target.es];
+        while (options.length < 4) {
+            let rand = dictionary[Math.floor(Math.random() * dictionary.length)].es;
+            if (!options.includes(rand)) options.push(rand);
+        }
+        options = options.sort(() => Math.random() - 0.5);
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "option-btn";
+            btn.innerText = opt;
+            btn.onclick = () => handleAnswer(opt === target.es, btn);
+            optionsGrid.appendChild(btn);
+        });
+
+        const qProg = document.getElementById('quiz-progress');
+        qProg.innerHTML = "";
+        for(let i=0; i<10; i++) {
+            const d = document.createElement('div');
+            d.className = `dot ${i === quizIdx ? 'active' : ''}`;
+            qProg.appendChild(d);
+        }
+    }
+
+    function handleAnswer(isCorrect, btn) {
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            currentQuizScore++;
+        } else {
+            btn.classList.add('error');
+        }
+
+        setTimeout(() => {
+            quizIdx++;
+            showQuestion();
+        }, 1000);
+    }
+
+    function resetWeek() {
+        if (confirm("¿Estás seguro de que quieres reiniciar la semana?")) {
+            // Reiniciamos pero mantenemos pollitos y comida
+            const chicks = state.totalChicks;
+            const food = state.foodItems;
+            resetState();
+            state.totalChicks = chicks;
+            state.foodItems = food;
+            saveProgress();
+            location.reload();
+        }
+    }
+
+    function logout() {
+        state = { daysCompleted: 0, lastDate: "", totalChicks: 0, foodItems: 0 };
+        activeUser = "";
+        currentIdx = 0;
+        isRepeating = false;
+        document.getElementById('username-input').value = "";
+        document.getElementById('app-content').style.display = 'none';
+        document.getElementById('auth-section').style.display = 'flex';
+    }
+
+    window.repeatDay = function() {
+        isRepeating = true;
+        generateDaily();
+        document.getElementById('day-done-section').style.display = 'none';
+        document.getElementById('learning-section').style.display = 'block';
+        renderUI();
+    };
+
+    function openFarm() {
+        document.getElementById('learning-section').style.display = 'none';
+        document.getElementById('quiz-section').style.display = 'none';
+        document.getElementById('day-done-section').style.display = 'none';
+        document.getElementById('farm-section').style.display = 'block';
+        
+        document.getElementById('view-title').innerText = "MIS POLLITOS";
+        document.getElementById('week-dots').style.display = 'none';
+        document.getElementById('streak-info').innerText = `Pollitos: ${state.totalChicks} 🐥 | Comida: ${state.foodItems} 🌾`;
+
+        const layer = document.getElementById('chicks-layer');
+        layer.innerHTML = '';
+        for(let i=0; i<state.totalChicks; i++) {
+            const chick = document.createElement('div');
+            chick.innerText = '🐥';
+            chick.className = 'chick-moving';
+            // Restringimos los pollitos a la zona del "pasto" (mitad inferior)
+            chick.style.left = (10 + Math.random() * 70) + '%';
+            chick.style.top = (50 + Math.random() * 30) + '%';
+            chick.style.animationDuration = (4 + Math.random() * 4) + 's';
+            chick.style.animationDelay = '-' + (Math.random() * 5) + 's';
+            layer.appendChild(chick);
+        }
+    }
+
+    function closeFarm() {
+        document.getElementById('farm-section').style.display = 'none';
+        document.getElementById('week-dots').style.display = 'flex';
+        checkProgress();
+    }
+</script>
+</body>
+</html>

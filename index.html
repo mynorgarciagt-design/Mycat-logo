@@ -5,11 +5,20 @@ import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged }
 import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, updateDoc, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 
 // --- FIREBASE INIT ---
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+// Usamos la configuración inyectada si estamos en la vista previa, o tus credenciales reales si se exporta a Vercel.
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+  apiKey: "AIzaSyDr8hXHlEJpnXd1667kMet7_WExa4bG74U",
+  authDomain: "mycatalogo-8ff18.firebaseapp.com",
+  projectId: "mycatalogo-8ff18",
+  storageBucket: "mycatalogo-8ff18.firebasestorage.app",
+  messagingSenderId: "754386656212",
+  appId: "1:754386656212:web:7a403200c60df71457d441",
+  measurementId: "G-81X2KH1EYQ"
+};
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'mi-peiperless-app';
+const appId = typeof __app_id !== 'undefined' ? __app_id : "mycatalogo-8ff18"; 
 
 // --- UTILIDADES PARA EXTRACCIÓN Y VARIANTES ---
 const parseSizes = (sizeStr) => {
@@ -152,10 +161,14 @@ export default function App() {
 
   useEffect(() => {
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Auth error:", error);
       }
     };
     initAuth();

@@ -1,903 +1,433 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Plus, Trash2, Package, LogIn, Store, Phone, FileText, Loader2, ChevronLeft, ChevronRight, Edit2, X, User, Mail, MapPin, Search, Share2, Copy, Check } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, updateDoc, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyCatálogo - Digital</title>
+    <!-- Librerías de React y Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
-// --- FIREBASE INIT ---
-// Usamos la configuración inyectada si estamos en la vista previa, o tus credenciales reales si se exporta a Vercel.
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-  apiKey: "AIzaSyDr8hXHlEJpnXd1667kMet7_WExa4bG74U",
-  authDomain: "mycatalogo-8ff18.firebaseapp.com",
-  projectId: "mycatalogo-8ff18",
-  storageBucket: "mycatalogo-8ff18.firebasestorage.app",
-  messagingSenderId: "754386656212",
-  appId: "1:754386656212:web:7a403200c60df71457d441",
-  measurementId: "G-81X2KH1EYQ"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : "mycatalogo-8ff18"; 
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-// --- UTILIDADES PARA EXTRACCIÓN Y VARIANTES ---
-const parseSizes = (sizeStr) => {
-  const sizes = new Set();
-  let str = sizeStr.toLowerCase().replace(/y/g, ',');
-  const parts = str.split(',');
-  parts.forEach(part => {
-    part = part.trim();
-    if (part.includes('al')) {
-      const range = part.split('al');
-      const start = parseInt(range[0].trim());
-      const end = parseInt(range[1].trim());
-      if (!isNaN(start) && !isNaN(end)) {
-        for (let i = start; i <= end; i++) sizes.add(i);
-      }
-    } else {
-      const val = parseInt(part);
-      if (!isNaN(val)) sizes.add(val);
-    }
-  });
-  return Array.from(sizes).sort((a,b) => a - b);
-};
+    <!-- Firebase SDKs (Carga Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, updateDoc, doc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-const getVariants = (description) => {
-  if (!description) return [];
-  const lines = description.split('\n').map(l => l.trim()).filter(l => l);
-  let variants = [];
-  let colors = [];
-  let globalSizes = [];
+        const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyDr8hXHlEJpnXd1667kMet7_WExa4bG74U",
+                authDomain: "mycatalogo-8ff18.firebaseapp.com",
+                projectId: "mycatalogo-8ff18",
+                storageBucket: "mycatalogo-8ff18.firebasestorage.app",
+                messagingSenderId: "754386656212",
+                appId: "1:754386656212:web:7a403200c60df71457d441",
+                measurementId: "G-81X2KH1EYQ"
+            };
 
-  lines.forEach(line => {
-    const lowerLine = line.toLowerCase();
-    if (lowerLine.includes('talla')) {
-      globalSizes = parseSizes(line.replace(/tallas?:/i, ''));
-    } else if (line.includes('/')) {
-      const parts = line.split('/');
-      const color = parts[0].trim();
-      const sizes = parseSizes(parts.slice(1).join('/'));
-      sizes.forEach(size => variants.push({ color, size }));
-    } else if (/^\d{2,3}\s*[a-zA-Z]/.test(line) || lowerLine.includes('negro') || lowerLine.includes('blanco') || lowerLine.includes('ivory') || lowerLine.includes('gris') || lowerLine.includes('coral') || lowerLine.includes('camel') || lowerLine.includes('beige')) {
-      colors.push(line);
-    }
-  });
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const finalAppId = (typeof __app_id !== 'undefined' && __app_id) ? __app_id : "mycatalogo-8ff18";
+        const initialToken = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) ? __initial_auth_token : null;
 
-  if (colors.length > 0 && globalSizes.length > 0) {
-    colors.forEach(color => {
-      globalSizes.forEach(size => {
-        if (!variants.some(v => v.color === color && v.size === size)) {
-          variants.push({ color, size });
-        }
-      });
-    });
-  }
-  return variants;
-};
+        // Exportar a global para React
+        window.fb = { 
+            auth, db, appId: finalAppId, collection, addDoc, onSnapshot, deleteDoc, 
+            updateDoc, doc, serverTimestamp, writeBatch, signInAnonymously, 
+            signInWithCustomToken, onAuthStateChanged, initialToken 
+        };
+    </script>
 
-const extractProductsLocally = (items, pageNumber) => {
-  const codes = [];
-  const prices = [];
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-  items.forEach(item => {
-    const txt = item.text.trim();
-    if (/^MM\d+/i.test(txt)) {
-      codes.push({ ...item, text: txt.toUpperCase() });
-    } else if (/Q\.?\s*(\d+)/i.test(txt)) {
-      const match = txt.match(/Q\.?\s*(\d+)/i);
-      prices.push({ ...item, price: parseFloat(match[1]) });
-    }
-  });
+        const Icons = {
+            Cart: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
+            Store: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>,
+            Share: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>,
+            Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" cy="21" x2="16.65" y2="16.65"/></svg>,
+            ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
+            ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+            Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+            X: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            Copy: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+            Loader: () => <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+        };
 
-  const products = [];
-  codes.forEach(codeItem => {
-    let bestPrice = 0;
-    let bestPriceY = codeItem.y + 20; 
-    let minDistance = Infinity;
+        // --- LÓGICA DE NEGOCIO ---
+        const parseSizes = (str) => {
+            const sizes = new Set();
+            let s = str.toLowerCase().replace(/y/g, ',');
+            s.split(',').forEach(p => {
+                p = p.trim();
+                if (p.includes('al')) {
+                    const r = p.split('al');
+                    const start = parseInt(r[0]); const end = parseInt(r[1]);
+                    if (!isNaN(start) && !isNaN(end)) for (let i = start; i <= end; i++) sizes.add(i);
+                } else {
+                    const v = parseInt(p); if (!isNaN(v)) sizes.add(v);
+                }
+            });
+            return Array.from(sizes).sort((a,b) => a - b);
+        };
 
-    prices.forEach(priceItem => {
-      const dist = Math.sqrt(Math.pow(codeItem.x - priceItem.x, 2) + Math.pow(codeItem.y - priceItem.y, 2));
-      if (dist < minDistance && dist < 30) { 
-        minDistance = dist;
-        bestPrice = priceItem.price;
-        bestPriceY = priceItem.y;
-      }
-    });
-
-    const descItems = items.filter(it => 
-      it.y > codeItem.y + 0.5 &&       
-      it.y < bestPriceY + 0.5 &&       
-      Math.abs(it.x - codeItem.x) < 30 && 
-      !/^MM\d+/i.test(it.text) &&      
-      !/Q\.?\s*(\d+)/i.test(it.text)   
-    );
-
-    descItems.sort((a, b) => a.y - b.y);
-    const description = descItems.map(d => d.text).join('\n');
-
-    products.push({
-      code: codeItem.text,
-      description: description || "",
-      price: bestPrice,
-      x: codeItem.x,
-      y: codeItem.y,
-      pageNumber: pageNumber
-    });
-  });
-
-  return products;
-};
-
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [view, setView] = useState('store'); 
-  const [products, setProducts] = useState([]);
-  const [pages, setPages] = useState([]);
-  const [hotspots, setHotspots] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  
-  // Estados para Búsqueda y Paginación
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Modales
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [adminPin, setAdminPin] = useState('');
-  const [pinError, setPinError] = useState(false);
-  
-  const [secretClicks, setSecretClicks] = useState(0);
-  const clickTimeout = useRef(null);
-
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => document.body.removeChild(script);
-  }, []);
-
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        console.error("Auth error:", error);
-      }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    const unsubProds = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), (s) => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
-    const unsubPages = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), (s) => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)));
-    const unsubHotspots = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), (s) => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
-    const unsubOrders = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (s) => setOrders(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))));
-    return () => { unsubProds(); unsubPages(); unsubHotspots(); unsubOrders(); };
-  }, [user]);
-
-  const addToCart = (productVariant) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === productVariant.id);
-      if (existing) return prev.map(item => item.id === productVariant.id ? { ...item, qty: item.qty + 1 } : item);
-      return [...prev, { ...productVariant, qty: 1 }];
-    });
-  };
-
-  const handleSecretClick = () => {
-    if (clickTimeout.current) clearTimeout(clickTimeout.current);
-    if (secretClicks + 1 >= 5) {
-      setShowLoginModal(true);
-      setSecretClicks(0);
-    } else {
-      setSecretClicks(prev => prev + 1);
-      clickTimeout.current = setTimeout(() => setSecretClicks(0), 1000);
-    }
-  };
-
-  const handleAdminLogin = (e) => {
-    e.preventDefault();
-    if (adminPin === '1234') {
-      setView('admin');
-      setShowLoginModal(false);
-      setAdminPin('');
-      setPinError(false);
-    } else {
-      setPinError(true);
-    }
-  };
-
-  const handleSearch = () => {
-    if(!searchQuery.trim()) return;
-    const foundProduct = products.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase()));
-    if (foundProduct && foundProduct.pageNumber) {
-      let targetIndex = pages.findIndex(pg => pg.pageNumber === foundProduct.pageNumber);
-      if (targetIndex !== -1) {
-        if (targetIndex % 2 !== 0) targetIndex--;
-        setCurrentIndex(Math.max(0, targetIndex));
-        setSearchQuery('');
-      }
-    } else {
-      setSearchQuery('No encontrado');
-      setTimeout(() => setSearchQuery(''), 2000);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 font-sans relative">
-      <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
-        <div 
-          className="flex items-center gap-2 text-xl font-extrabold text-[#007cc2] select-none cursor-pointer"
-          onClick={handleSecretClick}
-        >
-          <Store className="w-6 h-6" /> MyCatálogo
-        </div>
-        
-        {view === 'store' && (
-          <div className="flex-1 max-w-sm mx-4 hidden md:flex relative">
-            <input 
-              type="text" 
-              placeholder="Buscar código..." 
-              className={`w-full border rounded-full py-1.5 pl-4 pr-10 text-sm focus:outline-none focus:border-[#007cc2] ${searchQuery === 'No encontrado' ? 'bg-red-50 text-red-500 placeholder-red-400' : 'bg-gray-50'}`}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            />
-            <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#007cc2]">
-              <Search className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 md:gap-4">
-          {view === 'store' ? (
-            <>
-              <button onClick={() => setShowShareModal(true)} className="text-gray-500 hover:text-[#007cc2] transition p-2" title="Compartir Catálogo">
-                <Share2 className="w-5 h-5" />
-              </button>
-              <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition" title="Ver Carrito">
-                <ShoppingCart className="w-5 h-5" />
-                {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">{cart.reduce((s, i) => s + i.qty, 0)}</span>}
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setView('store')} className="text-sm font-bold text-gray-500 hover:text-[#007cc2] transition px-4 py-2 border rounded-full">
-              Salir de Admin
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Búsqueda en Móvil */}
-      {view === 'store' && (
-        <div className="md:hidden bg-white p-2 border-b flex relative">
-          <input 
-            type="text" 
-            placeholder="Buscar código..." 
-            className={`w-full border rounded-full py-1.5 pl-4 pr-10 text-sm focus:outline-none focus:border-[#007cc2] ${searchQuery === 'No encontrado' ? 'bg-red-50 text-red-500 placeholder-red-400' : 'bg-gray-50'}`}
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          />
-          <button onClick={handleSearch} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">
-            <Search className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      <main className="p-2 md:p-4 max-w-6xl mx-auto">
-        {view === 'store' ? (
-          <FlipbookView pages={pages} products={products} hotspots={hotspots} onAdd={addToCart} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} />
-        ) : (
-          <AdminView products={products} orders={orders} pages={pages} hotspots={hotspots} />
-        )}
-      </main>
-
-      {isCartOpen && <CartDrawer cart={cart} setCart={setCart} total={cart.reduce((s, i) => s + (i.price * i.qty), 0)} onClose={() => setIsCartOpen(false)} />}
-
-      {/* Modal Compartir */}
-      {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
-
-      {/* Modal Login Admin */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleAdminLogin} className="bg-white rounded-xl p-6 w-full max-w-xs shadow-2xl animate-in fade-in zoom-in-95">
-            <h3 className="font-bold text-lg mb-2 text-center text-gray-800 flex flex-col items-center gap-2">
-              <LogIn className="w-8 h-8 text-[#007cc2]" /> Acceso Administrador
-            </h3>
-            <p className="text-xs text-gray-500 text-center mb-4">Ingresa la contraseña para entrar.</p>
-            <input 
-              type="password" 
-              autoFocus
-              value={adminPin} 
-              onChange={e => setAdminPin(e.target.value)} 
-              className={`w-full border p-2.5 rounded mb-2 outline-none focus:border-[#007cc2] ${pinError ? 'border-red-400 bg-red-50' : ''}`} 
-              placeholder="Contraseña..." 
-            />
-            {pinError && <p className="text-red-500 text-xs font-bold mb-3 text-center">Contraseña incorrecta.</p>}
-            <div className="flex gap-2 mt-4">
-              <button type="button" onClick={() => { setShowLoginModal(false); setPinError(false); setAdminPin(''); }} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded font-bold hover:bg-gray-200">Cancelar</button>
-              <button type="submit" className="flex-1 bg-[#007cc2] hover:bg-blue-700 text-white py-2 rounded font-bold">Entrar</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-function ShareModal({ onClose }) {
-  const [copied, setCopied] = useState(false);
-  const shareLink = "https://misitio.com/catalogoXX"; // LINK DEFINIDO POR DEFECTO
-
-  const copyToClipboard = () => {
-    const el = document.createElement('textarea');
-    el.value = shareLink;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center relative animate-in fade-in zoom-in-95" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-gray-800"><X size={20}/></button>
-        <div className="bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Share2 className="w-6 h-6 text-[#007cc2]" />
-        </div>
-        <h3 className="font-extrabold text-xl mb-1 text-gray-800">Compartir Catálogo</h3>
-        <p className="text-sm text-gray-500 mb-6">Copia el siguiente enlace para compartirlo con tus clientes en WhatsApp o Redes Sociales.</p>
-        
-        <div className="flex gap-2 mb-2">
-          <input type="text" readOnly value={shareLink} className="w-full border bg-gray-50 px-3 py-2.5 rounded-lg text-sm outline-none font-medium text-gray-600" />
-          <button onClick={copyToClipboard} className={`px-4 py-2.5 rounded-lg font-bold flex items-center gap-1 transition text-white shadow-sm ${copied ? 'bg-green-500' : 'bg-[#007cc2] hover:bg-blue-700'}`}>
-            {copied ? <><Check size={16}/> Copiado</> : <><Copy size={16}/> Copiar</>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FlipbookView({ pages, products, hotspots, onAdd, currentIndex, setCurrentIndex }) {
-  const [activeHotspotId, setActiveHotspotId] = useState(null);
-  
-  // Touch Swiping logic
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
-
-  // ESTADO VACÍO (CUANDO NO HAY PDF)
-  if (pages.length === 0) return (
-    <div className="flex flex-col items-center justify-center h-[70vh] text-center px-4">
-      <div className="bg-blue-50 p-6 rounded-full mb-6">
-        <Store className="w-16 h-16 text-[#007cc2]" />
-      </div>
-      <h2 className="text-3xl font-extrabold text-gray-800 mb-3">¡Catálogo en preparación!</h2>
-      <p className="text-lg text-gray-500 font-medium">Próximamente muchos estilos para toda la familia.</p>
-    </div>
-  );
-
-  const left = pages[currentIndex];
-  const right = currentIndex + 1 < pages.length ? pages[currentIndex + 1] : null;
-
-  const handleNext = () => setCurrentIndex(Math.min(pages.length - 1, currentIndex + 2));
-  const handlePrev = () => setCurrentIndex(Math.max(0, currentIndex - 2));
-
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (distance > 50 && currentIndex + 2 < pages.length) handleNext();
-    if (distance < -50 && currentIndex > 0) handlePrev();
-  };
-
-  const handleAddClick = (p, variant = null) => {
-    const item = {
-      id: variant ? `${p.id}_${variant.color}_${variant.size}` : p.id,
-      productId: p.id,
-      code: p.code,
-      color: variant?.color || '',
-      size: variant?.size || '',
-      price: p.price,
-    };
-    onAdd(item);
-    setActiveHotspotId(null);
-  };
-
-  const renderHotspots = (page) => {
-    if (!page || !hotspots) return null;
-    return hotspots.filter(h => h.pageId === page.id).map(h => {
-      const p = products.find(prod => prod.id === h.productId);
-      if (!p) return null;
-      
-      const isOpen = activeHotspotId === h.id;
-      const variants = getVariants(p.description);
-
-      const groupedVariants = variants.reduce((acc, v) => {
-        if (!acc[v.color]) acc[v.color] = [];
-        acc[v.color].push(v.size);
-        return acc;
-      }, {});
-
-      return (
-        <div 
-          key={h.id} 
-          className="absolute z-20 transform -translate-y-1/2" 
-          style={{ left: `calc(${h.x}% - 30px)`, top: `${h.y}%` }} 
-        >
-          <div 
-            onClick={(e) => { e.stopPropagation(); setActiveHotspotId(isOpen ? null : h.id); }}
-            className={`bg-[#007cc2] text-white rounded-full p-2 shadow-lg border-2 border-white cursor-pointer transition-transform ${isOpen ? 'scale-110' : 'hover:scale-110 animate-pulse hover:animate-none'}`}
-          >
-            <ShoppingCart className="w-4 h-4" />
-          </div>
-
-          {isOpen && (
-            <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded shadow-2xl border border-gray-100 min-w-[150px] max-w-[200px] overflow-hidden flex flex-col z-50 animate-in fade-in slide-in-from-top-2">
-              <div className="bg-gray-50 px-2 py-1.5 border-b text-center">
-                <p className="text-[11px] font-extrabold text-gray-800 leading-none mb-1">{p.code}</p>
-                <p className="text-xs font-bold text-blue-600 leading-none">Q{p.price?.toFixed(2)}</p>
-              </div>
-              
-              <div className="flex flex-col p-1">
-                {Object.keys(groupedVariants).length > 0 ? (
-                  Object.entries(groupedVariants).map(([color, sizes], idx) => (
-                    <div key={idx} className="px-2 py-1.5 border-b border-gray-100 last:border-b-0">
-                      <p className="text-[10px] font-bold text-gray-700 mb-1">{color}:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {sizes.map(s => (
-                          <button 
-                            key={s}
-                            onClick={(e) => { e.stopPropagation(); handleAddClick(p, { color, size: s }); }}
-                            className="bg-gray-100 hover:bg-[#007cc2] hover:text-white text-gray-800 px-1.5 py-0.5 rounded text-[10px] font-semibold transition"
-                          >
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleAddClick(p); }}
-                    className="w-full text-center px-2 py-2 text-[10px] bg-white hover:bg-blue-50 font-bold text-[#007cc2] transition"
-                  >
-                    AGREGAR AL CARRITO
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    });
-  };
-
-  return (
-    <div 
-      className="flex items-center justify-center gap-1 md:gap-4 h-[75vh] md:h-[80vh]"
-      onClick={() => setActiveHotspotId(null)}
-    >
-      <button onClick={handlePrev} disabled={currentIndex === 0} className="p-1 md:p-3 disabled:opacity-20 hover:text-[#007cc2] transition text-gray-400 shrink-0">
-        <ChevronLeft className="w-8 h-8 md:w-14 md:h-14" />
-      </button>
-      
-      <div 
-        className="flex bg-white shadow-2xl h-full w-full max-w-5xl rounded-lg overflow-hidden relative select-none"
-        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-      >
-        <div className="w-1/2 h-full border-r relative bg-gray-50 flex items-center justify-center">
-          <img src={left?.imageUrl} className="w-full h-full object-contain pointer-events-none" alt="Left Page" />
-          {renderHotspots(left)}
-        </div>
-        <div className="w-1/2 h-full relative bg-gray-50 flex items-center justify-center">
-          {right && <>
-            <img src={right.imageUrl} className="w-full h-full object-contain pointer-events-none" alt="Right Page" />
-            {renderHotspots(right)}
-          </>}
-        </div>
-      </div>
-
-      <button onClick={handleNext} disabled={currentIndex + 2 >= pages.length} className="p-1 md:p-3 disabled:opacity-20 hover:text-[#007cc2] transition text-gray-400 shrink-0">
-        <ChevronRight className="w-8 h-8 md:w-14 md:h-14" />
-      </button>
-    </div>
-  );
-}
-
-function AdminView({ products, orders, pages, hotspots }) {
-  const [tab, setTab] = useState('pdf');
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState('');
-  const [editingPage, setEditingPage] = useState(null);
-  const [editingProduct, setEditingProduct] = useState(null);
-
-  const processPDF = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setLoading(true);
-    try {
-      const pdfjs = window['pdfjs-dist/build/pdf'];
-      pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-      const pdf = await pdfjs.getDocument(await file.arrayBuffer()).promise;
-      let lastPageCount = pages.length;
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        setProgress(`Procesando Página ${i}/${pdf.numPages}`);
-        try {
-          const page = await pdf.getPage(i);
-          const unscaledViewport = page.getViewport({ scale: 1.0 });
-          const viewport = page.getViewport({ scale: 0.8 }); 
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width; canvas.height = viewport.height;
-          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-          
-          const pageNum = lastPageCount + i;
-          const pageRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), {
-            imageUrl: canvas.toDataURL('image/jpeg', 0.5),
-            pageNumber: pageNum
-          });
-
-          const textContent = await page.getTextContent();
-          const items = textContent.items.map(it => ({
-            text: it.str.trim(),
-            x: (it.transform[4] / unscaledViewport.width) * 100,
-            y: (1 - (it.transform[5] / unscaledViewport.height)) * 100
-          })).filter(it => it.text.length > 0);
-
-          if (items.length > 0) {
-            const extractedProducts = extractProductsLocally(items, pageNum);
-            
-            for (const ep of extractedProducts) {
-              const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), {
-                name: ep.code,
-                code: ep.code, 
-                price: ep.price, 
-                description: ep.description,
-                pageNumber: ep.pageNumber
-              });
-              await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), {
-                pageId: pageRef.id, productId: pRef.id, x: ep.x, y: ep.y
-              });
+        const getVariants = (desc) => {
+            if (!desc) return [];
+            const lines = desc.split('\n').map(l => l.trim()).filter(l => l);
+            let variants = []; let colors = []; let globalSizes = [];
+            lines.forEach(l => {
+                const low = l.toLowerCase();
+                if (low.includes('talla')) globalSizes = parseSizes(l.replace(/tallas?:/i, ''));
+                else if (l.includes('/')) {
+                    const pts = l.split('/'); const color = pts[0].trim();
+                    const szs = parseSizes(pts.slice(1).join('/'));
+                    szs.forEach(s => variants.push({ color, size: s }));
+                } else if (/^\d{2,3}\s*[a-zA-Z]/.test(l) || low.includes('negro') || low.includes('blanco') || low.includes('azul') || low.includes('beige')) {
+                    colors.push(l);
+                }
+            });
+            if (colors.length > 0 && globalSizes.length > 0) {
+                colors.forEach(c => globalSizes.forEach(s => variants.push({ color: c, size: s })));
             }
-          }
-        } catch (pageError) {
-          console.error("Error aislando página", i, pageError);
+            return variants;
+        };
+
+        const extractProducts = (items, pageNum) => {
+            const codes = []; const prices = [];
+            items.forEach(it => {
+                const t = it.text.trim();
+                if (/^MM\d+/i.test(t)) codes.push({ ...it, text: t.toUpperCase() });
+                else if (/Q\.?\s*(\d+)/i.test(t)) {
+                    const m = t.match(/Q\.?\s*(\d+)/i);
+                    prices.push({ ...it, price: parseFloat(m[1]) });
+                }
+            });
+            return codes.map(c => {
+                let bestP = 0; let bestPY = c.y + 20; let minDist = Infinity;
+                prices.forEach(p => {
+                    const d = Math.sqrt(Math.pow(c.x-p.x,2)+Math.pow(c.y-p.y,2));
+                    if (d < minDist && d < 30) { minDist = d; bestP = p.price; bestPY = p.y; }
+                });
+                const descs = items.filter(it => it.y > c.y + 0.5 && it.y < bestPY + 0.5 && Math.abs(it.x - c.x) < 30 && !/^MM\d+/i.test(it.text) && !/Q\.?\s*(\d+)/i.test(it.text));
+                descs.sort((a,b) => a.y - b.y);
+                return { code: c.text, description: descs.map(d => d.text).join('\n'), price: bestP, x: c.x, y: c.y, pageNumber: pageNum };
+            });
+        };
+
+        // --- COMPONENTE PRINCIPAL ---
+        function App() {
+            const [view, setView] = useState('store');
+            const [products, setProducts] = useState([]);
+            const [pages, setPages] = useState([]);
+            const [hotspots, setHotspots] = useState([]);
+            const [cart, setCart] = useState([]);
+            const [isCartOpen, setIsCartOpen] = useState(false);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [showShareModal, setShowShareModal] = useState(false);
+            const [showLoginModal, setShowLoginModal] = useState(false);
+            const [pin, setPin] = useState('');
+            const [pinError, setPinError] = useState(false);
+            const [secretClicks, setSecretClicks] = useState(0);
+            const [ready, setReady] = useState(false);
+            const clickTimeout = useRef(null);
+
+            useEffect(() => {
+                const init = async () => {
+                    if (!window.fb) return setTimeout(init, 300);
+                    const { auth, db, appId, onAuthStateChanged, onSnapshot, collection, signInAnonymously, signInWithCustomToken, initialToken } = window.fb;
+                    try {
+                        if (initialToken) await signInWithCustomToken(auth, initialToken);
+                        else await signInAnonymously(auth);
+                        onAuthStateChanged(auth, (u) => { if (u) setReady(true); });
+                    } catch (e) { console.error(e); }
+                };
+                init();
+            }, []);
+
+            useEffect(() => {
+                if (!ready) return;
+                const { db, appId, onSnapshot, collection } = window.fb;
+                const unsubP = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                const unsubPg = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)));
+                const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                return () => { unsubP(); unsubPg(); unsubH(); };
+            }, [ready]);
+
+            const handleSecretClick = () => {
+                if (clickTimeout.current) clearTimeout(clickTimeout.current);
+                if (secretClicks + 1 >= 5) { setShowLoginModal(true); setSecretClicks(0); }
+                else { setSecretClicks(prev => prev + 1); clickTimeout.current = setTimeout(() => setSecretClicks(0), 1000); }
+            };
+
+            const handleSearch = () => {
+                const found = products.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase()));
+                if (found && found.pageNumber) {
+                    let idx = pages.findIndex(pg => pg.pageNumber === found.pageNumber);
+                    if (idx !== -1) { if (idx % 2 !== 0) idx--; setCurrentIndex(Math.max(0, idx)); setSearchQuery(''); }
+                } else { setSearchQuery('No encontrado'); setTimeout(() => setSearchQuery(''), 1500); }
+            };
+
+            if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
+
+            return (
+                <div className="min-h-screen relative overflow-x-hidden">
+                    <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
+                        <div className="flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
+                            <Icons.Store /> MyCatálogo
+                        </div>
+                        <div className="flex-1 max-w-xs mx-4 hidden md:flex relative">
+                            <input type="text" placeholder="Buscar código..." className="w-full border rounded-full py-1.5 px-4 text-sm focus:outline-none" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+                            <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><Icons.Search /></button>
+                        </div>
+                        <div className="flex gap-4">
+                            <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#007cc2]"><Icons.Share /></button>
+                            <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full">
+                                <Icons.Cart />
+                                {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}
+                            </button>
+                        </div>
+                    </header>
+
+                    <main className="p-4 max-w-6xl mx-auto">
+                        {view === 'store' ? (
+                            <FlipbookView pages={pages} products={products} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} onAdd={(v) => setCart(prev => {
+                                const ex = prev.find(x => x.id === v.id);
+                                if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x);
+                                return [...prev, {...v, qty: 1}];
+                            })} />
+                        ) : (
+                            <AdminView pages={pages} products={products} setView={setView} />
+                        )}
+                    </main>
+
+                    {isCartOpen && <CartDrawer cart={cart} setCart={setCart} onClose={() => setIsCartOpen(false)} />}
+                    {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
+                    {showLoginModal && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white p-6 rounded-3xl w-full max-w-xs text-center shadow-2xl">
+                                <h3 className="font-bold text-lg mb-4">Acceso Admin</h3>
+                                <input type="password" autoFocus className={`w-full border-2 p-3 rounded-2xl text-center text-xl mb-4 ${pinError ? 'border-red-500':'focus:border-[#007cc2]'}`} value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
+                                <div className="flex gap-2">
+                                    <button onClick={() => {setShowLoginModal(false); setPinError(false); setPin('');}} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cerrar</button>
+                                    <button onClick={() => {if(pin==='1234'){setView('admin'); setShowLoginModal(false); setPin('');}else setPinError(true);}} className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold">Entrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
         }
-      }
-    } catch (err) { 
-      console.error(err);
-      alert('Error al procesar el archivo PDF.'); 
-    }
-    setLoading(false); setProgress('');
-  };
 
-  const clearAllPages = async () => {
-    if(!window.confirm("¿Seguro que deseas borrar todo el catálogo y los productos?")) return;
-    try {
-      const batch = writeBatch(db);
-      pages.forEach((p) => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id)));
-      hotspots.forEach((h) => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id)));
-      products.forEach((p) => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)));
-      await batch.commit();
-    } catch(err) { console.error(err); }
-  };
+        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd }) {
+            const [activeH, setActiveH] = useState(null);
+            if (pages.length === 0) return <div className="h-[60vh] flex flex-col items-center justify-center text-center opacity-50"><Icons.Store /><h2 className="text-2xl font-bold mt-4">¡Catálogo en preparación!</h2><p>Próximamente muchos estilos para toda la familia.</p></div>;
+            
+            const left = pages[currentIndex]; const right = currentIndex + 1 < pages.length ? pages[currentIndex + 1] : null;
 
-  const updateProduct = async (e) => {
-    e.preventDefault();
-    try {
-      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), {
-        code: editingProduct.code,
-        price: parseFloat(editingProduct.price),
-        description: editingProduct.description
-      });
-      setEditingProduct(null);
-    } catch (err) { console.error(err); }
-  };
+            const renderH = (pg) => pg && hotspots.filter(h => h.pageId === pg.id).map(h => {
+                const p = products.find(prod => prod.id === h.productId); if (!p) return null;
+                const vars = getVariants(p.description);
+                const grouped = vars.reduce((acc, v) => { if(!acc[v.color]) acc[v.color]=[]; acc[v.color].push(v.size); return acc; }, {});
+                return (
+                    <div key={h.id} className="absolute z-20" style={{ left: `calc(${h.x}% - 30px)`, top: `${h.y}%` }}>
+                        <div onClick={(e) => {e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id);}} className="bg-[#007cc2] text-white rounded-full p-2 shadow-lg border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
+                        {activeH === h.id && (
+                            <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border min-w-[160px] z-50 p-2 animate-in fade-in" onClick={e => e.stopPropagation()}>
+                                <p className="text-[11px] font-bold text-gray-800 leading-none mb-1">{p.code}</p>
+                                <p className="text-xs font-bold text-blue-600 mb-2">Q{p.price?.toFixed(2)}</p>
+                                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                                    {Object.entries(grouped).length > 0 ? Object.entries(grouped).map(([c, szs]) => (
+                                        <div key={c} className="text-left border-t pt-1">
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">{c}:</p>
+                                            <div className="flex flex-wrap gap-1">
+                                                {szs.map(s => <button key={s} onClick={() => {onAdd({id:`${p.id}_${c}_${s}`, code:p.code, color:c, size:s, price:p.price}); setActiveH(null);}} className="bg-blue-50 text-[#007cc2] text-[10px] font-extrabold px-2 py-1 rounded hover:bg-[#007cc2] hover:text-white">{s}</button>)}
+                                            </div>
+                                        </div>
+                                    )) : <button onClick={() => {onAdd({id:p.id, code:p.code, color:'', size:'', price:p.price}); setActiveH(null);}} className="w-full bg-[#007cc2] text-white text-[10px] font-bold py-2 rounded">AGREGAR</button>}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            });
 
-  const groupedProducts = products.reduce((acc, p) => {
-    const pageKey = p.pageNumber || 'Sin Página';
-    if (!acc[pageKey]) acc[pageKey] = [];
-    acc[pageKey].push(p);
-    return acc;
-  }, {});
-
-  if (editingPage) return (
-    <div className="bg-white p-6 rounded-xl shadow-sm">
-      <button onClick={() => setEditingPage(null)} className="mb-4 text-blue-600 font-bold underline">Volver a páginas</button>
-      <div className="relative inline-block border bg-gray-50">
-        <img src={editingPage.imageUrl} className="max-h-[70vh]" onClick={async (e) => {
-          const rect = e.target.getBoundingClientRect();
-          const x = ((e.clientX - rect.left) / rect.width) * 100;
-          const y = ((e.clientY - rect.top) / rect.height) * 100;
-          const pid = prompt("ID del producto:");
-          if(pid) await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: editingPage.id, productId: pid, x, y });
-        }} alt="Página" />
-        {hotspots.filter(h => h.pageId === editingPage.id).map(h => (
-          <div key={h.id} className="absolute w-4 h-4 bg-[#007cc2] rounded-full border-2 border-white transform -translate-x-1/2 -translate-y-1/2" style={{ left: `${h.x}%`, top: `${h.y}%` }} />
-        ))}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-lg">
-      <div className="flex gap-4 border-b mb-6 overflow-x-auto pb-2">
-        {['pdf', 'productos', 'pedidos'].map(t => <button key={t} onClick={() => setTab(t)} className={`capitalize whitespace-nowrap ${tab === t ? 'border-b-2 border-[#007cc2] text-[#007cc2] font-bold' : 'text-gray-400 font-medium'}`}>{t === 'pdf' ? 'Catálogo PDF' : t}</button>)}
-      </div>
-
-      {tab === 'pdf' && (
-        <div className="bg-[#2D2D2D] p-6 rounded-xl shadow-inner min-h-[500px]">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-gray-600 pb-4">
-            <h3 className="text-white font-bold text-lg">Organizador de Páginas</h3>
-            <div className="flex gap-3">
-              {pages.length > 0 && <button onClick={clearAllPages} className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg font-bold hover:bg-red-500 hover:text-white transition">Borrar Todo</button>}
-              <input type="file" accept=".pdf" onChange={processPDF} className="hidden" id="pdf-up" />
-              <label htmlFor="pdf-up" className="bg-[#007cc2] text-white px-5 py-2 rounded-lg cursor-pointer font-bold shadow hover:bg-blue-600 transition flex items-center gap-2">
-                {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Plus className="w-4 h-4"/>} 
-                {loading ? progress : 'Subir Catálogo'}
-              </label>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            {pages.map(p => (
-              <div key={p.id} className="flex flex-col items-center group relative">
-                <div className="relative rounded-lg overflow-hidden border-2 border-transparent hover:border-[#007cc2] transition-colors cursor-pointer bg-white w-full aspect-[1/1.4] shadow-md">
-                  <img src={p.imageUrl} className="w-full h-full object-cover" alt="página" />
-                  
-                  {/* Overlay con botones al hacer hover */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center gap-3">
-                    <button onClick={() => setEditingPage(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow hover:scale-110 transition" title="Editar Botones">
-                      <Edit2 size={16}/>
-                    </button>
-                    <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white p-2 rounded-full shadow hover:scale-110 transition" title="Eliminar Página">
-                      <Trash2 size={16}/>
-                    </button>
-                  </div>
-                </div>
-                <span className="text-gray-400 text-xs font-bold mt-2 bg-gray-800 px-2 py-0.5 rounded-full">{p.pageNumber}</span>
-              </div>
-            ))}
-            {pages.length === 0 && !loading && (
-              <div className="col-span-full text-center py-20 text-gray-500">
-                <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                No hay páginas cargadas.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {tab === 'productos' && (
-        <div>
-          {editingProduct ? (
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md mb-6 max-w-lg mx-auto">
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-[#007cc2]"><Edit2 size={20}/> Editar Producto Extraído</h3>
-              <form onSubmit={updateProduct} className="flex flex-col gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Código</label>
-                  <input type="text" className="w-full border p-2.5 rounded mt-1 bg-gray-50 font-bold" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Descripción (Colores y Tallas)</label>
-                  <textarea className="w-full border p-2.5 rounded mt-1 bg-gray-50 h-28 text-sm" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Precio (Q)</label>
-                  <input type="number" step="0.01" className="w-full border p-2.5 rounded mt-1 bg-gray-50 font-bold text-blue-600" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required />
-                </div>
-                <div className="flex gap-3 mt-2">
-                  <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold flex-1 hover:bg-gray-200 transition">Cancelar</button>
-                  <button type="submit" className="bg-[#007cc2] text-white px-4 py-2.5 rounded-lg font-bold flex-1 hover:bg-blue-700 transition shadow-md">Guardar Cambios</button>
-                </div>
-              </form>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.keys(groupedProducts).sort((a,b)=>a-b).map(pageNum => (
-                <div key={pageNum} className="bg-white border rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-[#f0f4f8] px-5 py-3 font-bold text-gray-700 border-b flex justify-between items-center">
-                    <span>Página {pageNum}</span>
-                    <span className="text-xs bg-white px-2 py-1 rounded text-gray-500 border">{groupedProducts[pageNum].length} productos</span>
-                  </div>
-                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {groupedProducts[pageNum].map(p => (
-                      <div key={p.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 relative group hover:shadow-md transition">
-                        <div className="flex justify-between items-start mb-2">
-                          <p className="font-extrabold text-gray-800 text-lg">{p.code}</p>
-                          <p className="text-sm font-bold text-white bg-blue-500 px-2 py-0.5 rounded">Q{p.price}</p>
+            return (
+                <div className="flex flex-col items-center gap-6" onClick={() => setActiveH(null)}>
+                    <div className="flex items-center justify-center gap-2 md:gap-4 w-full h-[70vh] md:h-[75vh]">
+                        <button onClick={() => setCurrentIndex(Math.max(0, currentIndex-2))} disabled={currentIndex===0} className="p-2 disabled:opacity-10 text-gray-400"><Icons.ChevronLeft /></button>
+                        <div className="flex bg-white shadow-2xl h-full w-full max-w-5xl rounded-2xl overflow-hidden border border-gray-200">
+                            <div className="w-1/2 h-full border-r relative flex items-center justify-center bg-gray-50 overflow-hidden">
+                                <img src={left.imageUrl} className="max-h-full object-contain pointer-events-none" />{renderH(left)}
+                            </div>
+                            <div className="w-1/2 h-full relative flex items-center justify-center bg-gray-50 overflow-hidden">
+                                {right && <><img src={right.imageUrl} className="max-h-full object-contain pointer-events-none" />{renderH(right)}</>}
+                            </div>
                         </div>
-                        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-2">{p.description}</p>
-                        
-                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-lg p-1 shadow-sm border">
-                          <button onClick={() => setEditingProduct(p)} className="text-[#007cc2] p-1.5 rounded hover:bg-blue-50"><Edit2 size={14}/></button>
-                          <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id))} className="text-red-500 p-1.5 rounded hover:bg-red-50"><Trash2 size={14}/></button>
+                        <button onClick={() => setCurrentIndex(Math.min(pages.length-1, currentIndex+2))} disabled={currentIndex+2 >= pages.length} className="p-2 disabled:opacity-10 text-gray-400"><Icons.ChevronRight /></button>
+                    </div>
+                    <div className="text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">Vista: {currentIndex+1}-{right?currentIndex+2:currentIndex+1} de {pages.length}</div>
+                </div>
+            );
+        }
+
+        function AdminView({ pages, products, setView }) {
+            const [loading, setLoading] = useState(false);
+            const { db, appId, collection, addDoc, deleteDoc, doc, writeBatch } = window.fb;
+
+            const upload = async (e) => {
+                const f = e.target.files[0]; if (!f) return; setLoading(true);
+                try {
+                    const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const pg = await pdf.getPage(i); const vp = pg.getViewport({ scale: 0.8 });
+                        const canvas = document.createElement('canvas'); canvas.width = vp.width; canvas.height = vp.height;
+                        await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+                        const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: canvas.toDataURL('image/jpeg', 0.6), pageNumber: pages.length + i });
+                        const text = await pg.getTextContent();
+                        const items = text.items.map(it => ({ text: it.str, x: (it.transform[4]/(vp.width/0.8))*100, y: (1-(it.transform[5]/(vp.height/0.8)))*100 })).filter(it => it.text.trim());
+                        const ex = extractProducts(items, pages.length + i);
+                        for (const p of ex) {
+                            const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { ...p });
+                            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y });
+                        }
+                    }
+                } catch (err) { console.error(err); alert("Error al subir"); }
+                setLoading(false);
+            };
+
+            return (
+                <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="font-extrabold text-2xl text-gray-800">Panel de Control</h2>
+                        <button onClick={() => setView('store')} className="text-sm font-bold text-[#007cc2] hover:underline">Volver a Tienda</button>
+                    </div>
+                    <div className="bg-blue-50 border-2 border-dashed border-blue-200 p-10 rounded-2xl text-center mb-8">
+                        <input type="file" id="pdf" className="hidden" onChange={upload} />
+                        <label htmlFor="pdf" className="bg-[#007cc2] text-white px-8 py-3 rounded-full font-bold cursor-pointer hover:bg-blue-700 shadow-lg inline-flex items-center gap-2 transition-all active:scale-95">
+                            {loading ? <Icons.Loader /> : <Icons.Plus />} {loading ? 'Procesando Catálogo...' : 'Cargar Nuevo Catálogo PDF'}
+                        </label>
+                        {pages.length > 0 && <button onClick={async () => {if(confirm("¿Borrar todo?")){const b=writeBatch(db);pages.forEach(p=>b.delete(doc(db,'artifacts',appId,'public','data','pages',p.id))); await b.commit();}}} className="block mx-auto mt-4 text-red-500 text-xs font-bold hover:underline">Limpiar Catálogo Actual</button>}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                        {pages.map(p => (
+                            <div key={p.id} className="relative group bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
+                                <img src={p.imageUrl} className="rounded-lg mb-1" />
+                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 shadow-lg transition-opacity"><Icons.Trash /></button>
+                                <p className="text-[10px] text-center font-bold text-gray-400">Página {p.pageNumber}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function CartDrawer({ cart, setCart, onClose }) {
+            const [step, setStep] = useState('cart');
+            const [form, setForm] = useState({ name: '', phone: '', address: '' });
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+
+            const send = async () => {
+                const { addDoc, collection, db, appId, serverTimestamp } = window.fb;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), { ...form, items: cart, total, createdAt: serverTimestamp() });
+                let msg = `*NUEVO PEDIDO*\n\n*Cliente:* ${form.name}\n*Tel:* ${form.phone}\n*Dirección:* ${form.address}\n\n*Productos:*\n`;
+                cart.forEach(i => msg += `- ${i.qty}x ${i.code} [${i.color} / Talla ${i.size}] (Q${i.price})\n`);
+                msg += `\n*TOTAL: Q${total.toFixed(2)}*`;
+                window.open(`https://wa.me/50237733402?text=${encodeURIComponent(msg)}`);
+                setCart([]); onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/60 z-50 flex justify-end">
+                    <div className="bg-white w-full max-w-sm h-full p-6 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+                        <div className="flex justify-between items-center mb-6 border-b pb-4">
+                            <h2 className="font-extrabold text-xl flex items-center gap-2 text-gray-800"><Icons.Cart /> Tu Pedido</h2>
+                            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full"><Icons.X /></button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                        {step === 'cart' ? (
+                            <>
+                                <div className="flex-grow overflow-auto space-y-4 pr-2 custom-scrollbar">
+                                    {cart.map(i => (
+                                        <div key={i.id} className="flex justify-between items-center border-b border-gray-50 pb-3">
+                                            <div className="flex-1">
+                                                <p className="font-bold text-sm text-gray-800">{i.code}</p>
+                                                <p className="text-[10px] text-gray-400 font-medium">{i.color} {i.size && `/ Talla ${i.size}`}</p>
+                                                <p className="font-bold text-[#007cc2] mt-1 text-sm">Q{i.price?.toFixed(2)}</p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex border rounded-lg overflow-hidden bg-gray-50 items-center">
+                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:Math.max(1,x.qty-1)}:x))} className="px-2 py-1 font-bold text-gray-500">-</button>
+                                                    <span className="px-2 text-xs font-bold text-gray-700">{i.qty}</span>
+                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:x.qty+1}:x))} className="px-2 py-1 font-bold text-gray-500">+</button>
+                                                </div>
+                                                <button onClick={() => setCart(cart.filter(x=>x.id!==i.id))} className="text-red-300 hover:text-red-500"><Icons.Trash /></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {cart.length===0 && <div className="h-full flex flex-col items-center justify-center opacity-20"><Icons.Cart /><p className="font-bold mt-2">Carrito vacío</p></div>}
+                                </div>
+                                {cart.length > 0 && (
+                                    <div className="pt-4 border-t mt-4">
+                                        <div className="flex justify-between items-end mb-4"><span className="text-gray-400 font-bold">Total:</span><span className="text-2xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span></div>
+                                        <button onClick={()=>setStep('form')} className="w-full bg-[#007cc2] text-white p-4 rounded-2xl font-extrabold hover:bg-blue-700 shadow-lg transition-all active:scale-95">Enviar a mi asesor(a)</button>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <form onSubmit={e=>{e.preventDefault(); send();}} className="space-y-4">
+                                <h3 className="font-extrabold text-center text-gray-700 mb-6">Datos de Entrega</h3>
+                                <input required placeholder="Nombre Completo" className="w-full border p-3.5 rounded-xl focus:border-[#007cc2] outline-none bg-gray-50" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
+                                <input required placeholder="Teléfono" className="w-full border p-3.5 rounded-xl focus:border-[#007cc2] outline-none bg-gray-50" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} />
+                                <textarea required placeholder="Dirección Exacta" className="w-full border p-3.5 rounded-xl focus:border-[#007cc2] outline-none bg-gray-50 h-32" value={form.address} onChange={e=>setForm({...form,address:e.target.value})} />
+                                <button type="submit" className="w-full bg-green-600 text-white p-4 rounded-2xl font-extrabold hover:bg-green-700 shadow-xl flex items-center justify-center gap-2 mt-6">Enviar Pedido WhatsApp</button>
+                                <button type="button" onClick={()=>setStep('cart')} className="w-full text-gray-400 font-bold py-2 hover:text-gray-600">Volver al carrito</button>
+                            </form>
+                        )}
+                    </div>
                 </div>
-              ))}
-              {products.length === 0 && <p className="text-gray-500 text-center py-10">Sube un PDF para extraer automáticamente los productos.</p>}
-            </div>
-          )}
-        </div>
-      )}
+            );
+        }
 
-      {tab === 'pedidos' && (
-        <div className="space-y-4">
-          {orders.map(o => (
-            <div key={o.id} className="p-5 border rounded-xl bg-green-50/50 shadow-sm">
-              <p className="font-bold text-lg">{o.customerName}</p>
-              <div className="text-sm text-gray-600 mb-3 space-y-1">
-                <p>📞 {o.customerPhone}</p>
-                <p>✉️ {o.customerEmail}</p>
-                <p>📍 {o.customerAddress}</p>
-              </div>
-              <div className="border-t pt-3 mt-3 border-green-100">
-                <p className="font-bold text-xs text-green-800 uppercase mb-2">Productos ({o.items.length}):</p>
-                {o.items.map((i, idx) => (
-                  <p key={idx} className="text-sm text-gray-700 font-medium">
-                    {i.qty}x {i.code} <span className="text-gray-500 font-normal">{(i.color || i.size) ? `(${i.color} Talla: ${i.size})` : ''}</span>
-                  </p>
-                ))}
-              </div>
-              <p className="font-extrabold text-green-700 text-right text-lg mt-2">Total: Q{o.total?.toFixed(2)}</p>
-            </div>
-          ))}
-          {orders.length === 0 && <p className="text-gray-500 text-center py-10">Aún no has recibido pedidos.</p>}
-        </div>
-      )}
-    </div>
-  );
-}
+        function ShareModal({ onClose }) {
+            const [copied, setCopied] = useState(false); const link = window.location.href;
+            const copy = () => { navigator.clipboard.writeText(link); setCopied(true); setTimeout(()=>setCopied(false), 2000); };
+            return (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
+                    <div className="bg-white p-8 rounded-[40px] w-full max-w-sm text-center shadow-2xl relative animate-in zoom-in-95" onClick={e=>e.stopPropagation()}>
+                        <button onClick={onClose} className="absolute right-6 top-6 text-gray-300"><Icons.X /></button>
+                        <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><Icons.Share /></div>
+                        <h3 className="font-extrabold text-2xl mb-2 text-gray-800">Compartir Catálogo</h3>
+                        <p className="text-sm text-gray-500 mb-8 px-2">Envía este enlace por WhatsApp para que tus clientes puedan comprar.</p>
+                        <div className="flex gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-100 mb-2">
+                            <input readOnly value={link} className="flex-1 bg-transparent text-xs text-gray-400 outline-none px-2 font-medium overflow-hidden text-ellipsis" />
+                            <button onClick={copy} className={`px-5 py-3 rounded-xl font-bold text-white transition-all shadow-md ${copied?'bg-green-500':'bg-[#007cc2]'}`}>{copied ? <Icons.Check /> : <Icons.Copy />}</button>
+                        </div>
+                        {copied && <p className="text-green-600 text-[10px] font-bold uppercase tracking-widest mt-2 animate-bounce">¡Copiado con éxito!</p>}
+                    </div>
+                </div>
+            );
+        }
 
-function CartDrawer({ cart, setCart, total, onClose }) {
-  const [step, setStep] = useState('cart'); 
-  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '' });
-
-  const checkout = async (e) => {
-    e.preventDefault();
-    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), { 
-      customerName: form.name,
-      customerPhone: form.phone,
-      customerEmail: form.email,
-      customerAddress: form.address,
-      items: cart, 
-      total, 
-      createdAt: serverTimestamp() 
-    });
-    
-    let msg = `*NUEVO PEDIDO*\n\n*👤 Datos del cliente:*\nNombre: ${form.name}\nTel: ${form.phone}\nEmail: ${form.email}\nDirección: ${form.address}\n\n*🛍️ Detalle del pedido:*\n`;
-    cart.forEach(i => {
-      const variantStr = (i.color || i.size) ? `[Color: ${i.color} - Talla: ${i.size}]` : '';
-      msg += `- ${i.qty}x ${i.code} ${variantStr} (Q${i.price})\n`;
-    });
-    msg += `\n*TOTAL: Q${total.toFixed(2)}*`;
-    
-    window.open(`https://wa.me/50237733402?text=${encodeURIComponent(msg)}`, '_blank');
-    setCart([]); 
-    onClose();
-  };
-
-  const updateQty = (id, delta) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) {
-        const newQty = Math.max(1, item.qty + delta);
-        return { ...item, qty: newQty };
-      }
-      return item;
-    }));
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex justify-end">
-      {step === 'cart' ? (
-        <div className="bg-white w-full max-w-sm h-full p-6 flex flex-col shadow-2xl animate-in slide-in-from-right">
-          <div className="flex justify-between items-center mb-6 border-b pb-4">
-            <h2 className="font-extrabold text-xl flex items-center gap-2"><ShoppingCart className="text-[#007cc2]"/> Tu Carrito</h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full"><X/></button>
-          </div>
-          <div className="flex-grow space-y-4 overflow-auto">
-            {cart.map(i => (
-              <div key={i.id} className="flex justify-between items-center border-b pb-3">
-                <div className="flex-1">
-                  <p className="font-bold text-sm text-gray-800">{i.code}</p>
-                  <p className="text-xs text-gray-500 font-medium">
-                    {i.color && <span>{i.color} </span>}
-                    {i.size && <span>(Talla: {i.size})</span>}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">Q{i.price?.toFixed(2)} c/u</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center border border-gray-200 rounded-md">
-                    <button onClick={() => updateQty(i.id, -1)} className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 font-bold">-</button>
-                    <span className="px-2 text-xs font-bold text-gray-700 min-w-[20px] text-center">{i.qty}</span>
-                    <button onClick={() => updateQty(i.id, 1)} className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 font-bold">+</button>
-                  </div>
-                  <p className="font-bold text-[#007cc2] w-14 text-right">Q{(i.price * i.qty).toFixed(2)}</p>
-                  <button onClick={() => setCart(cart.filter(item => item.id !== i.id))} className="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded ml-1"><Trash2 size={16}/></button>
-                </div>
-              </div>
-            ))}
-            {cart.length === 0 && <div className="text-center mt-20 text-gray-400"><ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50"/>Carrito vacío</div>}
-          </div>
-          {cart.length > 0 && (
-            <div className="pt-4 border-t mt-4">
-              <div className="flex justify-between items-end mb-4">
-                <span className="font-bold text-gray-500">Total a pagar:</span>
-                <span className="text-2xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span>
-              </div>
-              <button onClick={() => setStep('checkout')} className="w-full bg-[#007cc2] hover:bg-blue-700 text-white p-3.5 rounded-xl font-bold shadow-lg transition">
-                Enviar a mi asesor(a)
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="bg-[#f8f9fa] p-4 border-b flex justify-between items-center">
-              <h3 className="font-bold text-lg text-gray-800">Finalizar Pedido</h3>
-              <button onClick={() => setStep('cart')} className="text-gray-500 hover:text-gray-800 text-sm font-bold underline">Volver</button>
-            </div>
-            <form onSubmit={checkout} className="p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 flex justify-center text-gray-500"><User size={20}/></div>
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Nombre completo</label>
-                  <input required className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 flex justify-center text-gray-500"><Phone size={20}/></div>
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Teléfono</label>
-                  <input required placeholder="Ejemplo: 1125456587" className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 flex justify-center text-gray-500"><Mail size={20}/></div>
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Email</label>
-                  <input type="email" required className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 flex justify-center text-gray-500"><MapPin size={20}/></div>
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Dirección</label>
-                  <input required className="w-full border-b border-gray-300 focus:border-[#007cc2] outline-none py-1 text-sm font-medium" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
-                </div>
-              </div>
-              <div className="pt-6">
-                <button type="submit" className="w-3/4 mx-auto flex items-center justify-center gap-2 bg-[#128C7E] hover:bg-[#075E54] text-white p-3 rounded-lg font-bold shadow-md transition">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                  Enviar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -153,22 +153,42 @@
             useEffect(() => {
                 const init = async () => {
                     if (!window.fb) return setTimeout(init, 300);
-                    const { auth, db, appId, onAuthStateChanged, onSnapshot, collection, signInAnonymously, signInWithCustomToken, initialToken } = window.fb;
+                    const { auth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, initialToken } = window.fb;
+                    
+                    // Nos aseguramos de que la pantalla se desbloquee cuando Firebase termine
+                    onAuthStateChanged(auth, (u) => { 
+                        setReady(true); 
+                    });
+
                     try {
                         if (initialToken) await signInWithCustomToken(auth, initialToken);
                         else await signInAnonymously(auth);
-                        onAuthStateChanged(auth, (u) => { if (u) setReady(true); });
-                    } catch (e) { console.error(e); }
+                    } catch (e) { 
+                        console.error("Error de Firebase:", e); 
+                        // Mostramos alertas claras de qué falta configurar en Firebase
+                        if (e.code === 'auth/operation-not-allowed') {
+                            alert("⚠️ Error: Ve a Firebase Console -> Authentication -> Sign-in method y HABILITA el acceso 'Anónimo'.");
+                        } else if (e.code === 'auth/unauthorized-domain') {
+                            alert("⚠️ Error: Firebase bloqueó el acceso. Agrega tu dominio de Vercel en Firebase Console -> Authentication -> Settings -> Authorized domains.");
+                        } else {
+                            alert("Error al conectar base de datos: " + e.message);
+                        }
+                        // Aunque falle, mostramos la interfaz vacía para no dejar la pantalla cargando eternamente
+                        setReady(true);
+                    }
                 };
                 init();
             }, []);
 
             useEffect(() => {
                 if (!ready) return;
-                const { db, appId, onSnapshot, collection } = window.fb;
-                const unsubP = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
-                const unsubPg = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)));
-                const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                const { db, appId, onSnapshot, collection, auth } = window.fb;
+                // Solo leemos datos si el usuario pudo autenticarse
+                if (!auth.currentUser) return;
+                
+                const unsubP = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))), e => console.error(e));
+                const unsubPg = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)), e => console.error(e));
+                const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))), e => console.error(e));
                 return () => { unsubP(); unsubPg(); unsubH(); };
             }, [ready]);
 
@@ -332,7 +352,7 @@
                             <div key={p.id} className="relative group bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
                                 <img src={p.imageUrl} className="rounded-lg mb-1" />
                                 <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 shadow-lg transition-opacity"><Icons.Trash /></button>
-                                <p className="text-[10px] text-center font-bold text-gray-400">Página {p.pageNumber}</p>
+                                <p className="text-[10px] text-center mt-1 font-bold text-gray-400">Página {p.pageNumber}</p>
                             </div>
                         ))}
                     </div>

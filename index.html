@@ -13,7 +13,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -275,23 +275,23 @@
             }
 
             return (
-                <div className="py-8">
-                    <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-10">Selecciona un Catálogo</h2>
-                    <div className="flex flex-wrap justify-center gap-8 max-w-5xl mx-auto">
+                <div className="py-8 w-full">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-center text-gray-800 mb-8">Selecciona un Catálogo</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 max-w-[1400px] mx-auto px-2 md:px-4">
                         {catalogs.map(cat => (
-                            <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full sm:w-64">
-                                <h3 className="font-bold text-lg text-gray-800 mb-3 group-hover:text-[#007cc2] transition text-center px-2">{cat.name}</h3>
-                                <div className="bg-white p-2 rounded-2xl shadow-lg border-2 border-transparent group-hover:border-[#007cc2] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden">
+                            <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full">
+                                <h3 className="font-bold text-sm md:text-lg text-gray-800 mb-2 group-hover:text-[#007cc2] transition text-center px-1 truncate w-full">{cat.name}</h3>
+                                <div className="bg-white p-1 md:p-2 rounded-2xl shadow-lg border-2 border-transparent group-hover:border-[#007cc2] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden">
                                     {getThumbnail(cat.id) ? (
                                         <img src={getThumbnail(cat.id)} className="w-full h-full object-cover rounded-xl" alt={cat.name} />
                                     ) : (
                                         <div className="flex flex-col items-center opacity-30">
                                             <Icons.FileText />
-                                            <span className="text-xs font-bold mt-2">Sin páginas</span>
+                                            <span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span>
                                         </div>
                                     )}
                                 </div>
-                                <button className="mt-6 bg-blue-50 text-[#007cc2] font-bold py-2.5 px-8 rounded-full group-hover:bg-[#007cc2] group-hover:text-white transition shadow-sm">
+                                <button className="mt-4 md:mt-6 bg-blue-50 text-[#007cc2] text-xs md:text-sm font-bold py-2 px-4 md:py-2.5 md:px-8 rounded-full group-hover:bg-[#007cc2] group-hover:text-white transition shadow-sm w-full md:w-auto">
                                     Ver Catálogo
                                 </button>
                             </div>
@@ -305,6 +305,9 @@
         function App() {
             const [view, setView] = useState('store');
             
+            // Layout Responsivo
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
             // Catálogos
             const [catalogs, setCatalogs] = useState([]);
             const [activeCatalogId, setActiveCatalogId] = useState('');
@@ -330,6 +333,13 @@
             const [secretClicks, setSecretClicks] = useState(0);
             const [ready, setReady] = useState(false);
             const clickTimeout = useRef(null);
+
+            // Responsive listener
+            useEffect(() => {
+                const handleResize = () => setIsMobile(window.innerWidth < 768);
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
 
             useEffect(() => {
                 const init = async () => {
@@ -377,15 +387,15 @@
                 if (view !== 'store' || showCatalogList || isCartOpen || showShareModal || showLoginModal || confirmDialog || globalMessage) return;
 
                 const handleKeyDown = (e) => {
-                    // Evitar cambiar página si está escribiendo en el buscador
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
 
                     const maxPages = pages.filter(p => p.catalogId === activeCatalogId || (!p.catalogId && catalogs.length === 0)).length;
-                    
-                    if (e.key === 'ArrowRight' && currentIndex + 2 < maxPages) {
-                        setCurrentIndex(prev => Math.min(maxPages - 1, prev + 2));
+                    const step = window.innerWidth < 768 ? 1 : 2;
+
+                    if (e.key === 'ArrowRight' && currentIndex + step < maxPages) {
+                        setCurrentIndex(prev => Math.min(maxPages - 1, prev + step));
                     } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
-                        setCurrentIndex(prev => Math.max(0, prev - 2));
+                        setCurrentIndex(prev => Math.max(0, prev - step));
                     }
                 };
 
@@ -407,20 +417,25 @@
                 const found = currentProducts.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase()));
                 if (found && found.pageNumber) {
                     let idx = currentPages.findIndex(pg => pg.pageNumber === found.pageNumber);
-                    if (idx !== -1) { if (idx % 2 !== 0) idx--; setCurrentIndex(Math.max(0, idx)); setSearchQuery(''); setShowCatalogList(false); }
+                    if (!isMobile && idx !== -1 && idx % 2 !== 0) idx--; // Ajustar si es vista 2 págs
+                    if (idx !== -1) { 
+                        setCurrentIndex(Math.max(0, idx)); 
+                        setSearchQuery(''); 
+                        setShowCatalogList(false); 
+                    }
                 } else { setSearchQuery('No encontrado'); setTimeout(() => setSearchQuery(''), 1500); }
             };
 
             if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
 
             return (
-                <div className="min-h-screen relative overflow-x-hidden flex flex-col">
+                <div className="min-h-screen relative flex flex-col bg-gray-100">
                     <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
                         <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
                             <Icons.Store /> MyCatálogo
                         </div>
                         
-                        {/* Buscador Centrado y más visible */}
+                        {/* Buscador Centrado y más visible en PC */}
                         {view === 'store' && !showCatalogList && (
                             <div className="flex-1 max-w-lg mx-4 hidden md:flex relative">
                                 <input type="text" placeholder="Buscar código..." className="w-full border-2 border-gray-200 rounded-full py-2 px-5 text-sm focus:outline-none focus:border-[#007cc2] transition-colors" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
@@ -451,7 +466,7 @@
                         </div>
                     )}
 
-                    <main className="flex-grow flex flex-col w-full max-w-7xl mx-auto">
+                    <main className="flex-grow flex flex-col w-full max-w-[1600px] mx-auto px-1 md:px-4">
                         {view === 'store' ? (
                             showCatalogList ? (
                                 <CatalogSelectionView 
@@ -472,6 +487,7 @@
                                     setCurrentIndex={setCurrentIndex} 
                                     onBack={() => setShowCatalogList(true)}
                                     hasCatalogs={catalogs.length > 0}
+                                    isMobile={isMobile}
                                     onAdd={(v) => setCart(prev => {
                                         const ex = prev.find(x => x.id === v.id);
                                         if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x);
@@ -539,28 +555,41 @@
             );
         }
 
-        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, onBack, hasCatalogs }) {
+        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, onBack, hasCatalogs, isMobile }) {
             const [activeH, setActiveH] = useState(null);
             const [showIndexMenu, setShowIndexMenu] = useState(false);
             
             const [touchStart, setTouchStart] = useState(null);
             const [touchEnd, setTouchEnd] = useState(null);
+
+            // Al cambiar la página se cierra el menú índice y los hotspots activos
+            useEffect(() => {
+                setShowIndexMenu(false);
+                setActiveH(null);
+            }, [currentIndex]);
             
-            const handleNext = () => setCurrentIndex(Math.min(pages.length - 1, currentIndex + 2));
-            const handlePrev = () => setCurrentIndex(Math.max(0, currentIndex - 2));
+            const step = isMobile ? 1 : 2;
+
+            const handleNext = () => {
+                setCurrentIndex(prev => Math.min(pages.length - 1, prev + step));
+            };
+            const handlePrev = () => {
+                setCurrentIndex(prev => Math.max(0, prev - step));
+            };
 
             const onTouchStart = (e) => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); };
             const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
             const onTouchEnd = () => {
                 if (!touchStart || !touchEnd) return;
                 const distance = touchStart - touchEnd;
-                if (distance > 50 && currentIndex + 2 < pages.length) handleNext();
+                if (distance > 50 && currentIndex < pages.length - 1) handleNext();
                 if (distance < -50 && currentIndex > 0) handlePrev();
             };
 
             if (pages.length === 0) return <div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4">¡Catálogo vacío!</h2></div>;
             
-            const left = pages[currentIndex]; const right = currentIndex + 1 < pages.length ? pages[currentIndex + 1] : null;
+            const left = pages[currentIndex]; 
+            const right = (!isMobile && currentIndex + 1 < pages.length) ? pages[currentIndex + 1] : null;
 
             // Páginas que tienen etiqueta de índice
             const indexedPages = pages.filter(p => p.indexName);
@@ -594,10 +623,10 @@
             });
 
             return (
-                <div className="flex flex-col flex-grow items-center" onClick={() => { setActiveH(null); setShowIndexMenu(false); }}>
+                <div className="flex flex-col flex-grow items-center mt-2 md:mt-4" onClick={() => { setActiveH(null); setShowIndexMenu(false); }}>
                     
                     {/* Barra Superior del Catálogo */}
-                    <div className="w-full max-w-[95%] xl:max-w-6xl flex justify-between items-center mb-4 px-2">
+                    <div className="w-full max-w-[98%] xl:max-w-6xl flex justify-between items-center mb-2 md:mb-4 px-2 z-20">
                         {hasCatalogs ? (
                             <button onClick={onBack} className="text-sm font-bold text-gray-600 hover:text-[#007cc2] bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 transition">
                                 ⬅ Volver
@@ -613,23 +642,22 @@
                             </button>
                             
                             {showIndexMenu && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                                     <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
                                         {indexedPages.length > 0 ? indexedPages.map(p => (
                                             <button 
                                                 key={p.id}
                                                 onClick={() => {
                                                     let idx = pages.findIndex(x => x.id === p.id);
-                                                    if (idx % 2 !== 0) idx--; // Ajustar a la izquierda si es impar
+                                                    if (!isMobile && idx % 2 !== 0) idx--; // Ajustar a la izquierda si es impar en PC
                                                     setCurrentIndex(Math.max(0, idx));
-                                                    setShowIndexMenu(false);
                                                 }}
-                                                className="w-full text-left px-3 py-2 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition"
+                                                className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b border-gray-50 last:border-b-0"
                                             >
                                                 {p.indexName}
                                             </button>
                                         )) : (
-                                            <p className="px-3 py-3 text-xs text-center text-gray-400">No hay secciones indexadas.</p>
+                                            <p className="px-3 py-4 text-xs text-center text-gray-400">El administrador aún no ha creado secciones indexadas.</p>
                                         )}
                                     </div>
                                 </div>
@@ -638,40 +666,42 @@
                     </div>
 
                     {/* Visor de Catálogo Grande con Flechas Externas */}
-                    <div className="relative flex items-center justify-center w-full flex-grow min-h-[70vh] md:min-h-[85vh]">
+                    <div className="relative flex items-center justify-center w-full flex-grow min-h-[75vh] md:min-h-[85vh] xl:min-h-[90vh]">
                         
                         {/* Botón Anterior Flotante */}
-                        <button onClick={handlePrev} disabled={currentIndex===0} className="absolute left-0 md:left-4 z-10 p-2 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/50 md:bg-transparent rounded-full md:rounded-none">
+                        <button onClick={handlePrev} disabled={currentIndex===0} className="absolute left-0 md:left-2 lg:left-8 z-10 p-1 md:p-3 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/70 md:bg-white rounded-full shadow-md md:shadow-lg border border-gray-100">
                             <Icons.ChevronLeft />
                         </button>
                         
-                        {/* Contenedor del Libro */}
-                        <div className="flex bg-white shadow-2xl h-full max-w-[95%] xl:max-w-6xl w-full rounded-sm md:rounded-2xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-                            <div className="w-1/2 h-full border-r flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-2">
+                        {/* Contenedor del Libro adaptativo */}
+                        <div className="flex bg-white shadow-2xl h-full w-full max-w-[100%] md:max-w-[92%] xl:max-w-[1400px] rounded-lg md:rounded-2xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+                            <div className={`h-full flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-4 ${isMobile ? 'w-full' : 'w-1/2 border-r'}`}>
                                 <div className="relative inline-flex items-center justify-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                                    <img src={left.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
+                                    <img src={left?.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
                                     {renderH(left)}
                                 </div>
                             </div>
-                            <div className="w-1/2 h-full flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-2">
-                                {right && (
-                                    <div className="relative inline-flex items-center justify-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                                        <img src={right.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
-                                        {renderH(right)}
-                                    </div>
-                                )}
-                            </div>
+                            {!isMobile && (
+                                <div className="w-1/2 h-full flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-4">
+                                    {right && (
+                                        <div className="relative inline-flex items-center justify-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
+                                            <img src={right.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
+                                            {renderH(right)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Botón Siguiente Flotante */}
-                        <button onClick={handleNext} disabled={currentIndex+2 >= pages.length} className="absolute right-0 md:right-4 z-10 p-2 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/50 md:bg-transparent rounded-full md:rounded-none">
+                        <button onClick={handleNext} disabled={currentIndex + step >= pages.length} className="absolute right-0 md:right-2 lg:right-8 z-10 p-1 md:p-3 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/70 md:bg-white rounded-full shadow-md md:shadow-lg border border-gray-100">
                             <Icons.ChevronRight />
                         </button>
 
                     </div>
                     
-                    <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
-                        Vista: {currentIndex+1}-{right?currentIndex+2:currentIndex+1} de {pages.length}
+                    <div className="mt-4 mb-2 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
+                        Página {currentIndex+1} {(!isMobile && right) ? `- ${currentIndex+2}` : ''} de {pages.length}
                     </div>
                 </div>
             );
@@ -789,7 +819,6 @@
                     defaultValue: page.indexName || '',
                     onSubmit: async (tagName) => {
                         try {
-                            // Guardamos la etiqueta o la borramos si la deja en blanco
                             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', page.id), {
                                 indexName: tagName.trim() === '' ? null : tagName.trim()
                             });
@@ -887,14 +916,17 @@
                                     {currentPages.map(p => (
                                         <div key={p.id} className="relative group bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
                                             <img src={p.imageUrl} className="rounded-lg mb-1" />
+                                            
+                                            {/* Etiqueta Visual de Índice */}
                                             {p.indexName && (
-                                                <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[9px] font-bold px-2 py-0.5 rounded-br-lg rounded-tl-lg shadow-sm truncate max-w-[80%]">
-                                                    {p.indexName}
+                                                <div className="absolute top-2 left-2 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg rounded-tl-lg shadow-sm max-w-[90%] z-10 flex items-center gap-1 overflow-hidden">
+                                                    <Icons.Tag /> <span className="truncate">{p.indexName}</span>
                                                 </div>
                                             )}
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 rounded-lg transition-opacity">
-                                                <button onClick={() => handleSetIndex(p)} className="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition"><Icons.Tag /></button>
-                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition"><Icons.Trash /></button>
+
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 rounded-lg transition-opacity z-20">
+                                                <button onClick={() => handleSetIndex(p)} className="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition" title="Etiquetar Sección"><Icons.Tag /></button>
+                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition" title="Borrar Página"><Icons.Trash /></button>
                                             </div>
                                             <p className="text-[10px] text-center mt-1 font-bold text-gray-400">Página {p.pageNumber}</p>
                                         </div>

@@ -33,7 +33,7 @@
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
             ? JSON.parse(__firebase_config) 
             : {
-                // Truco seguro para GitHub con tu llave EXACTA (con la P mayúscula corregida)
+                // Truco seguro para GitHub con tu llave EXACTA
                 apiKey: ["AIzaSyDr8hX", "HlEJPnXd1667", "kMet7_WExa4bG74U"].join(''), 
                 authDomain: "mycatalogo-8ff18.firebaseapp.com",
                 projectId: "mycatalogo-8ff18",
@@ -65,8 +65,9 @@
             Store: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>,
             Share: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>,
             Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" cy="21" x2="16.65" y2="16.65"/></svg>,
-            ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
-            ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+            ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
+            ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+            ChevronDown: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>,
             Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
             X: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
             Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
@@ -81,14 +82,14 @@
             Mail: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
             MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
             LogIn: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>,
-            Edit2: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+            Edit2: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
+            Tag: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
         };
 
         // --- LÓGICA DE EXTRACCIÓN AVANZADA DE TALLAS ---
         const generateShoeRange = (start, end) => {
             const s = parseInt(start); const e = parseInt(end);
             const res = [];
-            // Prevenir loops infinitos asegurando un rango lógico
             if (!isNaN(s) && !isNaN(e) && s <= e && (e - s) < 20) {
                 for (let i = s; i <= e; i++) res.push(i.toString());
             }
@@ -102,14 +103,13 @@
             if (sIdx !== -1 && eIdx !== -1 && sIdx <= eIdx) {
                 return sequence.slice(sIdx, eIdx + 1);
             }
-            return [start, end]; // Fallback si no encaja
+            return [start, end]; 
         };
 
         const extractSizesFromString = (str) => {
             const sizes = new Set();
             let cleanStr = str.toUpperCase().replace(/Y/g, ',').trim();
             
-            // Si tiene la palabra "AL" detectamos un rango (Zapatos o Jeans)
             if (cleanStr.includes(' AL ')) {
                 const parts = cleanStr.split(' AL ');
                 if (parts.length === 2) {
@@ -121,7 +121,6 @@
                     }
                 }
             } else {
-                // Verificar si las tallas de ropa (S, M, L...) vienen separadas por comas O solo por espacios
                 if (!cleanStr.includes(',') && /S|M|L|XL|XXL/i.test(cleanStr)) {
                     cleanStr.split(/\s+/).forEach(p => { if (p) sizes.add(p); });
                 } else {
@@ -156,7 +155,6 @@
                         sizesPart = l.substring(firstSlashIdx + 1).trim();
                     }
 
-                    // Determinar si es una línea válida de Color / Tallas
                     const isColorLine = /^\d{2,3}\s*[A-Z]/i.test(colorPart) || /NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(colorPart);
                     
                     if (isColorLine && sizesPart) {
@@ -176,7 +174,6 @@
                 colors.forEach(c => globalSizes.forEach(s => variants.push({ color: c, size: s })));
             }
 
-            // Remover posibles duplicados
             const uniqueVariants = [];
             const seen = new Set();
             variants.forEach(v => {
@@ -202,7 +199,7 @@
 
             return codes.map(c => {
                 let bestP = 0; 
-                let bestPY = c.transform[5] - 250; // Extendemos la búsqueda vertical muchísimo más abajo
+                let bestPY = c.transform[5] - 250;
                 
                 let validPrices = prices.filter(p => 
                     p.transform[5] <= c.transform[5] + 15 && 
@@ -243,12 +240,13 @@
 
         // --- COMPONENTES UI GLOBALES ---
         function PromptModal({ dialog, onClose }) {
-            const [val, setVal] = useState('');
+            const [val, setVal] = useState(dialog.defaultValue || '');
             return (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
                     <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95">
-                        <h3 className="font-bold text-lg mb-4 text-gray-800">{dialog.title}</h3>
-                        <input autoFocus className="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-[#007cc2] text-center" value={val} onChange={e=>setVal(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){dialog.onSubmit(val); onClose();}}} />
+                        <h3 className="font-bold text-lg mb-2 text-gray-800">{dialog.title}</h3>
+                        {dialog.text && <p className="text-xs text-gray-500 mb-4">{dialog.text}</p>}
+                        <input autoFocus className="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-[#007cc2] text-center font-bold" placeholder={dialog.placeholder || ''} value={val} onChange={e=>setVal(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){dialog.onSubmit(val); onClose();}}} />
                         <div className="flex gap-3">
                             <button onClick={onClose} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition">Cancelar</button>
                             <button onClick={() => { dialog.onSubmit(val); onClose(); }} className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Guardar</button>
@@ -258,7 +256,6 @@
             );
         }
 
-        // --- COMPONENTE SELECCIÓN DE CATÁLOGO ---
         function CatalogSelectionView({ catalogs, pages, onSelect }) {
             const getThumbnail = (catId) => {
                 const catPages = pages.filter(p => p.catalogId === catId);
@@ -346,9 +343,6 @@
                     } catch (e) { 
                         console.error(e);
                         let errorText = "Error al conectar Firebase: " + e.message;
-                        if (e.code === 'auth/api-key-not-valid') errorText = "La API Key es incorrecta. Revísala en el index.html.";
-                        else if (e.code === 'auth/operation-not-allowed') errorText = "Habilita 'Anónimo' en Firebase Authentication -> Sign-in method.";
-                        else if (e.code === 'auth/unauthorized-domain') errorText = "Agrega el dominio de Vercel (ej. mycat-logo.vercel.app) en Firebase Authentication -> Settings -> Authorized domains.";
                         setGlobalMessage({ title: "Error de Configuración", text: errorText, type: "error" });
                         setReady(true);
                     }
@@ -361,7 +355,6 @@
                 const { db, appId, onSnapshot, collection, auth } = window.fb;
                 if (!auth.currentUser) return;
 
-                // Escuchar catálogos
                 const unsubC = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), s => {
                     const cats = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0));
                     setCatalogs(cats);
@@ -378,6 +371,27 @@
                 const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
                 return () => { unsubP(); unsubPg(); unsubH(); unsubC(); };
             }, [ready]);
+
+            // Navegación Global por Teclado
+            useEffect(() => {
+                if (view !== 'store' || showCatalogList || isCartOpen || showShareModal || showLoginModal || confirmDialog || globalMessage) return;
+
+                const handleKeyDown = (e) => {
+                    // Evitar cambiar página si está escribiendo en el buscador
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+                    const maxPages = pages.filter(p => p.catalogId === activeCatalogId || (!p.catalogId && catalogs.length === 0)).length;
+                    
+                    if (e.key === 'ArrowRight' && currentIndex + 2 < maxPages) {
+                        setCurrentIndex(prev => Math.min(maxPages - 1, prev + 2));
+                    } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                        setCurrentIndex(prev => Math.max(0, prev - 2));
+                    }
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [view, showCatalogList, isCartOpen, showShareModal, showLoginModal, confirmDialog, globalMessage, currentIndex, pages, activeCatalogId, catalogs]);
 
             const handleSecretClick = () => {
                 if (clickTimeout.current) clearTimeout(clickTimeout.current);
@@ -400,33 +414,25 @@
             if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
 
             return (
-                <div className="min-h-screen relative overflow-x-hidden">
+                <div className="min-h-screen relative overflow-x-hidden flex flex-col">
                     <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
-                        <div className="flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
+                        <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
                             <Icons.Store /> MyCatálogo
                         </div>
                         
-                        <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
+                        {/* Buscador Centrado y más visible */}
+                        {view === 'store' && !showCatalogList && (
+                            <div className="flex-1 max-w-lg mx-4 hidden md:flex relative">
+                                <input type="text" placeholder="Buscar código..." className="w-full border-2 border-gray-200 rounded-full py-2 px-5 text-sm focus:outline-none focus:border-[#007cc2] transition-colors" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+                                <button onClick={handleSearch} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#007cc2] hover:scale-110 transition"><Icons.Search /></button>
+                            </div>
+                        )}
+                        
+                        <div className="flex-1 flex items-center gap-2 md:gap-4 justify-end">
                             {view === 'store' && (
                                 <>
-                                    {!showCatalogList && catalogs.length > 0 && (
-                                        <button 
-                                            onClick={() => setShowCatalogList(true)} 
-                                            className="text-sm font-bold text-[#007cc2] bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition mr-auto hidden md:block"
-                                        >
-                                            ⬅ Volver a Catálogos
-                                        </button>
-                                    )}
-
-                                    {!showCatalogList && (
-                                        <div className="max-w-xs mx-2 hidden md:flex relative">
-                                            <input type="text" placeholder="Buscar código..." className="w-full border rounded-full py-1.5 px-4 text-sm focus:outline-none" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-                                            <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><Icons.Search /></button>
-                                        </div>
-                                    )}
-                                    
                                     <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#007cc2]"><Icons.Share /></button>
-                                    <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full">
+                                    <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition">
                                         <Icons.Cart />
                                         {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}
                                     </button>
@@ -435,21 +441,17 @@
                         </div>
                     </header>
 
+                    {/* Búsqueda en Móvil */}
                     {view === 'store' && !showCatalogList && (
-                        <div className="md:hidden bg-white p-2 border-b flex items-center gap-2">
-                            {catalogs.length > 0 && (
-                                <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-[#007cc2] bg-blue-50 px-3 py-2 rounded-full whitespace-nowrap">
-                                    ⬅ Volver
-                                </button>
-                            )}
+                        <div className="md:hidden bg-white p-3 border-b flex items-center gap-2 shadow-sm z-20">
                             <div className="flex-1 relative">
-                                <input type="text" placeholder="Buscar código..." className="w-full border rounded-full py-1.5 pl-4 pr-8 text-sm focus:outline-none" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-                                <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><Icons.Search /></button>
+                                <input type="text" placeholder="Buscar código..." className="w-full border rounded-full py-2 pl-4 pr-10 text-sm focus:outline-none focus:border-[#007cc2]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+                                <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#007cc2]"><Icons.Search /></button>
                             </div>
                         </div>
                     )}
 
-                    <main className="p-4 max-w-6xl mx-auto">
+                    <main className="flex-grow flex flex-col w-full max-w-7xl mx-auto">
                         {view === 'store' ? (
                             showCatalogList ? (
                                 <CatalogSelectionView 
@@ -462,11 +464,20 @@
                                     }} 
                                 />
                             ) : (
-                                <FlipbookView pages={currentPages} products={currentProducts} hotspots={currentHotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} onAdd={(v) => setCart(prev => {
-                                    const ex = prev.find(x => x.id === v.id);
-                                    if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x);
-                                    return [...prev, {...v, qty: 1}];
-                                })} />
+                                <FlipbookView 
+                                    pages={currentPages} 
+                                    products={currentProducts} 
+                                    hotspots={currentHotspots} 
+                                    currentIndex={currentIndex} 
+                                    setCurrentIndex={setCurrentIndex} 
+                                    onBack={() => setShowCatalogList(true)}
+                                    hasCatalogs={catalogs.length > 0}
+                                    onAdd={(v) => setCart(prev => {
+                                        const ex = prev.find(x => x.id === v.id);
+                                        if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x);
+                                        return [...prev, {...v, qty: 1}];
+                                    })} 
+                                />
                             )
                         ) : (
                             <AdminView 
@@ -528,8 +539,9 @@
             );
         }
 
-        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd }) {
+        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, onBack, hasCatalogs }) {
             const [activeH, setActiveH] = useState(null);
+            const [showIndexMenu, setShowIndexMenu] = useState(false);
             
             const [touchStart, setTouchStart] = useState(null);
             const [touchEnd, setTouchEnd] = useState(null);
@@ -546,9 +558,12 @@
                 if (distance < -50 && currentIndex > 0) handlePrev();
             };
 
-            if (pages.length === 0) return <div className="h-[60vh] flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4">¡Catálogo vacío!</h2></div>;
+            if (pages.length === 0) return <div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4">¡Catálogo vacío!</h2></div>;
             
             const left = pages[currentIndex]; const right = currentIndex + 1 < pages.length ? pages[currentIndex + 1] : null;
+
+            // Páginas que tienen etiqueta de índice
+            const indexedPages = pages.filter(p => p.indexName);
 
             const renderH = (pg) => pg && hotspots.filter(h => h.pageId === pg.id).map(h => {
                 const p = products.find(prod => prod.id === h.productId); if (!p) return null;
@@ -579,28 +594,85 @@
             });
 
             return (
-                <div className="flex flex-col items-center gap-6" onClick={() => setActiveH(null)}>
-                    <div className="flex items-center justify-center gap-2 md:gap-4 w-full h-[70vh] md:h-[75vh]">
-                        <button onClick={handlePrev} disabled={currentIndex===0} className="p-2 disabled:opacity-10 text-gray-400"><Icons.ChevronLeft /></button>
-                        <div className="flex bg-white shadow-2xl h-full w-full max-w-5xl rounded-2xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-                            <div className="w-1/2 h-full border-r flex items-center justify-center bg-gray-50 overflow-hidden p-2 md:p-4">
+                <div className="flex flex-col flex-grow items-center" onClick={() => { setActiveH(null); setShowIndexMenu(false); }}>
+                    
+                    {/* Barra Superior del Catálogo */}
+                    <div className="w-full max-w-[95%] xl:max-w-6xl flex justify-between items-center mb-4 px-2">
+                        {hasCatalogs ? (
+                            <button onClick={onBack} className="text-sm font-bold text-gray-600 hover:text-[#007cc2] bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 transition">
+                                ⬅ Volver
+                            </button>
+                        ) : <div></div>}
+                        
+                        <div className="relative">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} 
+                                className="text-sm font-bold text-gray-700 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 hover:text-[#007cc2] transition flex items-center gap-1"
+                            >
+                                Índice <Icons.ChevronDown />
+                            </button>
+                            
+                            {showIndexMenu && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                    <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
+                                        {indexedPages.length > 0 ? indexedPages.map(p => (
+                                            <button 
+                                                key={p.id}
+                                                onClick={() => {
+                                                    let idx = pages.findIndex(x => x.id === p.id);
+                                                    if (idx % 2 !== 0) idx--; // Ajustar a la izquierda si es impar
+                                                    setCurrentIndex(Math.max(0, idx));
+                                                    setShowIndexMenu(false);
+                                                }}
+                                                className="w-full text-left px-3 py-2 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition"
+                                            >
+                                                {p.indexName}
+                                            </button>
+                                        )) : (
+                                            <p className="px-3 py-3 text-xs text-center text-gray-400">No hay secciones indexadas.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Visor de Catálogo Grande con Flechas Externas */}
+                    <div className="relative flex items-center justify-center w-full flex-grow min-h-[70vh] md:min-h-[85vh]">
+                        
+                        {/* Botón Anterior Flotante */}
+                        <button onClick={handlePrev} disabled={currentIndex===0} className="absolute left-0 md:left-4 z-10 p-2 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/50 md:bg-transparent rounded-full md:rounded-none">
+                            <Icons.ChevronLeft />
+                        </button>
+                        
+                        {/* Contenedor del Libro */}
+                        <div className="flex bg-white shadow-2xl h-full max-w-[95%] xl:max-w-6xl w-full rounded-sm md:rounded-2xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+                            <div className="w-1/2 h-full border-r flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-2">
                                 <div className="relative inline-flex items-center justify-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                                    <img src={left.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none" style={{ maxHeight: '100%' }} />
+                                    <img src={left.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
                                     {renderH(left)}
                                 </div>
                             </div>
-                            <div className="w-1/2 h-full flex items-center justify-center bg-gray-50 overflow-hidden p-2 md:p-4">
+                            <div className="w-1/2 h-full flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-2">
                                 {right && (
                                     <div className="relative inline-flex items-center justify-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                                        <img src={right.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none" style={{ maxHeight: '100%' }} />
+                                        <img src={right.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
                                         {renderH(right)}
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <button onClick={handleNext} disabled={currentIndex+2 >= pages.length} className="p-2 disabled:opacity-10 text-gray-400"><Icons.ChevronRight /></button>
+
+                        {/* Botón Siguiente Flotante */}
+                        <button onClick={handleNext} disabled={currentIndex+2 >= pages.length} className="absolute right-0 md:right-4 z-10 p-2 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/50 md:bg-transparent rounded-full md:rounded-none">
+                            <Icons.ChevronRight />
+                        </button>
+
                     </div>
-                    <div className="text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">Vista: {currentIndex+1}-{right?currentIndex+2:currentIndex+1} de {pages.length}</div>
+                    
+                    <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
+                        Vista: {currentIndex+1}-{right?currentIndex+2:currentIndex+1} de {pages.length}
+                    </div>
                 </div>
             );
         }
@@ -628,7 +700,8 @@
                 if (!f) return; 
 
                 setPromptDialog({
-                    title: "Asigna un nombre a este catálogo (ej. Campaña 3):",
+                    title: "Asigna un nombre a este catálogo",
+                    placeholder: "Ej. Campaña 3",
                     onSubmit: (catName) => {
                         if (catName && catName.trim() !== '') {
                             processUpload(f, catName.trim());
@@ -704,6 +777,23 @@
                             console.error(err);
                             setGlobalMessage({ title: "Error", text: "No se pudo borrar el catálogo completo.", type: "error" });
                         }
+                    }
+                });
+            };
+
+            const handleSetIndex = (page) => {
+                setPromptDialog({
+                    title: "Crear Índice de Sección",
+                    text: "Asigna un nombre a esta página para que el cliente pueda navegar rápidamente (ej. Zapatos de Dama, Ropa Niños).",
+                    placeholder: "Nombre de sección...",
+                    defaultValue: page.indexName || '',
+                    onSubmit: async (tagName) => {
+                        try {
+                            // Guardamos la etiqueta o la borramos si la deja en blanco
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', page.id), {
+                                indexName: tagName.trim() === '' ? null : tagName.trim()
+                            });
+                        } catch(err) { console.error(err); }
                     }
                 });
             };
@@ -797,7 +887,15 @@
                                     {currentPages.map(p => (
                                         <div key={p.id} className="relative group bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
                                             <img src={p.imageUrl} className="rounded-lg mb-1" />
-                                            <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 shadow-lg transition-opacity"><Icons.Trash /></button>
+                                            {p.indexName && (
+                                                <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[9px] font-bold px-2 py-0.5 rounded-br-lg rounded-tl-lg shadow-sm truncate max-w-[80%]">
+                                                    {p.indexName}
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 rounded-lg transition-opacity">
+                                                <button onClick={() => handleSetIndex(p)} className="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition"><Icons.Tag /></button>
+                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition"><Icons.Trash /></button>
+                                            </div>
                                             <p className="text-[10px] text-center mt-1 font-bold text-gray-400">Página {p.pageNumber}</p>
                                         </div>
                                     ))}

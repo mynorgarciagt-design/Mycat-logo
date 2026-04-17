@@ -13,7 +13,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #1a1a1a; overflow-x: hidden; } /* Fondo oscuro para resaltar catálogo */
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -33,7 +33,6 @@
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
             ? JSON.parse(__firebase_config) 
             : {
-                // Truco seguro para GitHub con tu llave EXACTA
                 apiKey: ["AIzaSyDr8hX", "HlEJPnXd1667", "kMet7_WExa4bG74U"].join(''), 
                 authDomain: "mycatalogo-8ff18.firebaseapp.com",
                 projectId: "mycatalogo-8ff18",
@@ -83,7 +82,9 @@
             MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
             LogIn: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>,
             Edit2: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
-            Tag: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            Tag: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>,
+            Star: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
+            Play: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
         };
 
         // --- LÓGICA DE EXTRACCIÓN AVANZADA DE TALLAS ---
@@ -255,43 +256,67 @@
                 </div>
             );
         }
+        
+        function VideoModal({ videoUrl, onClose }) {
+            // Convertir link de YouTube a formato embed
+            const embedUrl = videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
+            
+            return (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[60]" onClick={onClose}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden relative animate-in zoom-in-95" onClick={e=>e.stopPropagation()}>
+                        <button onClick={onClose} className="absolute right-2 top-2 z-10 bg-white text-gray-800 p-2 rounded-full shadow hover:bg-gray-100"><Icons.X /></button>
+                        <div className="aspect-video w-full bg-black">
+                            <iframe 
+                                width="100%" 
+                                height="100%" 
+                                src={`${embedUrl}?autoplay=1`} 
+                                title="YouTube video player" 
+                                frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
         function CatalogSelectionView({ catalogs, pages, onSelect }) {
             const getThumbnail = (catId) => {
                 const catPages = pages.filter(p => p.catalogId === catId);
                 if (catPages.length === 0) return null;
                 const firstPage = catPages.find(p => p.pageNumber === 1) || catPages[0];
-                return firstPage.imageUrl;
+                return firstPage.coverImage || firstPage.imageUrl; // Usa coverImage si existe (GIF), si no, la imagen normal
             };
 
             if (catalogs.length === 0) {
                 return (
                     <div className="flex flex-col items-center justify-center h-[60vh] text-center opacity-50">
                         <Icons.Package />
-                        <h2 className="text-2xl font-bold mt-4">¡Catálogo en preparación!</h2>
-                        <p>Próximamente muchos estilos para toda la familia.</p>
+                        <h2 className="text-2xl font-bold mt-4 text-white">¡Catálogo en preparación!</h2>
+                        <p className="text-gray-300">Próximamente muchos estilos para toda la familia.</p>
                     </div>
                 );
             }
 
             return (
-                <div className="py-8 w-full">
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-center text-gray-800 mb-8">Selecciona un Catálogo</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 max-w-[1400px] mx-auto px-2 md:px-4">
+                <div className="py-8 w-full min-h-screen">
+                    <h2 className="text-2xl md:text-4xl font-extrabold text-center text-white mb-10 tracking-wide">Descubre Nuestras Campañas</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8 max-w-[1600px] mx-auto px-2 md:px-6">
                         {catalogs.map(cat => (
                             <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full">
-                                <h3 className="font-bold text-sm md:text-lg text-gray-800 mb-2 group-hover:text-[#007cc2] transition text-center px-1 truncate w-full">{cat.name}</h3>
-                                <div className="bg-white p-1 md:p-2 rounded-2xl shadow-lg border-2 border-transparent group-hover:border-[#007cc2] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden">
+                                <div className="bg-white p-1 md:p-2 rounded-2xl shadow-xl border-4 border-transparent group-hover:border-[#007cc2] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden mb-4 relative">
                                     {getThumbnail(cat.id) ? (
                                         <img src={getThumbnail(cat.id)} className="w-full h-full object-cover rounded-xl" alt={cat.name} />
                                     ) : (
-                                        <div className="flex flex-col items-center opacity-30">
+                                        <div className="flex flex-col items-center opacity-30 text-gray-800">
                                             <Icons.FileText />
                                             <span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span>
                                         </div>
                                     )}
                                 </div>
-                                <button className="mt-4 md:mt-6 bg-blue-50 text-[#007cc2] text-xs md:text-sm font-bold py-2 px-4 md:py-2.5 md:px-8 rounded-full group-hover:bg-[#007cc2] group-hover:text-white transition shadow-sm w-full md:w-auto">
+                                <h3 className="font-bold text-sm md:text-xl text-white group-hover:text-[#45b6fe] transition text-center px-1 w-full truncate">{cat.name}</h3>
+                                <button className="mt-2 md:mt-4 bg-white/10 text-white text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#007cc2] transition shadow-sm w-full md:w-auto border border-white/20">
                                     Ver Catálogo
                                 </button>
                             </div>
@@ -354,9 +379,6 @@
                     } catch (e) { 
                         console.error(e);
                         let errorText = "Error al conectar Firebase: " + e.message;
-                        if (e.code === 'auth/api-key-not-valid') errorText = "La API Key es incorrecta. Revísala en el index.html.";
-                        else if (e.code === 'auth/operation-not-allowed') errorText = "Habilita 'Anónimo' en Firebase Authentication -> Sign-in method.";
-                        else if (e.code === 'auth/unauthorized-domain') errorText = "Agrega el dominio de Vercel (ej. mycat-logo.vercel.app) en Firebase Authentication -> Settings -> Authorized domains.";
                         setGlobalMessage({ title: "Error de Configuración", text: errorText, type: "error" });
                         setReady(true);
                     }
@@ -434,79 +456,92 @@
             if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
 
             return (
-                <div className="min-h-screen relative flex flex-col bg-gray-100" onClick={() => setShowIndexMenu(false)}>
-                    <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
-                        <div className="flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
-                            <Icons.Store /> <span className="hidden sm:inline">MyCatálogo</span>
-                        </div>
-                        
-                        {/* Botones Centrales en PC (Volver, Buscador, Índice) */}
-                        {view === 'store' && !showCatalogList && (
-                            <div className="flex-1 flex justify-center items-center gap-2 md:gap-4 mx-4">
-                                {catalogs.length > 0 && (
+                <div className="min-h-screen relative flex flex-col" onClick={() => setShowIndexMenu(false)}>
+                    
+                    {/* CABECERA BLANCA (Para Tienda) */}
+                    {view === 'store' && (
+                        <header className="bg-white shadow-md p-3 md:p-4 flex justify-between items-center sticky top-0 z-30">
+                            <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
+                                <Icons.Store /> <span className="hidden sm:inline">MyCatálogo</span>
+                            </div>
+                            
+                            {/* Botones Centrales en PC */}
+                            {!showCatalogList && (
+                                <div className="flex-2 flex justify-center items-center gap-2 md:gap-4 mx-4">
                                     <button 
                                         onClick={() => setShowCatalogList(true)} 
-                                        className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full hover:bg-gray-800 transition shadow-md whitespace-nowrap"
+                                        className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow-md hover:bg-blue-900 transition whitespace-nowrap hidden md:block"
                                     >
                                         ⬅ Volver
                                     </button>
-                                )}
 
-                                <div className="flex-1 max-w-lg hidden md:flex relative">
-                                    <input type="text" placeholder="Buscar código..." className="w-full border-2 border-gray-200 rounded-full py-2 px-5 text-sm focus:outline-none focus:border-[#007cc2] transition-colors" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-                                    <button onClick={handleSearch} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#007cc2] hover:scale-110 transition"><Icons.Search /></button>
-                                </div>
+                                    <div className="flex-1 max-w-lg hidden md:flex relative">
+                                        <input type="text" placeholder="Buscar código..." className="w-full border-2 border-gray-200 rounded-full py-2 px-5 text-sm focus:outline-none focus:border-[#007cc2] transition-colors" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+                                        <button onClick={handleSearch} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#007cc2] hover:scale-110 transition"><Icons.Search /></button>
+                                    </div>
 
-                                <div className="relative">
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} 
-                                        className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow-md hover:bg-gray-800 transition flex items-center gap-1"
-                                    >
-                                        Índice <Icons.ChevronDown />
-                                    </button>
-                                    
-                                    {showIndexMenu && (
-                                        <div className="absolute right-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                                            <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
-                                                {indexedPages.length > 0 ? indexedPages.map(p => (
-                                                    <button 
-                                                        key={p.id}
-                                                        onClick={() => {
-                                                            let idx = currentPages.findIndex(x => x.id === p.id);
-                                                            if (!isMobile && idx % 2 !== 0) idx--;
-                                                            setCurrentIndex(Math.max(0, idx));
-                                                            setShowIndexMenu(false);
-                                                        }}
-                                                        className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b border-gray-50 last:border-b-0"
-                                                    >
-                                                        {p.indexName}
-                                                    </button>
-                                                )) : (
-                                                    <p className="px-3 py-4 text-xs text-center text-gray-400">No hay secciones indexadas.</p>
-                                                )}
+                                    <div className="relative">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} 
+                                            className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow-md hover:bg-blue-900 transition flex items-center gap-1"
+                                        >
+                                            Índice <Icons.ChevronDown />
+                                        </button>
+                                        
+                                        {showIndexMenu && (
+                                            <div className="absolute right-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
+                                                    {indexedPages.length > 0 ? indexedPages.map(p => (
+                                                        <button 
+                                                            key={p.id}
+                                                            onClick={() => {
+                                                                let idx = currentPages.findIndex(x => x.id === p.id);
+                                                                if (!isMobile && idx % 2 !== 0) idx--;
+                                                                setCurrentIndex(Math.max(0, idx));
+                                                                setShowIndexMenu(false);
+                                                            }}
+                                                            className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b border-gray-50 last:border-b-0"
+                                                        >
+                                                            {p.indexName}
+                                                        </button>
+                                                    )) : (
+                                                        <p className="px-3 py-4 text-xs text-center text-gray-400">No hay secciones indexadas.</p>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        
-                        <div className="flex items-center gap-2 md:gap-4 justify-end">
-                            {view === 'store' && (
-                                <>
-                                    <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#007cc2]"><Icons.Share /></button>
-                                    <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition">
-                                        <Icons.Cart />
-                                        {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}
-                                    </button>
-                                </>
                             )}
-                        </div>
-                    </header>
+                            
+                            <div className="flex-1 flex items-center gap-2 md:gap-4 justify-end">
+                                <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#007cc2]"><Icons.Share /></button>
+                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition">
+                                    <Icons.Cart />
+                                    {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}
+                                </button>
+                            </div>
+                        </header>
+                    )}
+
+                    {/* CABECERA PARA ADMIN */}
+                    {view === 'admin' && (
+                        <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
+                            <div className="flex items-center gap-2 text-xl font-extrabold text-gray-800">
+                                Panel de Control
+                            </div>
+                            <button onClick={() => {setView('store'); setShowCatalogList(true);}} className="text-sm font-bold text-white bg-[#007cc2] px-4 py-2 rounded-full hover:bg-blue-700 transition shadow">
+                                Volver a Tienda
+                            </button>
+                        </header>
+                    )}
 
                     {/* Búsqueda en Móvil */}
                     {view === 'store' && !showCatalogList && (
                         <div className="md:hidden bg-white p-3 border-b flex items-center gap-2 shadow-sm z-20">
+                            <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#0a192f] px-3 py-2 rounded-full shadow whitespace-nowrap">
+                                ⬅ Volver
+                            </button>
                             <div className="flex-1 relative">
                                 <input type="text" placeholder="Buscar código..." className="w-full border rounded-full py-2 pl-4 pr-10 text-sm focus:outline-none focus:border-[#007cc2]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
                                 <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#007cc2]"><Icons.Search /></button>
@@ -514,7 +549,7 @@
                         </div>
                     )}
 
-                    <main className="flex-grow flex flex-col w-full max-w-[1800px] mx-auto px-1 md:px-4">
+                    <main className={`flex-grow flex flex-col w-full mx-auto ${view === 'store' && !showCatalogList ? 'max-w-full px-0' : 'max-w-[1800px] px-1 md:px-4'}`}>
                         {view === 'store' ? (
                             showCatalogList ? (
                                 <CatalogSelectionView 
@@ -542,17 +577,18 @@
                                 />
                             )
                         ) : (
-                            <AdminView 
-                                catalogs={catalogs} 
-                                activeCatalogId={activeCatalogId} 
-                                setActiveCatalogId={setActiveCatalogId} 
-                                pages={pages} 
-                                products={products} 
-                                hotspots={hotspots}
-                                setView={(v) => { setView(v); if(v === 'store') setShowCatalogList(true); }} 
-                                setGlobalMessage={setGlobalMessage} 
-                                setConfirmDialog={setConfirmDialog} 
-                            />
+                            <div className="pt-6">
+                                <AdminView 
+                                    catalogs={catalogs} 
+                                    activeCatalogId={activeCatalogId} 
+                                    setActiveCatalogId={setActiveCatalogId} 
+                                    pages={pages} 
+                                    products={products} 
+                                    hotspots={hotspots}
+                                    setGlobalMessage={setGlobalMessage} 
+                                    setConfirmDialog={setConfirmDialog} 
+                                />
+                            </div>
                         )}
                     </main>
 
@@ -560,12 +596,12 @@
                     {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
                     
                     {showLoginModal && (
-                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-                            <div className="bg-white p-6 rounded-3xl w-full max-w-xs text-center shadow-2xl">
-                                <h3 className="font-bold text-lg mb-4">Acceso Admin</h3>
-                                <input type="password" autoFocus className={`w-full border-2 p-3 rounded-2xl text-center text-xl mb-4 ${pinError ? 'border-red-500':'focus:border-[#007cc2]'}`} value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
+                            <div className="bg-white p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl">
+                                <h3 className="font-extrabold text-xl mb-4 text-gray-800">Acceso Admin</h3>
+                                <input type="password" autoFocus className={`w-full border-2 p-3 rounded-2xl text-center text-xl mb-6 ${pinError ? 'border-red-500':'focus:border-[#007cc2]'} outline-none`} value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
                                 <div className="flex gap-2">
-                                    <button onClick={() => {setShowLoginModal(false); setPinError(false); setPin('');}} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cerrar</button>
+                                    <button onClick={() => {setShowLoginModal(false); setPinError(false); setPin('');}} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-gray-700">Cerrar</button>
                                     <button onClick={() => {if(pin==='1234'){setView('admin'); setShowLoginModal(false); setPin('');}else setPinError(true);}} className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold">Entrar</button>
                                 </div>
                             </div>
@@ -573,7 +609,7 @@
                     )}
 
                     {globalMessage && (
-                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
                             <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95">
                                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${globalMessage.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-[#007cc2]'}`}>
                                     <Icons.AlertCircle />
@@ -586,7 +622,7 @@
                     )}
 
                     {confirmDialog && (
-                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
                             <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95">
                                 <h3 className="font-bold text-xl mb-2 text-gray-800">{confirmDialog.title}</h3>
                                 <p className="text-sm text-gray-600 mb-6">{confirmDialog.text}</p>
@@ -603,6 +639,7 @@
 
         function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, isMobile }) {
             const [activeH, setActiveH] = useState(null);
+            const [playingVideo, setPlayingVideo] = useState(null); // Estado para el modal de video
             
             const [touchStart, setTouchStart] = useState(null);
             const [touchEnd, setTouchEnd] = useState(null);
@@ -629,7 +666,7 @@
                 if (distance < -50 && currentIndex > 0) handlePrev();
             };
 
-            if (pages.length === 0) return <div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4">¡Catálogo vacío!</h2></div>;
+            if (pages.length === 0) return <div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-white">¡Catálogo vacío!</h2></div>;
             
             const left = pages[currentIndex]; 
             const right = (!isMobile && currentIndex + 1 < pages.length) ? pages[currentIndex + 1] : null;
@@ -641,20 +678,27 @@
                 
                 return (
                     <div key={h.id} className="absolute z-20" style={{ left: `calc(${h.x}% - 24px)`, top: `${h.y}%`, transform: 'translateY(-50%)' }}>
-                        <div onClick={(e) => {e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id);}} className="bg-[#007cc2] text-white rounded-full p-2 shadow-lg border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
+                        <div onClick={(e) => {e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id);}} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
                         {activeH === h.id && (
-                            <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border min-w-[160px] z-50 p-2 animate-in fade-in" onClick={e => e.stopPropagation()}>
-                                <p className="text-[11px] font-bold text-gray-800 leading-none mb-1">{p.code}</p>
-                                <p className="text-xs font-bold text-blue-600 mb-2">Q{p.price?.toFixed(2)}</p>
-                                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                            <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2 animate-in fade-in" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-start mb-1">
+                                    <p className="text-[12px] font-extrabold text-gray-800 leading-none">{p.code}</p>
+                                    {p.youtubeUrl && (
+                                        <button onClick={() => setPlayingVideo(p.youtubeUrl)} className="text-red-600 hover:scale-110 transition bg-red-50 p-1 rounded-full" title="Ver Video">
+                                            <Icons.Play />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-sm font-bold text-[#007cc2] mb-3">Q{p.price?.toFixed(2)}</p>
+                                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                                     {Object.entries(grouped).length > 0 ? Object.entries(grouped).map(([c, szs]) => (
-                                        <div key={c} className="text-left border-t pt-1">
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase leading-none mb-1">{c}:</p>
-                                            <div className="flex flex-wrap gap-1">
-                                                {szs.map(s => <button key={s} onClick={() => {onAdd({id:`${p.id}_${c}_${s}`, code:p.code, color:c, size:s, price:p.price}); setActiveH(null);}} className="bg-blue-50 text-[#007cc2] text-[10px] font-extrabold px-2 py-1 rounded hover:bg-[#007cc2] hover:text-white">{s}</button>)}
+                                        <div key={c} className="text-left border-t pt-2">
+                                            <p className="text-[10px] font-extrabold text-gray-500 uppercase leading-none mb-1.5">{c}:</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {szs.map(s => <button key={s} onClick={() => {onAdd({id:`${p.id}_${c}_${s}`, code:p.code, color:c, size:s, price:p.price}); setActiveH(null);}} className="bg-blue-50 text-[#007cc2] text-xs font-bold px-2.5 py-1 rounded hover:bg-[#007cc2] hover:text-white transition">{s}</button>)}
                                             </div>
                                         </div>
-                                    )) : <button onClick={() => {onAdd({id:p.id, code:p.code, color:'', size:'', price:p.price}); setActiveH(null);}} className="w-full bg-[#007cc2] text-white text-[10px] font-bold py-2 rounded">AGREGAR</button>}
+                                    )) : <button onClick={() => {onAdd({id:p.id, code:p.code, color:'', size:'', price:p.price}); setActiveH(null);}} className="w-full bg-[#007cc2] text-white text-xs font-bold py-2.5 rounded hover:bg-blue-700 transition">AGREGAR AL CARRITO</button>}
                                 </div>
                             </div>
                         )}
@@ -663,29 +707,31 @@
             });
 
             return (
-                <div className="flex flex-col flex-grow items-center mt-2 md:mt-4" onClick={() => { setActiveH(null); }}>
+                <div className="flex flex-col flex-grow items-center relative" onClick={() => { setActiveH(null); }}>
 
-                    {/* Visor de Catálogo Gigante en PC con Flechas Externas */}
-                    <div className="relative flex items-center justify-center w-full flex-grow min-h-[75vh] md:min-h-[88vh] xl:min-h-[92vh]">
+                    {/* Visor de Catálogo INMERSIVO */}
+                    <div className="relative flex items-center justify-center w-full flex-grow h-[calc(100vh-100px)] md:h-[calc(100vh-80px)]">
                         
                         {/* Botón Anterior Flotante */}
-                        <button onClick={handlePrev} disabled={currentIndex===0} className="absolute left-0 md:left-2 lg:left-6 z-10 p-1 md:p-4 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/70 md:bg-white rounded-full shadow-md md:shadow-xl border border-gray-100">
+                        <button onClick={handlePrev} disabled={currentIndex===0} className="absolute left-2 md:left-6 z-10 p-2 md:p-4 disabled:opacity-10 text-white hover:scale-110 transition bg-black/40 hover:bg-black/60 rounded-full shadow-lg backdrop-blur-sm">
                             <Icons.ChevronLeft />
                         </button>
                         
-                        {/* Contenedor del Libro adaptativo y maximizado */}
-                        <div className="flex bg-white shadow-2xl h-full w-full max-w-[100%] md:max-w-[94%] xl:max-w-[1600px] rounded-lg md:rounded-2xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-                            <div className={`h-full flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-4 ${isMobile ? 'w-full' : 'w-1/2 border-r'}`}>
-                                <div className="relative inline-flex items-center justify-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                                    <img src={left?.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
-                                    {renderH(left)}
-                                </div>
+                        {/* Contenedor del Libro sin márgenes limitantes */}
+                        <div className="flex h-full w-full max-w-[100%] overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+                            <div className={`h-full flex items-center justify-center relative ${isMobile ? 'w-full' : 'w-1/2'}`}>
+                                {left && (
+                                    <div className="relative inline-flex items-center justify-center h-full w-full">
+                                        <img src={left.imageUrl} className="w-full h-full object-contain md:object-cover md:object-right pointer-events-none" />
+                                        {renderH(left)}
+                                    </div>
+                                )}
                             </div>
                             {!isMobile && (
-                                <div className="w-1/2 h-full flex items-center justify-center bg-gray-50 overflow-hidden p-1 md:p-4">
+                                <div className="w-1/2 h-full flex items-center justify-center relative">
                                     {right && (
-                                        <div className="relative inline-flex items-center justify-center" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                                            <img src={right.imageUrl} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" style={{ maxHeight: '100%' }} />
+                                        <div className="relative inline-flex items-center justify-center h-full w-full">
+                                            <img src={right.imageUrl} className="w-full h-full object-contain md:object-cover md:object-left pointer-events-none" />
                                             {renderH(right)}
                                         </div>
                                     )}
@@ -694,20 +740,19 @@
                         </div>
 
                         {/* Botón Siguiente Flotante */}
-                        <button onClick={handleNext} disabled={currentIndex + step >= pages.length} className="absolute right-0 md:right-2 lg:right-6 z-10 p-1 md:p-4 disabled:opacity-10 text-[#007cc2] hover:scale-110 transition bg-white/70 md:bg-white rounded-full shadow-md md:shadow-xl border border-gray-100">
+                        <button onClick={handleNext} disabled={currentIndex + step >= pages.length} className="absolute right-2 md:right-6 z-10 p-2 md:p-4 disabled:opacity-10 text-white hover:scale-110 transition bg-black/40 hover:bg-black/60 rounded-full shadow-lg backdrop-blur-sm">
                             <Icons.ChevronRight />
                         </button>
 
                     </div>
-                    
-                    <div className="mt-4 mb-2 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
-                        Página {currentIndex+1} {(!isMobile && right) ? `- ${currentIndex+2}` : ''} de {pages.length}
-                    </div>
+
+                    {/* Modal de YouTube */}
+                    {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}
                 </div>
             );
         }
 
-        function AdminView({ catalogs, activeCatalogId, setActiveCatalogId, pages, products, hotspots, setView, setGlobalMessage, setConfirmDialog }) {
+        function AdminView({ catalogs, activeCatalogId, setActiveCatalogId, pages, products, hotspots, setGlobalMessage, setConfirmDialog }) {
             const [tab, setTab] = useState('pdf');
             const [loading, setLoading] = useState(false);
             const [uploadProgress, setUploadProgress] = useState(0);
@@ -814,7 +859,7 @@
             const handleSetIndex = (page) => {
                 setPromptDialog({
                     title: "Crear Índice de Sección",
-                    text: "Asigna un nombre a esta página para que el cliente pueda navegar rápidamente (ej. Zapatos de Dama, Ropa Niños).",
+                    text: "Asigna un nombre a esta página para que el cliente pueda navegar rápidamente (ej. Zapatos de Dama).",
                     placeholder: "Nombre de sección...",
                     defaultValue: page.indexName || '',
                     onSubmit: async (tagName) => {
@@ -827,13 +872,31 @@
                 });
             };
 
+            // NUEVA FUNCIÓN: Agregar GIF a Portada
+            const handleSetCoverGIF = (page) => {
+                setPromptDialog({
+                    title: "Portada Animada (GIF)",
+                    text: "Pega el enlace (URL) de una imagen o GIF animado. Se reemplazará la miniatura de esta página en la galería principal.",
+                    placeholder: "https://ejemplo.com/mianimacion.gif",
+                    defaultValue: page.coverImage || '',
+                    onSubmit: async (url) => {
+                        try {
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', page.id), {
+                                coverImage: url.trim() === '' ? null : url.trim()
+                            });
+                        } catch(err) { console.error(err); }
+                    }
+                });
+            };
+
             const updateProduct = async (e) => {
                 e.preventDefault();
                 try {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), {
                         code: editingProduct.code,
                         price: parseFloat(editingProduct.price),
-                        description: editingProduct.description
+                        description: editingProduct.description,
+                        youtubeUrl: editingProduct.youtubeUrl || null // Guardar link de youtube
                     });
                     setEditingProduct(null);
                 } catch (err) { console.error(err); }
@@ -855,85 +918,92 @@
             }, {});
 
             return (
-                <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                <div className="bg-white p-4 md:p-8 rounded-[30px] shadow-2xl border border-gray-100">
                     {promptDialog && <PromptModal dialog={promptDialog} onClose={() => setPromptDialog(null)} />}
 
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="font-extrabold text-2xl text-gray-800">Panel de Control</h2>
-                        <button onClick={() => setView('store')} className="text-sm font-bold text-[#007cc2] hover:underline">Volver a Tienda</button>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-blue-50 p-4 rounded-xl mb-6">
-                        <div className="flex items-center gap-3">
-                            <span className="font-bold text-gray-600 text-sm">Gestionando:</span>
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-blue-50 p-4 rounded-2xl mb-8 gap-4">
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <span className="font-extrabold text-blue-900 text-sm">Gestionando Catálogo:</span>
                             {catalogs.length > 0 ? (
                                 <select
-                                    className="border border-blue-200 rounded-lg text-sm font-bold text-[#007cc2] bg-white py-1 px-3 focus:outline-none cursor-pointer"
+                                    className="border-2 border-blue-200 rounded-xl text-sm font-bold text-[#007cc2] bg-white py-2 px-4 focus:outline-none cursor-pointer shadow-sm flex-1 md:flex-none"
                                     value={activeCatalogId}
                                     onChange={e => setActiveCatalogId(e.target.value)}
                                 >
                                     {catalogs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             ) : (
-                                <span className="text-sm text-gray-400">Ningún catálogo disponible</span>
+                                <span className="text-sm text-gray-500 font-medium">Ninguno disponible</span>
                             )}
                         </div>
                     </div>
 
-                    <div className="flex gap-4 border-b mb-6 overflow-x-auto pb-2 custom-scrollbar">
+                    <div className="flex gap-2 md:gap-4 border-b-2 border-gray-100 mb-8 overflow-x-auto pb-2 custom-scrollbar">
                         {['pdf', 'productos', 'pedidos'].map(t => (
-                            <button key={t} onClick={() => setTab(t)} className={`capitalize whitespace-nowrap px-2 ${tab === t ? 'border-b-2 border-[#007cc2] text-[#007cc2] font-bold' : 'text-gray-400 font-medium'}`}>
-                                {t === 'pdf' ? 'Catálogo PDF' : t}
+                            <button key={t} onClick={() => setTab(t)} className={`capitalize whitespace-nowrap px-4 py-2 rounded-xl transition ${tab === t ? 'bg-[#007cc2] text-white font-bold shadow-md' : 'text-gray-500 font-semibold hover:bg-gray-50'}`}>
+                                {t === 'pdf' ? 'Organizar Páginas' : t}
                             </button>
                         ))}
                     </div>
 
                     {tab === 'pdf' && (
                         <div>
-                            <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-10 rounded-2xl text-center mb-8 relative">
+                            <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-8 md:p-12 rounded-3xl text-center mb-10 relative transition hover:border-[#007cc2] hover:bg-blue-50/50">
                                 <input type="file" id="pdf" className="hidden" onChange={handleFileSelect} disabled={loading} />
-                                <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-3 rounded-full font-bold shadow-lg inline-flex items-center gap-2 transition-all ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700 active:scale-95'}`}>
+                                <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-4 rounded-full font-bold shadow-xl inline-flex items-center gap-2 transition-all text-lg ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700 hover:scale-105'}`}>
                                     {loading ? <Icons.Loader /> : <Icons.Plus />} {loading ? 'Procesando...' : 'Cargar Nuevo Catálogo PDF'}
                                 </label>
                                 
                                 {loading && (
-                                    <div className="mt-6 w-full max-w-md mx-auto">
-                                        <div className="flex justify-between text-xs font-bold text-[#007cc2] mb-1">
-                                            <span>Extrayendo páginas y códigos...</span>
+                                    <div className="mt-8 w-full max-w-md mx-auto">
+                                        <div className="flex justify-between text-sm font-bold text-[#007cc2] mb-2">
+                                            <span>Extrayendo páginas y códigos matemáticamente...</span>
                                             <span>{uploadProgress}%</span>
                                         </div>
-                                        <div className="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
-                                            <div className="bg-[#007cc2] h-2.5 transition-all duration-300 ease-out" style={{ width: `${uploadProgress}%` }}></div>
+                                        <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden shadow-inner">
+                                            <div className="bg-[#007cc2] h-3 transition-all duration-300 ease-out rounded-full" style={{ width: `${uploadProgress}%` }}></div>
                                         </div>
                                     </div>
                                 )}
 
-                                {currentPages.length > 0 && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-6 text-red-500 text-xs font-bold hover:underline">Eliminar este Catálogo Completo</button>}
+                                {currentPages.length > 0 && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-8 text-red-500 text-sm font-bold hover:underline opacity-80 hover:opacity-100 transition">Eliminar este Catálogo Completo permanentemente</button>}
                             </div>
                             
                             {currentPages.length > 0 ? (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
                                     {currentPages.map(p => (
-                                        <div key={p.id} className="relative group bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
-                                            <img src={p.imageUrl} className="rounded-lg mb-1" />
-                                            
-                                            {/* Etiqueta Visual de Índice */}
-                                            {p.indexName && (
-                                                <div className="absolute top-2 left-2 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg rounded-tl-lg shadow-sm max-w-[90%] z-10 flex items-center gap-1 overflow-hidden">
-                                                    <Icons.Tag /> <span className="truncate">{p.indexName}</span>
-                                                </div>
-                                            )}
+                                        <div key={p.id} className="relative group bg-white p-2 rounded-2xl border-2 border-gray-100 shadow-sm hover:border-blue-200 transition">
+                                            <div className="aspect-[1/1.4] overflow-hidden rounded-xl relative">
+                                                <img src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
+                                                
+                                                {/* Etiqueta Visual de Índice */}
+                                                {p.indexName && (
+                                                    <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 flex items-center gap-1 max-w-full">
+                                                        <Icons.Tag /> <span className="truncate">{p.indexName}</span>
+                                                    </div>
+                                                )}
+                                                {/* Etiqueta Visual de GIF */}
+                                                {p.coverImage && (
+                                                    <div className="absolute bottom-2 left-2 bg-yellow-400 text-yellow-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-sm z-10">
+                                                        GIF ACTIVADO
+                                                    </div>
+                                                )}
 
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 rounded-lg transition-opacity z-20">
-                                                <button onClick={() => handleSetIndex(p)} className="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition" title="Etiquetar Sección"><Icons.Tag /></button>
-                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition" title="Borrar Página"><Icons.Trash /></button>
+                                                <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20 backdrop-blur-sm">
+                                                    <button onClick={() => handleSetIndex(p)} className="bg-white text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Tag /> Índice</button>
+                                                    <button onClick={() => handleSetCoverGIF(p)} className="bg-white text-yellow-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Star /> Portada</button>
+                                                    <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Trash /> Borrar</button>
+                                                </div>
                                             </div>
-                                            <p className="text-[10px] text-center mt-1 font-bold text-gray-400">Página {p.pageNumber}</p>
+                                            <p className="text-xs text-center mt-3 font-extrabold text-gray-500">Página {p.pageNumber}</p>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-center text-gray-400 py-10">Este catálogo no tiene páginas aún.</p>
+                                <div className="text-center text-gray-400 py-20 flex flex-col items-center">
+                                    <Icons.FileText />
+                                    <p className="mt-4 font-medium">Este catálogo no tiene páginas aún.</p>
+                                </div>
                             )}
                         </div>
                     )}
@@ -941,80 +1011,112 @@
                     {tab === 'productos' && (
                         <div>
                             {editingProduct ? (
-                                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md mb-6 max-w-lg mx-auto">
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-[#007cc2]"><Icons.Edit2 /> Editar Producto</h3>
-                                    <form onSubmit={updateProduct} className="flex flex-col gap-4">
+                                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
+                                    <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Edit2 /> Editar Detalle de Producto</h3>
+                                    <form onSubmit={updateProduct} className="flex flex-col gap-5">
                                         <div>
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Código</label>
-                                            <input type="text" className="w-full border p-2.5 rounded mt-1 bg-gray-50 font-bold" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required />
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Código de Sistema</label>
+                                            <input type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Descripción (Colores y Tallas)</label>
-                                            <textarea className="w-full border p-2.5 rounded mt-1 bg-gray-50 h-28 text-sm" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción (Variantes: Colores y Tallas)</label>
+                                            <textarea className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 h-32 text-sm text-gray-700 focus:border-[#007cc2] outline-none transition custom-scrollbar" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
                                         </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Precio (Q)</label>
-                                            <input type="number" step="0.01" className="w-full border p-2.5 rounded mt-1 bg-gray-50 font-bold text-blue-600" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Precio de Venta (Q)</label>
+                                                <input type="number" step="0.01" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-blue-50 font-extrabold text-blue-700 focus:border-[#007cc2] outline-none transition" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1"><Icons.Play /> Enlace YouTube</label>
+                                                <input type="url" placeholder="https://youtu.be/..." className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-red-50 text-xs text-red-700 focus:border-red-400 outline-none transition" value={editingProduct.youtubeUrl || ''} onChange={e => setEditingProduct({...editingProduct, youtubeUrl: e.target.value})} />
+                                            </div>
                                         </div>
-                                        <div className="flex gap-3 mt-2">
-                                            <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold flex-1 hover:bg-gray-200 transition">Cancelar</button>
-                                            <button type="submit" className="bg-[#007cc2] text-white px-4 py-2.5 rounded-lg font-bold flex-1 hover:bg-blue-700 transition shadow-md">Guardar Cambios</button>
+                                        <div className="flex gap-4 mt-4">
+                                            <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 text-gray-600 px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-gray-200 transition">Cancelar Edición</button>
+                                            <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-blue-700 transition shadow-lg">Guardar Cambios</button>
                                         </div>
                                     </form>
                                 </div>
                             ) : (
-                                <div className="space-y-6">
+                                <div className="space-y-8">
                                     {Object.keys(groupedProducts).sort((a,b)=>a-b).map(pageNum => (
-                                        <div key={pageNum} className="bg-white border rounded-xl overflow-hidden shadow-sm">
-                                            <div className="bg-[#f0f4f8] px-5 py-3 font-bold text-gray-700 border-b flex justify-between items-center">
-                                                <span>Página {pageNum}</span>
-                                                <span className="text-xs bg-white px-2 py-1 rounded text-gray-500 border">{groupedProducts[pageNum].length} productos</span>
+                                        <div key={pageNum} className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
+                                            <div className="bg-[#f8fafc] px-6 py-4 font-bold text-gray-800 border-b border-gray-200 flex justify-between items-center">
+                                                <span className="text-lg">Productos detectados en Página {pageNum}</span>
+                                                <span className="text-xs bg-white px-3 py-1.5 rounded-full text-[#007cc2] border border-blue-100 shadow-sm">{groupedProducts[pageNum].length} ítems</span>
                                             </div>
-                                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                 {groupedProducts[pageNum].map(p => (
-                                                    <div key={p.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 relative group hover:shadow-md transition">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <p className="font-extrabold text-gray-800 text-lg">{p.code}</p>
-                                                            <p className="text-sm font-bold text-white bg-blue-500 px-2 py-0.5 rounded">Q{p.price}</p>
+                                                    <div key={p.id} className="p-5 border-2 border-transparent hover:border-blue-100 rounded-2xl bg-gray-50 relative group transition-all shadow-sm hover:shadow-md">
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">
+                                                                {p.code} 
+                                                                {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full"><Icons.Play /></span>}
+                                                            </p>
+                                                            <p className="text-sm font-extrabold text-white bg-[#007cc2] px-2.5 py-1 rounded-lg shadow-sm">Q{p.price}</p>
                                                         </div>
-                                                        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-2">{p.description}</p>
-                                                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-lg p-1 shadow-sm border">
-                                                            <button onClick={() => setEditingProduct(p)} className="text-[#007cc2] p-1.5 rounded hover:bg-blue-50"><Icons.Edit2 /></button>
-                                                            <button onClick={() => handleDeleteProduct(p)} className="text-red-500 p-1.5 rounded hover:bg-red-50"><Icons.Trash /></button>
+                                                        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-3">{p.description}</p>
+                                                        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button onClick={() => setEditingProduct(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Edit2 /></button>
+                                                            <button onClick={() => handleDeleteProduct(p)} className="bg-white text-red-500 p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Trash /></button>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                     ))}
-                                    {currentProducts.length === 0 && <p className="text-gray-500 text-center py-10">Este catálogo no tiene productos. Sube un PDF.</p>}
+                                    {currentProducts.length === 0 && (
+                                        <div className="text-center text-gray-400 py-20 flex flex-col items-center">
+                                            <Icons.Package />
+                                            <p className="mt-4 font-medium">Este catálogo aún no tiene productos extraídos.</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
                     )}
 
                     {tab === 'pedidos' && (
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             {orders.map(o => (
-                                <div key={o.id} className="p-5 border rounded-xl bg-green-50/50 shadow-sm">
-                                    <p className="font-bold text-lg">{o.customerName}</p>
-                                    <div className="text-sm text-gray-600 mb-3 space-y-1">
-                                        <p>📞 {o.customerPhone}</p>
-                                        <p>✉️ {o.customerEmail || 'N/A'}</p>
-                                        <p>📍 {o.customerAddress}</p>
+                                <div key={o.id} className="p-6 border border-green-100 rounded-3xl bg-green-50/30 shadow-sm hover:shadow-md transition">
+                                    <div className="flex justify-between items-start mb-4 border-b border-green-100 pb-4">
+                                        <div>
+                                            <p className="font-extrabold text-xl text-gray-800">{o.customerName}</p>
+                                            <p className="text-xs text-gray-400 mt-1">{new Date(o.createdAt?.toDate()).toLocaleString()}</p>
+                                        </div>
+                                        <p className="font-extrabold text-[#128C7E] text-2xl bg-white px-4 py-2 rounded-2xl shadow-sm border border-green-50">Q{o.total?.toFixed(2)}</p>
                                     </div>
-                                    <div className="border-t pt-3 mt-3 border-green-100">
-                                        <p className="font-bold text-xs text-green-800 uppercase mb-2">Productos ({o.items.length}):</p>
-                                        {o.items.map((i, idx) => (
-                                            <p key={idx} className="text-sm text-gray-700 font-medium">
-                                                {i.qty}x {i.code} <span className="text-gray-500 font-normal">{(i.color || i.size) ? `(${i.color} Talla: ${i.size})` : ''}</span>
-                                            </p>
-                                        ))}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2 text-sm text-gray-600 bg-white p-4 rounded-2xl border border-gray-50">
+                                            <p className="flex items-center gap-2"><Icons.Phone /> <span className="font-bold">{o.customerPhone}</span></p>
+                                            {o.customerEmail && <p className="flex items-center gap-2"><Icons.Mail /> <span>{o.customerEmail}</span></p>}
+                                            <p className="flex items-start gap-2"><Icons.MapPin /> <span className="leading-snug">{o.customerAddress}</span></p>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-2xl border border-gray-50">
+                                            <p className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-3">Detalle ({o.items.length} ítems):</p>
+                                            <ul className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                                                {o.items.map((i, idx) => (
+                                                    <li key={idx} className="text-sm flex justify-between items-start border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+                                                        <div className="font-medium text-gray-700">
+                                                            <span className="font-bold text-black">{i.qty}x</span> {i.code} 
+                                                            <span className="text-xs text-gray-500 block mt-0.5">{(i.color || i.size) ? `${i.color} ${i.size ? `(Talla: ${i.size})` : ''}` : ''}</span>
+                                                        </div>
+                                                        <span className="text-gray-500 font-medium">Q{i.price}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     </div>
-                                    <p className="font-extrabold text-green-700 text-right text-lg mt-2">Total: Q{o.total?.toFixed(2)}</p>
                                 </div>
                             ))}
-                            {orders.length === 0 && <p className="text-gray-500 text-center py-10">Aún no hay pedidos.</p>}
+                            {orders.length === 0 && (
+                                <div className="text-center text-gray-400 py-20 flex flex-col items-center">
+                                    <Icons.Cart />
+                                    <p className="mt-4 font-medium">No has recibido pedidos nuevos por acá.</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -1041,35 +1143,40 @@
                     {/* Drawer lateral para ver productos */}
                     {step === 'cart' && (
                         <div className="fixed inset-0 bg-black/60 z-40 flex justify-end transition-opacity">
-                            <div className="bg-white w-full max-w-sm h-full p-6 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
-                                <div className="flex justify-between items-center mb-6 border-b pb-4">
-                                    <h2 className="font-extrabold text-xl flex items-center gap-2 text-gray-800"><Icons.Cart /> Tu Pedido</h2>
-                                    <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full"><Icons.X /></button>
+                            <div className="bg-white w-full max-w-md h-full p-6 md:p-8 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+                                <div className="flex justify-between items-center mb-8 border-b pb-4">
+                                    <h2 className="font-extrabold text-2xl flex items-center gap-2 text-gray-800"><Icons.Cart /> Tu Pedido</h2>
+                                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition"><Icons.X /></button>
                                 </div>
-                                <div className="flex-grow overflow-auto space-y-4 pr-2 custom-scrollbar">
+                                <div className="flex-grow overflow-auto space-y-5 pr-2 custom-scrollbar">
                                     {cart.map(i => (
-                                        <div key={i.id} className="flex justify-between items-center border-b border-gray-50 pb-3">
+                                        <div key={i.id} className="flex justify-between items-center border border-gray-100 bg-gray-50 rounded-2xl p-4 shadow-sm">
                                             <div className="flex-1">
-                                                <p className="font-bold text-sm text-gray-800">{i.code}</p>
-                                                <p className="text-[10px] text-gray-400 font-medium">{i.color} {i.size && `/ Talla ${i.size}`}</p>
-                                                <p className="font-bold text-[#007cc2] mt-1 text-sm">Q{i.price?.toFixed(2)}</p>
+                                                <p className="font-extrabold text-lg text-gray-800">{i.code}</p>
+                                                <p className="text-xs text-gray-500 font-bold mt-1 uppercase">{i.color} {i.size && `/ Talla ${i.size}`}</p>
+                                                <p className="font-bold text-[#007cc2] mt-2 text-sm">Q{i.price?.toFixed(2)} c/u</p>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex border rounded-lg overflow-hidden bg-gray-50 items-center">
-                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:Math.max(1,x.qty-1)}:x))} className="px-2 py-1 font-bold text-gray-500">-</button>
-                                                    <span className="px-2 text-xs font-bold text-gray-700">{i.qty}</span>
-                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:x.qty+1}:x))} className="px-2 py-1 font-bold text-gray-500">+</button>
+                                            <div className="flex flex-col items-end gap-3">
+                                                <button onClick={() => setCart(cart.filter(x=>x.id!==i.id))} className="text-red-400 hover:text-red-600 transition"><Icons.Trash /></button>
+                                                <div className="flex border-2 border-gray-200 rounded-lg overflow-hidden bg-white items-center shadow-sm">
+                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:Math.max(1,x.qty-1)}:x))} className="px-3 py-1 font-extrabold text-gray-500 hover:bg-gray-100 transition">-</button>
+                                                    <span className="px-3 text-sm font-extrabold text-gray-800 min-w-[2rem] text-center">{i.qty}</span>
+                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:x.qty+1}:x))} className="px-3 py-1 font-extrabold text-gray-500 hover:bg-gray-100 transition">+</button>
                                                 </div>
-                                                <button onClick={() => setCart(cart.filter(x=>x.id!==i.id))} className="text-red-300 hover:text-red-500"><Icons.Trash /></button>
                                             </div>
                                         </div>
                                     ))}
-                                    {cart.length===0 && <div className="h-full flex flex-col items-center justify-center opacity-20"><Icons.Cart /><p className="font-bold mt-2">Carrito vacío</p></div>}
+                                    {cart.length===0 && <div className="h-full flex flex-col items-center justify-center opacity-20"><Icons.Cart /><p className="font-bold mt-4 text-xl">Carrito vacío</p></div>}
                                 </div>
                                 {cart.length > 0 && (
-                                    <div className="pt-4 border-t mt-4">
-                                        <div className="flex justify-between items-end mb-4"><span className="text-gray-400 font-bold">Total:</span><span className="text-2xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span></div>
-                                        <button onClick={()=>setStep('form')} className="w-full bg-[#007cc2] text-white p-4 rounded-2xl font-extrabold hover:bg-blue-700 shadow-lg transition-all active:scale-95">Enviar a mi asesor(a)</button>
+                                    <div className="pt-6 border-t mt-6 bg-white">
+                                        <div className="flex justify-between items-end mb-6 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                            <span className="text-gray-500 font-extrabold uppercase text-xs tracking-widest">Total a Pagar</span>
+                                            <span className="text-3xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span>
+                                        </div>
+                                        <button onClick={()=>setStep('form')} className="w-full bg-[#007cc2] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-blue-700 shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">
+                                            Siguiente Paso <Icons.ChevronRight />
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -1078,45 +1185,45 @@
 
                     {/* Modal centrado para finalizar pedido (Checkout) */}
                     {step === 'form' && (
-                        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95">
-                                <div className="bg-gray-50 p-4 border-b flex justify-between items-center">
-                                    <h3 className="font-extrabold text-xl text-gray-800">Finalizar Pedido</h3>
-                                    <button onClick={() => setStep('cart')} className="text-sm font-bold text-gray-500 hover:text-gray-800 underline">Volver</button>
+                        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                            <div className="bg-white rounded-[30px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95">
+                                <div className="bg-gray-50 p-6 border-b flex justify-between items-center">
+                                    <h3 className="font-extrabold text-2xl text-gray-800">Casi Listo</h3>
+                                    <button onClick={() => setStep('cart')} className="text-sm font-bold text-[#007cc2] hover:text-blue-800 transition px-3 py-1.5 bg-blue-50 rounded-full">⬅ Volver</button>
                                 </div>
-                                <form onSubmit={e=>{e.preventDefault(); send();}} className="p-6 space-y-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 flex justify-center text-gray-400"><Icons.User /></div>
+                                <form onSubmit={e=>{e.preventDefault(); send();}} className="p-8 space-y-6">
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.User /></div>
                                         <div className="flex-1">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase">Nombre completo</label>
-                                            <input required className="w-full border-b border-gray-300 py-1 focus:border-[#007cc2] outline-none text-sm font-medium" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Nombre completo</label>
+                                            <input required className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 flex justify-center text-gray-400"><Icons.Phone /></div>
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.Phone /></div>
                                         <div className="flex-1">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase">Teléfono</label>
-                                            <input required placeholder="Ejemplo: 1125456587" className="w-full border-b border-gray-300 py-1 focus:border-[#007cc2] outline-none text-sm font-medium" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} />
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Teléfono (WhatsApp)</label>
+                                            <input required type="tel" placeholder="Ej: 5555 5555" className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 flex justify-center text-gray-400"><Icons.Mail /></div>
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.Mail /></div>
                                         <div className="flex-1">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase">Email</label>
-                                            <input type="email" className="w-full border-b border-gray-300 py-1 focus:border-[#007cc2] outline-none text-sm font-medium" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Email (Opcional)</label>
+                                            <input type="email" className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 flex justify-center text-gray-400"><Icons.MapPin /></div>
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.MapPin /></div>
                                         <div className="flex-1">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase">Dirección</label>
-                                            <input required className="w-full border-b border-gray-300 py-1 focus:border-[#007cc2] outline-none text-sm font-medium" value={form.address} onChange={e=>setForm({...form,address:e.target.value})} />
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Dirección de Entrega</label>
+                                            <input required placeholder="Ciudad, Municipio, Zona..." className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.address} onChange={e=>setForm({...form,address:e.target.value})} />
                                         </div>
                                     </div>
-                                    <div className="pt-4">
-                                        <button type="submit" className="w-full bg-[#128C7E] text-white p-4 rounded-xl font-extrabold hover:bg-[#075E54] shadow-lg flex items-center justify-center gap-2">
-                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                            Enviar
+                                    <div className="pt-6">
+                                        <button type="submit" className="w-full bg-[#25D366] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-[#128C7E] shadow-xl shadow-green-500/30 flex items-center justify-center gap-3 transition-transform active:scale-95">
+                                            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                            Enviar Pedido por WhatsApp
                                         </button>
                                     </div>
                                 </form>
@@ -1133,15 +1240,16 @@
             return (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
                     <div className="bg-white p-8 rounded-[40px] w-full max-w-sm text-center shadow-2xl relative animate-in zoom-in-95" onClick={e=>e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute right-6 top-6 text-gray-300"><Icons.X /></button>
-                        <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><Icons.Share /></div>
-                        <h3 className="font-extrabold text-2xl mb-2 text-gray-800">Compartir Catálogo</h3>
-                        <p className="text-sm text-gray-500 mb-8 px-2">Envía este enlace por WhatsApp para que tus clientes puedan comprar.</p>
-                        <div className="flex gap-2 bg-white p-2 rounded-2xl border border-gray-200 mb-2">
-                            <input readOnly value={link} className="flex-1 bg-transparent text-xs text-gray-500 outline-none px-2 font-medium overflow-hidden text-ellipsis" />
-                            <button onClick={copy} className={`px-5 py-3 rounded-xl font-bold text-white transition-all shadow-md ${copied?'bg-green-500':'bg-[#007cc2]'}`}>{copied ? <Icons.Check /> : <Icons.Copy />}</button>
+                        <button onClick={onClose} className="absolute right-6 top-6 text-gray-300 hover:text-gray-600 transition"><Icons.X /></button>
+                        <div className="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner"><Icons.Share /></div>
+                        <h3 className="font-extrabold text-2xl mb-2 text-gray-800">¡Comparte tu Tienda!</h3>
+                        <p className="text-sm text-gray-500 mb-8 px-2 leading-relaxed">Copia este enlace y envíalo a tus clientes en WhatsApp o Redes Sociales.</p>
+                        <div className="flex gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-200 mb-2 focus-within:border-[#007cc2] transition-colors">
+                            <input readOnly value={link} className="flex-1 bg-transparent text-xs text-gray-600 outline-none px-3 font-bold overflow-hidden text-ellipsis" />
+                            <button onClick={copy} className={`px-6 py-3.5 rounded-xl font-bold text-white transition-all shadow-md flex items-center gap-2 ${copied?'bg-green-500':'bg-[#007cc2] hover:bg-blue-700'}`}>
+                                {copied ? <><Icons.Check /> Copiado</> : <><Icons.Copy /> Copiar</>}
+                            </button>
                         </div>
-                        {copied && <p className="text-green-600 text-[10px] font-bold uppercase tracking-widest mt-2 animate-bounce">¡Copiado con éxito!</p>}
                     </div>
                 </div>
             );

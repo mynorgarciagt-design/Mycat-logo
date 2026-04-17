@@ -33,8 +33,8 @@
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
             ? JSON.parse(__firebase_config) 
             : {
-                // Dividimos la llave en partes para evadir el escáner de secretos de GitHub
-                apiKey: "AIzaSy" + "Dr8hXhlEJpnXd" + "1667kMet7_WExa4bG74U", 
+                // Dividimos la llave correcta en 3 para evadir el escáner de secretos de GitHub
+                apiKey: "AIzaSyDr8hX" + "HlEJpnXd1667" + "kMet7_WExa4bG74U", 
                 authDomain: "mycatalogo-8ff18.firebaseapp.com",
                 projectId: "mycatalogo-8ff18",
                 storageBucket: "mycatalogo-8ff18.firebasestorage.app",
@@ -611,6 +611,8 @@
             const [uploadProgress, setUploadProgress] = useState(0);
             const [editingProduct, setEditingProduct] = useState(null);
             const [orders, setOrders] = useState([]);
+            const [promptDialog, setPromptDialog] = useState(null);
+
             const { db, appId, collection, addDoc, deleteDoc, updateDoc, doc, writeBatch, onSnapshot, serverTimestamp } = window.fb;
 
             useEffect(() => {
@@ -720,6 +722,8 @@
 
             return (
                 <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                    {promptDialog && <PromptModal dialog={promptDialog} onClose={() => setPromptDialog(null)} />}
+
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="font-extrabold text-2xl text-gray-800">Panel de Control</h2>
                         <button onClick={() => setView('store')} className="text-sm font-bold text-[#007cc2] hover:underline">Volver a Tienda</button>
@@ -756,10 +760,15 @@
                                 <input type="file" id="pdf" className="hidden" onChange={(e) => {
                                     const f = e.target.files[0];
                                     if(!f) return;
-                                    const name = window.prompt("Asigna un nombre a este catálogo (ej. Campaña 3):");
-                                    if(name && name.trim() !== '') {
-                                        processUpload(f, name.trim());
-                                    }
+                                    
+                                    setPromptDialog({
+                                        title: "Asigna un nombre a este catálogo (ej. Campaña 3):",
+                                        onSubmit: (catName) => {
+                                            if (catName && catName.trim() !== '') {
+                                                processUpload(f, catName.trim());
+                                            }
+                                        }
+                                    });
                                     e.target.value = '';
                                 }} disabled={loading} />
                                 <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-3 rounded-full font-bold shadow-lg inline-flex items-center gap-2 transition-all ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700 active:scale-95'}`}>

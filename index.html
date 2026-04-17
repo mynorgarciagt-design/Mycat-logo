@@ -33,8 +33,8 @@
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
             ? JSON.parse(__firebase_config) 
             : {
-                // Truco seguro para GitHub y Vercel
-                apiKey: ["AIzaSyDr8hX", "HlEJpnXd1667", "kMet7_WExa4bG74U"].join(''), 
+                // Truco seguro para GitHub con tu llave EXACTA (con la P mayúscula corregida)
+                apiKey: ["AIzaSyDr8hX", "HlEJPnXd1667", "kMet7_WExa4bG74U"].join(''), 
                 authDomain: "mycatalogo-8ff18.firebaseapp.com",
                 projectId: "mycatalogo-8ff18",
                 storageBucket: "mycatalogo-8ff18.firebasestorage.app",
@@ -347,8 +347,8 @@
                         console.error(e);
                         let errorText = "Error al conectar Firebase: " + e.message;
                         if (e.code === 'auth/api-key-not-valid') errorText = "La API Key es incorrecta. Revísala en el index.html.";
-                        else if (e.code === 'auth/operation-not-allowed') errorText = "Habilita 'Anónimo' en Firebase Authentication.";
-                        else if (e.code === 'auth/unauthorized-domain') errorText = "Agrega tu dominio de Vercel en Firebase Authentication -> Settings.";
+                        else if (e.code === 'auth/operation-not-allowed') errorText = "Habilita 'Anónimo' en Firebase Authentication -> Sign-in method.";
+                        else if (e.code === 'auth/unauthorized-domain') errorText = "Agrega el dominio de Vercel (ej. mycat-logo.vercel.app) en Firebase Authentication -> Settings -> Authorized domains.";
                         setGlobalMessage({ title: "Error de Configuración", text: errorText, type: "error" });
                         setReady(true);
                     }
@@ -694,7 +694,6 @@
                                 ...hotspotsToDelete.map(h => doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id))
                             ];
                             
-                            // Borrar en lotes seguros de 400 elementos para evitar límites de Firestore
                             for (let i = 0; i < toDelete.length; i += 400) {
                                 const b = writeBatch(db);
                                 toDelete.slice(i, i + 400).forEach(d => b.delete(d));

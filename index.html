@@ -48,7 +48,6 @@
         const finalAppId = (typeof __app_id !== 'undefined' && __app_id) ? __app_id : "mycatalogo-8ff18";
         const initialToken = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) ? __initial_auth_token : null;
 
-        // Exportar a global para que React pueda usarlo
         window.fb = { 
             auth, db, appId: finalAppId, collection, addDoc, onSnapshot, deleteDoc, 
             updateDoc, doc, serverTimestamp, writeBatch, signInAnonymously, 
@@ -84,7 +83,7 @@
             Edit2: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
             Tag: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>,
             Star: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
-            Play: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Play: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
         };
 
         // --- LÓGICA DE EXTRACCIÓN AVANZADA DE TALLAS ---
@@ -273,105 +272,6 @@
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                 allowFullScreen
                             ></iframe>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // --- COMPONENTE: AJUSTADOR MANUAL DE ICONOS ---
-        function HotspotAdjuster({ page, products, hotspots, onClose }) {
-            const [selectedProd, setSelectedProd] = useState(null);
-            const { db, appId, collection, addDoc, updateDoc, doc } = window.fb;
-
-            const pageProducts = products.filter(p => p.pageNumber === page.pageNumber && p.catalogId === page.catalogId);
-            const pageHotspots = hotspots.filter(h => h.pageId === page.id);
-
-            const handleImageClick = async (e) => {
-                if (!selectedProd) {
-                    alert("⚠️ Primero debes seleccionar (tocar) un producto en la lista de la derecha.");
-                    return;
-                }
-                const rect = e.target.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-                const existingH = pageHotspots.find(h => h.productId === selectedProd);
-                if (existingH) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', existingH.id), { x, y });
-                } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), {
-                        pageId: page.id,
-                        productId: selectedProd,
-                        x, y,
-                        catalogId: page.catalogId
-                    });
-                }
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col md:flex-row overflow-hidden animate-in fade-in">
-                    <div className="p-4 flex justify-between items-center md:hidden bg-gray-900 border-b border-gray-800">
-                        <h3 className="text-white font-bold text-sm">Ajustar Carritos - Pág {page.pageNumber}</h3>
-                        <button onClick={onClose} className="text-white bg-red-500 px-4 py-1.5 rounded-full text-xs font-bold">Cerrar</button>
-                    </div>
-                    
-                    <div className="flex-1 flex items-center justify-center p-4 overflow-auto relative">
-                        <div className="relative inline-block max-w-full max-h-full shadow-2xl bg-white">
-                            <img 
-                                src={page.imageUrl} 
-                                alt="Página a Ajustar" 
-                                onClick={handleImageClick}
-                                className="max-h-[85vh] w-auto cursor-crosshair relative z-10" 
-                            />
-                            {pageHotspots.map(h => {
-                                const p = pageProducts.find(prod => prod.id === h.productId);
-                                const isSelected = selectedProd === h.productId;
-                                return (
-                                    <div 
-                                        key={h.id} 
-                                        onClick={(e) => { e.stopPropagation(); setSelectedProd(h.productId); }}
-                                        className={`absolute w-10 h-10 -ml-5 -mt-5 rounded-full flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] ${isSelected ? 'bg-green-500 border-white scale-125 z-[60] animate-pulse' : 'bg-[#007cc2] border-white hover:scale-110 z-50 opacity-90 hover:opacity-100'}`}
-                                        style={{left: `${h.x}%`, top: `${h.y}%`}}
-                                        title={p ? p.code : 'Desconocido'}
-                                    >
-                                        <Icons.Cart />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="w-full md:w-80 bg-white flex flex-col shadow-2xl z-10 h-72 md:h-full">
-                        <div className="p-5 border-b hidden md:flex justify-between items-center bg-gray-50">
-                            <h3 className="font-extrabold text-gray-800">Posición de Iconos</h3>
-                            <button onClick={onClose} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition"><Icons.X /></button>
-                        </div>
-                        <div className="p-4 bg-blue-50 text-xs text-blue-900 font-medium border-b border-blue-100 leading-relaxed">
-                            <span className="font-extrabold block mb-1">Instrucciones:</span>
-                            1️⃣ Toca un código en la lista.<br/>
-                            2️⃣ Toca la foto para poner su icono.<br/>
-                            <span className="text-gray-500 text-[10px] block mt-2">*Añade manuales en la pestaña 'Productos' si falta alguno.</span>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-gray-50">
-                            {pageProducts.length === 0 ? (
-                                <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p>
-                            ) : pageProducts.map(p => {
-                                const hasIcon = pageHotspots.some(h => h.productId === p.id);
-                                return (
-                                    <button 
-                                        key={p.id}
-                                        onClick={() => setSelectedProd(p.id)}
-                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]' : 'border-white hover:border-blue-200 bg-white shadow-sm'}`}
-                                    >
-                                        <div>
-                                            <p className={`font-extrabold text-lg ${selectedProd === p.id ? 'text-green-700' : 'text-gray-800'}`}>{p.code}</p>
-                                            <p className="text-[11px] font-bold text-gray-400">Q{p.price}</p>
-                                        </div>
-                                        {hasIcon && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
-                                    </button>
-                                );
-                            })}
                         </div>
                     </div>
                 </div>
@@ -710,6 +610,7 @@
                                     pages={pages} 
                                     products={products} 
                                     hotspots={hotspots}
+                                    setView={(v) => { setView(v); if(v === 'store') setShowCatalogList(true); }} 
                                     setGlobalMessage={setGlobalMessage} 
                                     setConfirmDialog={setConfirmDialog} 
                                 />
@@ -795,17 +696,20 @@
                 const grouped = vars.reduce((acc, v) => { if(!acc[v.color]) acc[v.color]=[]; acc[v.color].push(v.size); return acc; }, {});
                 
                 return (
-                    <div key={h.id} className="absolute z-20" style={{ left: `calc(${h.x}% - 24px)`, top: `${h.y}%`, transform: 'translateY(-50%)' }}>
+                    <div key={h.id} className="absolute z-20 flex items-center gap-2" style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
                         <div onClick={(e) => {e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id);}} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
+                        
+                        {/* Botón Play directo en el PDF (si hay youtubeUrl) */}
+                        {p.youtubeUrl && (
+                            <div onClick={(e) => {e.stopPropagation(); setPlayingVideo(p.youtubeUrl);}} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow">
+                                <Icons.Play />
+                            </div>
+                        )}
+
                         {activeH === h.id && (
-                            <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2 animate-in fade-in" onClick={e => e.stopPropagation()}>
+                            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2 animate-in fade-in" onClick={e => e.stopPropagation()}>
                                 <div className="flex justify-between items-start mb-1">
                                     <p className="text-[12px] font-extrabold text-gray-800 leading-none">{p.code}</p>
-                                    {p.youtubeUrl && (
-                                        <button onClick={() => setPlayingVideo(p.youtubeUrl)} className="text-red-600 hover:scale-110 transition bg-red-50 p-1 rounded-full" title="Ver Video">
-                                            <Icons.Play />
-                                        </button>
-                                    )}
                                 </div>
                                 <p className="text-sm font-bold text-[#007cc2] mb-3">Q{p.price?.toFixed(2)}</p>
                                 <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
@@ -833,22 +737,23 @@
                             <Icons.ChevronLeft />
                         </button>
                         
-                        <div className="flex bg-white shadow-2xl h-full w-full max-w-[1400px] rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-                            <div className={`h-full flex items-center justify-center relative bg-white overflow-hidden p-1 md:p-3 lg:p-4 ${isMobile ? 'w-full' : 'w-1/2 border-r border-gray-100'}`}>
+                        {/* Contenedor del Libro modificado para ajustarse a las imágenes */}
+                        <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+                            <div className={`relative h-full bg-white overflow-hidden ${isMobile ? '' : 'border-r border-gray-100'}`}>
                                 {left && (
-                                    <div className="relative h-full max-w-full inline-block">
-                                        <img src={left.imageUrl} className="h-full w-auto max-w-full object-contain pointer-events-none block" />
+                                    <>
+                                        <img src={left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />
                                         {renderH(left)}
-                                    </div>
+                                    </>
                                 )}
                             </div>
                             {!isMobile && (
-                                <div className="w-1/2 h-full flex items-center justify-center relative bg-white overflow-hidden p-1 md:p-3 lg:p-4">
+                                <div className="relative h-full bg-white overflow-hidden">
                                     {right && (
-                                        <div className="relative h-full max-w-full inline-block">
-                                            <img src={right.imageUrl} className="h-full w-auto max-w-full object-contain pointer-events-none block" />
+                                        <>
+                                            <img src={right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />
                                             {renderH(right)}
-                                        </div>
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -860,7 +765,7 @@
 
                     </div>
 
-                    <div className="mt-2 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
+                    <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
                         Página {currentIndex+1} {(!isMobile && right) ? `- ${currentIndex+2}` : ''} de {pages.length}
                     </div>
 
@@ -1125,22 +1030,24 @@
                                             <div className="aspect-[1/1.4] overflow-hidden rounded-xl relative">
                                                 <img src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
                                                 
+                                                {/* Etiqueta Visual de Índice */}
                                                 {p.indexName && (
                                                     <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 flex items-center gap-1 max-w-full">
                                                         <Icons.Tag /> <span className="truncate">{p.indexName}</span>
                                                     </div>
                                                 )}
+                                                {/* Etiqueta Visual de GIF */}
                                                 {p.coverImage && (
                                                     <div className="absolute bottom-2 left-2 bg-yellow-400 text-yellow-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-sm z-10">
                                                         GIF ACTIVADO
                                                     </div>
                                                 )}
 
-                                                <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity z-20 backdrop-blur-sm">
-                                                    <button onClick={() => handleSetIndex(p)} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Tag /> Índice</button>
-                                                    <button onClick={() => handleSetCoverGIF(p)} className="bg-white text-yellow-600 text-[10px] font-bold px-3 py-1 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Star /> Portada</button>
-                                                    <button onClick={() => setAdjustingPage(p)} className="bg-white text-green-600 text-[10px] font-bold px-3 py-1 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.MapPin /> Iconos</button>
-                                                    <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Trash /> Borrar</button>
+                                                <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20 backdrop-blur-sm">
+                                                    <button onClick={() => handleSetIndex(p)} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Tag /> Índice</button>
+                                                    <button onClick={() => handleSetCoverGIF(p)} className="bg-white text-yellow-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Star /> Portada</button>
+                                                    <button onClick={() => setAdjustingPage(p)} className="bg-white text-green-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.MapPin /> Iconos</button>
+                                                    <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Trash /> Borrar</button>
                                                 </div>
                                             </div>
                                             <p className="text-xs text-center mt-3 font-extrabold text-gray-500">Página {p.pageNumber}</p>
@@ -1202,16 +1109,18 @@
                                             </div>
                                             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                 {groupedProducts[pageNum].map(p => (
-                                                    <div key={p.id} className="p-5 border-2 border-transparent hover:border-blue-100 rounded-2xl bg-gray-50 relative group transition-all shadow-sm hover:shadow-md">
-                                                        <div className="flex justify-between items-start mb-3">
-                                                            <p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">
-                                                                {p.code} 
-                                                                {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full"><Icons.Play /></span>}
-                                                            </p>
-                                                            <p className="text-sm font-extrabold text-white bg-[#007cc2] px-2.5 py-1 rounded-lg shadow-sm">Q{p.price}</p>
+                                                    <div key={p.id} className="p-5 flex flex-col justify-between border-2 border-transparent hover:border-blue-100 rounded-2xl bg-gray-50 transition-all shadow-sm hover:shadow-md">
+                                                        <div>
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">
+                                                                    {p.code} 
+                                                                    {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full"><Icons.Play /></span>}
+                                                                </p>
+                                                                <p className="text-sm font-extrabold text-white bg-[#007cc2] px-2.5 py-1 rounded-lg shadow-sm">Q{p.price}</p>
+                                                            </div>
+                                                            <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-3">{p.description}</p>
                                                         </div>
-                                                        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-3">{p.description}</p>
-                                                        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
                                                             <button onClick={() => setEditingProduct(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Edit2 /></button>
                                                             <button onClick={() => handleDeleteProduct(p)} className="bg-white text-red-500 p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Trash /></button>
                                                         </div>
@@ -1272,15 +1181,6 @@
                                 </div>
                             )}
                         </div>
-                    )}
-
-                    {adjustingPage && (
-                        <HotspotAdjuster 
-                            page={adjustingPage} 
-                            products={currentProducts} 
-                            hotspots={hotspots} 
-                            onClose={() => setAdjustingPage(null)} 
-                        />
                     )}
                 </div>
             );

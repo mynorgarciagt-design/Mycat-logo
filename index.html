@@ -34,7 +34,7 @@
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
             ? JSON.parse(__firebase_config) 
             : {
-                apiKey: "AIzaSyDr8" + "hXHlEJPn" + "Xd1667kMe" + "t7_WExa4bG74U", 
+                apiKey: "AIzaSyDr8hXHlEJPnXd1667kMet7_WExa4bG74U", 
                 authDomain: "mycatalogo-8ff18.firebaseapp.com",
                 projectId: "mycatalogo-8ff18",
                 storageBucket: "mycatalogo-8ff18.firebasestorage.app",
@@ -62,7 +62,7 @@
         const { useState, useEffect, useRef } = React;
 
         // --- CONSTANTES GLOBALES ---
-        const ADMIN_PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // 1234
+        const ADMIN_PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
         const WHATSAPP_NUMBER = "50237733402";
 
         const Icons = {
@@ -725,7 +725,7 @@
                                                 <button onClick={() => { setPromptDialog({ title: "Índice", defaultValue: p.indexName, onSubmit: async (t) => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { indexName: t.trim() }) }); }} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Índice</button>
                                                 <button onClick={() => { setPromptDialog({ title: "GIF Portada", defaultValue: p.coverImage, onSubmit: async (url) => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { coverImage: url.trim() }) }); }} className="bg-white text-yellow-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Portada</button>
                                                 <button onClick={() => setAdjustingPage(p)} className="bg-white text-green-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Iconos</button>
-                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Borrar</button>
+                                                <button onClick={() => { if(window.confirm('¿Eliminar página? No se puede deshacer.')) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id)); }} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Borrar</button>
                                             </div>
                                         </div>
                                         <p className="text-xs text-center mt-3 font-extrabold text-gray-500">Página {p.pageNumber}</p>
@@ -745,7 +745,7 @@
                             {editingProduct ? (
                                 <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
                                     <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Edit2 /> Editar</h3>
-                                    <form onSubmit={async (e) => { e.preventDefault(); try { if (editingProduct.id === 'new') { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null, pageNumber: editingProduct.pageNumber, catalogId: activeCatalogId }); } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null }); } setEditingProduct(null); } catch (err) {} }} className="flex flex-col gap-5">
+                                    <form onSubmit={async (e) => { e.preventDefault(); try { if (editingProduct.id === 'new') { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null, pageNumber: editingProduct.pageNumber, catalogId: activeCatalogId }); } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null }); } setEditingProduct(null); } catch (err) { console.error('Error guardando producto:', err); alert('Error al guardar. Intenta de nuevo.'); } }} className="flex flex-col gap-5">
                                         <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Código</label><input type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required /></div>
                                         <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</label><textarea className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 h-32 text-sm focus:border-[#007cc2] outline-none transition" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} /></div>
                                         <div className="grid grid-cols-2 gap-4">
@@ -777,7 +777,7 @@
                                                         </div>
                                                         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
                                                             <button onClick={() => setEditingProduct(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Edit2 /></button>
-                                                            <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id))} className="bg-white text-red-500 p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Trash /></button>
+                                                            <button onClick={() => { if(window.confirm('¿Eliminar producto? No se puede deshacer.')) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)); }} className="bg-white text-red-500 p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Trash /></button>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -829,7 +829,7 @@
                     {tab === 'ajustes' && (
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
                             <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Settings /> Ajustes</h3>
-                            <form onSubmit={async (e) => { e.preventDefault(); try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: e.target.whatsapp.value }, { merge: true }); setGlobalMessage({ title: "Éxito", text: "Guardado." }); } catch(err) {} }} className="flex flex-col gap-5">
+                            <form onSubmit={async (e) => { e.preventDefault(); try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: e.target.whatsapp.value }, { merge: true }); setGlobalMessage({ title: "Éxito", text: "Guardado." }); } catch(err) { console.error(err); setGlobalMessage({ title: "Error", text: "No se pudo guardar." }); } }} className="flex flex-col gap-5">
                                 <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp Ventas</label><input type="text" name="whatsapp" className="w-full border-2 border-gray-200 p-3 rounded-xl bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" defaultValue={settings?.whatsapp || ''} required pattern="[0-9]{8,15}" /></div>
                                 <div className="flex gap-4 mt-4"><button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold w-full hover:bg-blue-700 transition shadow-lg">Guardar</button></div>
                             </form>

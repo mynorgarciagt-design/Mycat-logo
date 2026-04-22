@@ -270,7 +270,9 @@
                     <div className="w-full md:w-80 bg-white flex flex-col shadow-2xl">
                         <div className="p-5 border-b hidden md:flex justify-between items-center bg-gray-50"><h3 className="font-extrabold text-gray-800">Iconos</h3><button onClick={onClose} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition"><Icons.X /></button></div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-gray-50">
-                            {pageProducts.map(p => {
+                            {pageProducts.length === 0 ? (
+                                <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p>
+                            ) : pageProducts.map(p => {
                                 const hasIcon = pageHotspots.some(h => h.productId === p.id);
                                 return (<button key={p.id} onClick={() => setSelectedProd(p.id)} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]' : 'border-white hover:border-blue-200 bg-white shadow-sm'}`}><div><p className="font-extrabold text-lg">{p.code}</p><p className="text-[11px] font-bold text-gray-400">Q{p.price}</p></div>{hasIcon && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}</button>);
                             })}
@@ -389,19 +391,30 @@
                     const pdfjsLib = window['pdfjs-dist/build/pdf'];
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
                     const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
+                    
+                    // Optimizamos memoria: creamos un solo canvas para todo el PDF
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
                     for (let i = 1; i <= pdf.numPages; i++) {
                         setUploadProgress(`Página ${i} de ${pdf.numPages}...`);
-                        const pg = await pdf.getPage(i); const vp = pg.getViewport({ scale: 2.5 }); 
-                        const canvas = document.createElement('canvas'); canvas.width = vp.width; canvas.height = vp.height;
-                        await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-                        const base64Data = canvas.toDataURL('image/jpeg', 0.92);
+                        const pg = await pdf.getPage(i); const vp = pg.getViewport({ scale: 2.0 }); 
+                        canvas.width = vp.width; canvas.height = vp.height;
+                        await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+                        const base64Data = canvas.toDataURL('image/jpeg', 0.85);
                         let finalImageUrl = base64Data; let storagePath = null;
                         try {
                             const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
                             await uploadString(imageRef, base64Data, 'data_url');
                             finalImageUrl = await getDownloadURL(imageRef); storagePath = imageRef.fullPath;
                         } catch(e) {}
-                        const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
+                        
+                        try {
+                            const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
+                        } catch(e) {
+                             throw new Error(`Error guardando página ${i}. Firebase Storage falló y la imagen es muy grande para la base de datos local (>1MB).`);
+                        }
+
                         const text = await pg.getTextContent();
                         const items = text.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => it.text.trim());
                         const ex = extractProducts(items, i, pg.getViewport({ scale: 1.0 }));
@@ -409,8 +422,11 @@
                             const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
                             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
                         }
+                        
+                        // Liberamos RAM
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
                     }
-                } catch (err) { console.error(err); setGlobalMessage({ title: "Error", text: "Error procesando PDF: " + err.message, type: "error" }); }
+                } catch (err) { console.error(err); setGlobalMessage({ title: "Error", text: err.message, type: "error" }); }
                 finally { setLoading(false); setUploadProgress(''); }
             };
             const deleteActiveCatalog = async () => {

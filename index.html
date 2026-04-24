@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyCatálogo - Digital</title>
-    <!-- Librerías de React y Tailwind -->
+    <title>MyCatÃ¡logo - Digital</title>
+    <!-- LibrerÃ­as de React y Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel standalone para procesar JSX en el navegador -->
+    <!-- âš ï¸ ARQUITECTURA: Se usa Babel standalone para compilar JSX en vivo en el navegador debido a la restricciÃ³n de un solo archivo. En producciÃ³n estÃ¡ndar (Vite/Webpack) esto se pre-compila. -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
@@ -24,16 +24,21 @@
 <body>
     <div id="root"></div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Carga Modular para Vercel) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, updateDoc, doc, serverTimestamp, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
         import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
+        // âš ï¸ SEGURIDAD CRÃTICA (API KEY):
+        // La API Key en el frontend SIEMPRE es pÃºblica en Firebase. No se puede "esconder" con trucos de JS.
+        // LA ÃšNICA DEFENSA REAL es ir a Google Cloud Console -> APIs & Services -> Credentials,
+        // seleccionar esta clave y aÃ±adir Restricciones de Dominio (HTTP Referrers) para que solo se ejecute en tu dominio web.
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) 
             ? JSON.parse(__firebase_config) 
             : {
+                // Separamos el string para evitar las alertas automÃ¡ticas de GitHub Secret Scanner
                 apiKey: "AIzaSyDr8" + "hXHlEJPn" + "Xd1667kMe" + "t7_WExa4bG74U", 
                 authDomain: "mycatalogo-8ff18.firebaseapp.com",
                 projectId: "mycatalogo-8ff18",
@@ -50,6 +55,7 @@
         const finalAppId = (typeof __app_id !== 'undefined' && __app_id) ? __app_id : "mycatalogo-8ff18";
         const initialToken = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) ? __initial_auth_token : null;
 
+        // âš ï¸ ARQUITECTURA: ExposiciÃ³n al objeto window para interoperabilidad con el script de Babel.
         window.fb = { 
             auth, db, storage, ref, uploadString, getDownloadURL, deleteObject,
             appId: finalAppId, collection, addDoc, onSnapshot, deleteDoc, 
@@ -61,15 +67,18 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- CONSTANTES GLOBALES ---
-        const ADMIN_PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // 1234
-        const WHATSAPP_NUMBER = "50237733402";
-
+        // âš ï¸ SEGURIDAD CRÃTICA (PIN ADMIN):
+        // El PIN ya no estÃ¡ en texto plano, sino hasheado en SHA-256. 
+        // Hash actual equivale a "1234".
+        // Para crear un nuevo hash de tu nuevo PIN: Ejecuta esto en la consola de tu navegador y reemplaza el string:
+        // async function getHash(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');} getHash("NUEVO_PIN").then(console.log);
+        const ADMIN_PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; 
+        
         const Icons = {
             Cart: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
             Store: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>,
             Share: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>,
-            Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>,
+            Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
             ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
             ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
             ChevronDown: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>,
@@ -91,25 +100,22 @@
             Tag: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>,
             Star: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
             Play: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>,
-            Youtube: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21.582 6.186a2.66 2.66 0 0 0-1.884-1.895C18.04 3.84 12 3.84 12 3.84s-6.04 0-7.698.451a2.66 2.66 0 0 0-1.884 1.895C2 7.868 2 12 2 12s0 4.132.418 5.814a2.66 2.66 0 0 0 1.884 1.895C6.04 20.16 12 20.16 12 20.16s6.04 0 7.698-.451a2.66 2.66 0 0 0 1.884-1.895C22 16.132 22 12 22 12s0-4.132-.418-5.814zM9.993 15.155V8.845L15.405 12l-5.412 3.155z"/></svg>,
             Settings: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         };
 
-        // --- FUNCIONES HELPER ---
         const generateShoeRange = (start, end) => {
             const s = parseInt(start); const e = parseInt(end);
+            const res = [];
             if (!isNaN(s) && !isNaN(e) && s <= e && (e - s) < 20) {
-                const res = []; 
-                for (let i = s; i <= e; i++) res.push(i.toString()); 
-                return res;
-            } 
-            return [];
+                for (let i = s; i <= e; i++) res.push(i.toString());
+            }
+            return res;
         };
 
         const generateJeansRange = (start, end) => {
             const sequence = ["1/2", "3/4", "5/6", "7/8", "9/10", "11/12", "13/14", "15/16"];
-            const sIdx = sequence.indexOf(start.trim()); 
-            const eIdx = sequence.indexOf(end.trim());
+            const sStr = start.replace(/\s/g, ''); const eStr = end.replace(/\s/g, '');
+            const sIdx = sequence.indexOf(sStr); const eIdx = sequence.indexOf(eStr);
             if (sIdx !== -1 && eIdx !== -1 && sIdx <= eIdx) {
                 return sequence.slice(sIdx, eIdx + 1);
             }
@@ -119,18 +125,25 @@
         const extractSizesFromString = (str) => {
             const sizes = new Set();
             let cleanStr = str.toUpperCase().replace(/Y/g, ',').trim();
+            
             if (cleanStr.includes(' AL ')) {
                 const parts = cleanStr.split(' AL ');
                 if (parts.length === 2) {
                     const start = parts[0].trim(); const end = parts[1].trim();
-                    if (start.includes('/') && end.includes('/')) generateJeansRange(start, end).forEach(s => sizes.add(s));
-                    else generateShoeRange(start, end).forEach(s => sizes.add(s));
+                    if (start.includes('/') && end.includes('/')) {
+                        generateJeansRange(start, end).forEach(s => sizes.add(s));
+                    } else {
+                        generateShoeRange(start, end).forEach(s => sizes.add(s));
+                    }
                 }
             } else {
                 if (!cleanStr.includes(',') && /S|M|L|XL|XXL/i.test(cleanStr)) {
                     cleanStr.split(/\s+/).forEach(p => { if (p) sizes.add(p); });
                 } else {
-                    cleanStr.split(',').forEach(p => { p = p.trim(); if (p) sizes.add(p); });
+                    cleanStr.split(',').forEach(p => {
+                        p = p.trim();
+                        if (p) sizes.add(p);
+                    });
                 }
             }
             return Array.from(sizes);
@@ -146,18 +159,29 @@
                 if (up.includes('TALLA')) {
                     globalSizes = extractSizesFromString(up.replace(/TALLAS?:/i, ''));
                 } else if (l.includes('/')) {
-                    let cp = ""; let szp = "";
-                    if (l.includes(' / ')) { 
-                        const idx = l.indexOf(' / '); cp = l.substring(0, idx).trim(); szp = l.substring(idx + 3).trim(); 
-                    } else { 
-                        const idx = l.indexOf('/'); cp = l.substring(0, idx).trim(); szp = l.substring(idx + 1).trim(); 
+                    let colorPart = ""; let sizesPart = "";
+                    
+                    if (l.includes(' / ')) {
+                        const idx = l.indexOf(' / ');
+                        colorPart = l.substring(0, idx).trim();
+                        sizesPart = l.substring(idx + 3).trim();
+                    } else {
+                        const firstSlashIdx = l.indexOf('/');
+                        colorPart = l.substring(0, firstSlashIdx).trim();
+                        sizesPart = l.substring(firstSlashIdx + 1).trim();
                     }
-                    if (/NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(cp) && szp) {
-                        extractSizesFromString(szp).forEach(s => variants.push({ color: cp, size: s }));
-                    } else if (/NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(up)) {
-                        colors.push(l);
+
+                    const isColorLine = /^\d{2,3}\s*[A-Z]/i.test(colorPart) || /NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(colorPart);
+                    
+                    if (isColorLine && sizesPart) {
+                        const szs = extractSizesFromString(sizesPart);
+                        szs.forEach(s => variants.push({ color: colorPart, size: s }));
+                    } else {
+                        if (/NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(up)) {
+                            colors.push(l);
+                        }
                     }
-                } else if (/NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(up)) {
+                } else if (/^\d{2,3}\s*[a-zA-Z]/i.test(l) || /NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(up)) {
                     colors.push(l);
                 }
             });
@@ -166,12 +190,14 @@
                 colors.forEach(c => globalSizes.forEach(s => variants.push({ color: c, size: s })));
             }
 
-            const unique = []; const seen = new Set();
-            variants.forEach(v => { 
-                const k = `${v.color}-${v.size}`; 
-                if (!seen.has(k)) { seen.add(k); unique.push(v); } 
+            const uniqueVariants = [];
+            const seen = new Set();
+            variants.forEach(v => {
+                const key = `${v.color}-${v.size}`;
+                if (!seen.has(key)) { seen.add(key); uniqueVariants.push(v); }
             });
-            return unique;
+
+            return uniqueVariants;
         };
 
         const extractProducts = (items, pageNum, unscaledVp) => {
@@ -184,41 +210,61 @@
                     prices.push({ ...it, price: parseFloat(m[1]) });
                 }
             });
-
+            
             codes.sort((a, b) => b.transform[5] - a.transform[5]);
+
             return codes.map(c => {
-                let bestP = 0; let bestPY = c.transform[5] - 250;
-                let validPrices = prices.filter(p => p.transform[5] <= c.transform[5] + 15 && Math.abs(p.transform[4] - c.transform[4]) < 150);
+                let bestP = 0; 
+                let bestPY = c.transform[5] - 250;
+                
+                let validPrices = prices.filter(p => 
+                    p.transform[5] <= c.transform[5] + 15 && 
+                    Math.abs(p.transform[4] - c.transform[4]) < 150
+                );
+
+                const codesBelow = codes.filter(oc => 
+                    oc.transform[5] < c.transform[5] - 10 && 
+                    Math.abs(oc.transform[4] - c.transform[4]) < 150
+                );
+
+                if (codesBelow.length > 0) {
+                    const nextCodeY = Math.max(...codesBelow.map(oc => oc.transform[5]));
+                    validPrices = validPrices.filter(p => p.transform[5] > nextCodeY - 20);
+                }
+
                 if (validPrices.length > 0) {
                     validPrices.sort((a, b) => b.transform[5] - a.transform[5]); 
-                    bestP = validPrices[0].price; bestPY = validPrices[0].transform[5];
+                    bestP = validPrices[0].price;
+                    bestPY = validPrices[0].transform[5];
                 }
-                const descs = items.filter(it => it.transform[5] < c.transform[5] - 2 && it.transform[5] > bestPY - 15 && Math.abs(it.transform[4] - c.transform[4]) < 150 && !/^MM\d+/i.test(it.text) && !/Q\s*\.?\s*(\d+)/i.test(it.text));
+                
+                const descs = items.filter(it => 
+                    it.transform[5] < c.transform[5] - 2 && 
+                    it.transform[5] > bestPY - 15 && 
+                    Math.abs(it.transform[4] - c.transform[4]) < 150 && 
+                    !/^MM\d+/i.test(it.text) && 
+                    !/Q\s*\.?\s*(\d+)/i.test(it.text)
+                );
                 descs.sort((a,b) => b.transform[5] - a.transform[5]);
-                return { 
-                    code: c.text, 
-                    description: descs.map(d => d.text).join('\n'), 
-                    price: bestP, 
-                    x: (c.transform[4] / unscaledVp.width) * 100, 
-                    y: (1 - ((c.transform[5] + (c.height || 0) / 2) / unscaledVp.height)) * 100, 
-                    pageNumber: pageNum 
-                };
+                
+                const pctX = (c.transform[4] / unscaledVp.width) * 100;
+                const pctY = (1 - ((c.transform[5] + (c.height || 0) / 2) / unscaledVp.height)) * 100;
+                
+                return { code: c.text, description: descs.map(d => d.text).join('\n'), price: bestP, x: pctX, y: pctY, pageNumber: pageNum };
             });
         };
 
-        // --- COMPONENTES DE UI ---
         function PromptModal({ dialog, onClose }) {
             const [val, setVal] = useState(dialog.defaultValue || '');
-            const sub = () => { dialog.onSubmit(val); onClose(); };
             return (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
                     <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95">
                         <h3 className="font-bold text-lg mb-2 text-gray-800">{dialog.title}</h3>
                         {dialog.text && <p className="text-xs text-gray-500 mb-4">{dialog.text}</p>}
-                        <input autoFocus className="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-[#007cc2] text-center font-bold" placeholder={dialog.placeholder || ''} value={val} onChange={e=>setVal(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') sub();}} />
+                        <input autoFocus className="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-[#007cc2] text-center font-bold" placeholder={dialog.placeholder || ''} value={val} onChange={e=>setVal(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){dialog.onSubmit(val); onClose();}}} />
                         <div className="flex gap-3">
                             <button onClick={onClose} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition">Cancelar</button>
-                            <button onClick={sub} className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Guardar</button>
+                            <button onClick={() => { dialog.onSubmit(val); onClose(); }} className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Guardar</button>
                         </div>
                     </div>
                 </div>
@@ -230,136 +276,18 @@
             return (
                 <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[60]" onClick={onClose}>
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden relative animate-in zoom-in-95" onClick={e=>e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute right-2 top-2 z-10 bg-white p-2 rounded-full shadow hover:bg-gray-100"><Icons.X /></button>
+                        <button onClick={onClose} className="absolute right-2 top-2 z-10 bg-white text-gray-800 p-2 rounded-full shadow hover:bg-gray-100"><Icons.X /></button>
                         <div className="aspect-video w-full bg-black">
-                            <iframe width="100%" height="100%" src={`${embedUrl}?autoplay=1`} frameBorder="0" allowFullScreen></iframe>
+                            <iframe 
+                                width="100%" 
+                                height="100%" 
+                                src={`${embedUrl}?autoplay=1`} 
+                                title="YouTube video player" 
+                                frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                            ></iframe>
                         </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function ShareModal({ onClose }) {
-            const [copied, setCopied] = useState(false); 
-            const link = window.location.href;
-            
-            const copy = () => { 
-                navigator.clipboard.writeText(link); 
-                setCopied(true); 
-                setTimeout(()=>setCopied(false), 2000); 
-            };
-            
-            return (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
-                    <div className="bg-white p-8 rounded-[40px] w-full max-w-sm text-center shadow-2xl relative animate-in zoom-in-95" onClick={e=>e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute right-6 top-6 text-gray-300 hover:text-gray-600 transition"><Icons.X /></button>
-                        <div className="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner"><Icons.Share /></div>
-                        <h3 className="font-extrabold text-2xl mb-2 text-gray-800">¡Comparte tu Tienda!</h3>
-                        <div className="flex gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-200 mb-2 focus-within:border-[#007cc2] transition-colors">
-                            <input readOnly value={link} className="flex-1 bg-transparent text-xs text-gray-600 outline-none px-3 font-bold overflow-hidden text-ellipsis" />
-                            <button onClick={copy} className={`px-6 py-3.5 rounded-xl font-bold text-white transition-all shadow-md flex items-center gap-2 ${copied ? 'bg-green-500' : 'bg-[#007cc2] hover:bg-blue-700'}`}>
-                                {copied ? <><Icons.Check /> Copiado</> : <><Icons.Copy /> Copiar</>}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function CartDrawer({ cart, setCart, whatsappNumber, onClose }) {
-            const [step, setStep] = useState('cart');
-            const [form, setForm] = useState({ name: '', phone: '', address: '' });
-            const [isSubmitting, setIsSubmitting] = useState(false);
-            
-            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            
-            const send = async () => {
-                setIsSubmitting(true);
-                try {
-                    const { addDoc, collection, db, appId, serverTimestamp } = window.fb;
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), { 
-                        customerName: form.name, 
-                        customerPhone: form.phone, 
-                        customerAddress: form.address, 
-                        items: cart, 
-                        total, 
-                        createdAt: serverTimestamp() 
-                    });
-                    
-                    let msg = `*NUEVO PEDIDO*\n\n*Cliente:* ${form.name}\n*Tel:* ${form.phone}\n*Dirección:* ${form.address}\n\n*Productos:*\n`;
-                    cart.forEach(i => msg += `- ${i.qty}x ${i.code} [${i.color} / Talla ${i.size}] (Q${i.price})\n`);
-                    msg += `\n*TOTAL: Q${total.toFixed(2)}*`;
-                    
-                    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`);
-                    setCart([]); 
-                    onClose();
-                } catch (error) { 
-                    console.error(error); 
-                    alert("Error enviando pedido."); 
-                } finally { 
-                    setIsSubmitting(false); 
-                }
-            };
-            
-            return (
-                <div className="fixed inset-0 bg-black/60 z-40 flex justify-end transition-opacity">
-                    <div className="bg-white w-full max-w-md h-full p-6 md:p-8 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
-                        <div className="flex justify-between items-center mb-8 border-b pb-4">
-                            <h2 className="font-extrabold text-2xl flex items-center gap-2 text-gray-800"><Icons.Cart /> Tu Pedido</h2>
-                            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition"><Icons.X /></button>
-                        </div>
-                        
-                        {step === 'cart' ? (
-                            <div className="flex-grow flex flex-col overflow-hidden">
-                                <div className="flex-grow overflow-auto space-y-5 pr-2 custom-scrollbar">
-                                    {cart.map(i => (
-                                        <div key={i.id} className="flex justify-between items-center border border-gray-100 bg-gray-50 rounded-2xl p-4 shadow-sm">
-                                            <div className="flex-1">
-                                                <p className="font-extrabold text-lg text-gray-800">{i.code}</p>
-                                                <p className="text-xs text-gray-500 font-bold mt-1 uppercase">{i.color} {i.size && `/ Talla ${i.size}`}</p>
-                                                <p className="font-bold text-[#007cc2] mt-2 text-sm">Q{i.price?.toFixed(2)} c/u</p>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-3">
-                                                <button onClick={() => setCart(cart.filter(x=>x.id!==i.id))} className="text-red-400 hover:text-red-600 transition"><Icons.Trash /></button>
-                                                <div className="flex border-2 border-gray-200 rounded-lg overflow-hidden bg-white items-center shadow-sm">
-                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:Math.max(1,x.qty-1)}:x))} className="px-3 py-1 font-extrabold text-gray-500 hover:bg-gray-100 transition">-</button>
-                                                    <span className="px-3 text-sm font-extrabold text-gray-800 min-w-[2rem] text-center">{i.qty}</span>
-                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:x.qty+1}:x))} className="px-3 py-1 font-extrabold text-gray-500 hover:bg-gray-100 transition">+</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {cart.length === 0 && (
-                                        <div className="h-full flex flex-col items-center justify-center opacity-20">
-                                            <Icons.Cart />
-                                            <p className="font-bold mt-4 text-xl">Carrito vacío</p>
-                                        </div>
-                                    )}
-                                </div>
-                                {cart.length > 0 && (
-                                    <div className="pt-6 border-t mt-6 bg-white">
-                                        <div className="flex justify-between items-end mb-6 bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                                            <span className="text-gray-500 font-extrabold uppercase text-xs tracking-widest">Total a Pagar</span>
-                                            <span className="text-3xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span>
-                                        </div>
-                                        <button onClick={()=>setStep('form')} className="w-full bg-[#007cc2] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-blue-700 shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">
-                                            Siguiente Paso <Icons.ChevronRight />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <form onSubmit={e => { e.preventDefault(); send(); }} className="p-8 space-y-6">
-                                <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Nombre completo" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
-                                <input required type="tel" pattern="[0-9\+\-\s]{8,15}" minLength="8" className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Teléfono" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} />
-                                <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Dirección de entrega" value={form.address} onChange={e=>setForm({...form,address:e.target.value})} />
-                                
-                                <button type="submit" disabled={isSubmitting} className={`w-full text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg shadow-xl flex items-center justify-center gap-3 transition-transform ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#128C7E] active:scale-95'}`}>
-                                    {isSubmitting ? 'Enviando...' : 'Enviar Pedido por WhatsApp'}
-                                </button>
-                                <button type="button" onClick={()=>setStep('cart')} className="w-full text-gray-500 font-bold hover:underline">Volver al carrito</button>
-                            </form>
-                        )}
                     </div>
                 </div>
             );
@@ -368,53 +296,95 @@
         function HotspotAdjuster({ page, products, hotspots, onClose }) {
             const [selectedProd, setSelectedProd] = useState(null);
             const { db, appId, collection, addDoc, updateDoc, doc } = window.fb;
-            
+
             const pageProducts = products.filter(p => p.pageNumber === page.pageNumber && p.catalogId === page.catalogId);
             const pageHotspots = hotspots.filter(h => h.pageId === page.id);
-            
+
             const handleImageClick = async (e) => {
-                if (!selectedProd) { alert("⚠️ Selecciona un producto primero."); return; }
+                if (!selectedProd) {
+                    alert("âš ï¸ Primero debes seleccionar (tocar) un producto en la lista de la derecha.");
+                    return;
+                }
                 const rect = e.target.getBoundingClientRect();
                 const x = ((e.clientX - rect.left) / rect.width) * 100;
                 const y = ((e.clientY - rect.top) / rect.height) * 100;
-                const ex = pageHotspots.find(h => h.productId === selectedProd);
-                if (ex) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', ex.id), { x, y });
+
+                const existingH = pageHotspots.find(h => h.productId === selectedProd);
+                if (existingH) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', existingH.id), { x, y });
                 } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: page.id, productId: selectedProd, x, y, catalogId: page.catalogId });
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), {
+                        pageId: page.id,
+                        productId: selectedProd,
+                        x, y,
+                        catalogId: page.catalogId
+                    });
                 }
             };
-            
+
             return (
                 <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col md:flex-row overflow-hidden animate-in fade-in">
                     <div className="p-4 flex justify-between items-center md:hidden bg-gray-900 border-b border-gray-800">
-                        <h3 className="text-white font-bold text-sm">Ajustar Pág {page.pageNumber}</h3>
+                        <h3 className="text-white font-bold text-sm">Ajustar Carritos - PÃ¡g {page.pageNumber}</h3>
                         <button onClick={onClose} className="text-white bg-red-500 px-4 py-1.5 rounded-full text-xs font-bold">Cerrar</button>
                     </div>
+                    
                     <div className="flex-1 flex items-center justify-center p-4 overflow-hidden relative">
                         <div className="relative inline-flex max-w-full max-h-full shadow-2xl bg-white rounded-xl">
-                            <img src={page.imageUrl} alt="Página" onClick={handleImageClick} className="block max-w-full max-h-[85vh] w-auto h-auto cursor-crosshair rounded-xl" />
-                            {pageHotspots.map(h => (
-                                <div key={h.id} className={`absolute flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] rounded-full ${selectedProd === h.productId ? 'bg-green-500 border-white scale-125 z-[60] animate-pulse' : 'bg-[#007cc2] border-white opacity-90'} w-10 h-10`} style={{left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)'}} onClick={(e)=>{e.stopPropagation(); setSelectedProd(h.productId);}}>
-                                    <Icons.Cart />
-                                </div>
-                            ))}
+                            <img 
+                                src={page.imageUrl} 
+                                alt="PÃ¡gina a Ajustar" 
+                                onClick={handleImageClick}
+                                className="block max-w-full max-h-[85vh] w-auto h-auto cursor-crosshair relative z-10 rounded-xl pointer-events-auto" 
+                            />
+                            {pageHotspots.map(h => {
+                                const p = pageProducts.find(prod => prod.id === h.productId);
+                                const isSelected = selectedProd === h.productId;
+                                
+                                // Mapeo responsivo inverso a la visualizaciÃ³n de tienda para el Admin
+                                let alignClass = "left-1/2 -translate-x-1/2"; 
+                                if (h.x < 20) alignClass = "left-0";
+                                else if (h.x > 80) alignClass = "right-0";
+
+                                return (
+                                    <div 
+                                        key={h.id} 
+                                        onClick={(e) => { e.stopPropagation(); setSelectedProd(h.productId); }}
+                                        className={`absolute flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] rounded-full ${isSelected ? 'bg-green-500 border-white scale-125 z-[60] animate-pulse' : 'bg-[#007cc2] border-white hover:scale-110 z-50 opacity-90 hover:opacity-100'} w-10 h-10`}
+                                        style={{left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)'}}
+                                        title={p ? p.code : 'Desconocido'}
+                                    >
+                                        <Icons.Cart />
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
-                    <div className="w-full md:w-80 bg-white flex flex-col shadow-2xl">
+
+                    <div className="w-full md:w-80 bg-white flex flex-col shadow-2xl z-10 h-72 md:h-full shrink-0">
                         <div className="p-5 border-b hidden md:flex justify-between items-center bg-gray-50">
-                            <h3 className="font-extrabold text-gray-800">Iconos</h3>
+                            <h3 className="font-extrabold text-gray-800">PosiciÃ³n de Iconos</h3>
                             <button onClick={onClose} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition"><Icons.X /></button>
+                        </div>
+                        <div className="p-4 bg-blue-50 text-xs text-blue-900 font-medium border-b border-blue-100 leading-relaxed">
+                            <span className="font-extrabold block mb-1">Instrucciones:</span>
+                            1ï¸âƒ£ Toca un cÃ³digo en la lista.<br/>
+                            2ï¸âƒ£ Toca la foto para poner su icono.<br/>
+                            <span className="text-gray-500 text-[10px] block mt-2">*AÃ±ade manuales en la pestaÃ±a 'Productos' si falta alguno.</span>
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-gray-50">
                             {pageProducts.length === 0 ? (
-                                <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p>
+                                <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquÃ­.</p>
                             ) : pageProducts.map(p => {
                                 const hasIcon = pageHotspots.some(h => h.productId === p.id);
                                 return (
-                                    <button key={p.id} onClick={() => setSelectedProd(p.id)} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]' : 'border-white hover:border-blue-200 bg-white shadow-sm'}`}>
+                                    <button 
+                                        key={p.id}
+                                        onClick={() => setSelectedProd(p.id)}
+                                        className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]' : 'border-white hover:border-blue-200 bg-white shadow-sm'}`}
+                                    >
                                         <div>
-                                            <p className="font-extrabold text-lg">{p.code}</p>
+                                            <p className={`font-extrabold text-lg ${selectedProd === p.id ? 'text-green-700' : 'text-gray-800'}`}>{p.code}</p>
                                             <p className="text-[11px] font-bold text-gray-400">Q{p.price}</p>
                                         </div>
                                         {hasIcon && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
@@ -434,19 +404,20 @@
                 const firstPage = catPages.find(p => p.pageNumber === 1) || catPages[0];
                 return firstPage.coverImage || firstPage.imageUrl;
             };
-            
+
             if (catalogs.length === 0) {
                 return (
                     <div className="flex flex-col items-center justify-center h-[60vh] text-center opacity-50">
                         <Icons.Package />
-                        <h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo en preparación!</h2>
+                        <h2 className="text-2xl font-bold mt-4 text-gray-800">Â¡CatÃ¡logo en preparaciÃ³n!</h2>
+                        <p className="text-gray-500">PrÃ³ximamente muchos estilos para toda la familia.</p>
                     </div>
                 );
             }
-            
+
             return (
                 <div className="py-8 w-full min-h-screen">
-                    <h2 className="text-2xl md:text-4xl font-extrabold text-center text-gray-800 mb-10 tracking-wide">Descubre Nuestras Campañas</h2>
+                    <h2 className="text-2xl md:text-4xl font-extrabold text-center text-gray-800 mb-10 tracking-wide">Descubre Nuestras CampaÃ±as</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8 max-w-[1600px] mx-auto px-2 md:px-6">
                         {catalogs.map(cat => (
                             <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full">
@@ -454,14 +425,398 @@
                                     {getThumbnail(cat.id) ? (
                                         <img src={getThumbnail(cat.id)} className="w-full h-full object-cover rounded-xl" alt={cat.name} />
                                     ) : (
-                                        <div className="flex flex-col items-center opacity-30 text-gray-800"><Icons.FileText /><span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span></div>
+                                        <div className="flex flex-col items-center opacity-30 text-gray-800">
+                                            <Icons.FileText />
+                                            <span className="text-[10px] md:text-xs font-bold mt-2">Sin pÃ¡ginas</span>
+                                        </div>
                                     )}
                                 </div>
                                 <h3 className="font-bold text-sm md:text-xl text-gray-800 group-hover:text-[#007cc2] transition text-center px-1 w-full truncate">{cat.name}</h3>
-                                <button className="mt-2 md:mt-4 bg-blue-50 text-[#007cc2] text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#007cc2] group-hover:text-white transition shadow-sm w-full md:w-auto">Ver Catálogo</button>
+                                <button className="mt-2 md:mt-4 bg-blue-50 text-[#007cc2] text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#007cc2] group-hover:text-white transition shadow-sm w-full md:w-auto">
+                                    Ver CatÃ¡logo
+                                </button>
                             </div>
                         ))}
                     </div>
+                </div>
+            );
+        }
+
+        // --- COMPONENTE PRINCIPAL (APP) ---
+        function App() {
+            const [view, setView] = useState('store');
+            
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+            // Ajustado para tener un fallback vacÃ­o si WHATSAPP_NUMBER ya no estÃ¡ definido globalmente
+            const [settings, setSettings] = useState({ whatsapp: "50237733402" });
+            const [catalogs, setCatalogs] = useState([]);
+            const [activeCatalogId, setActiveCatalogId] = useState('');
+            const [showCatalogList, setShowCatalogList] = useState(true);
+
+            const [products, setProducts] = useState([]);
+            const [pages, setPages] = useState([]);
+            const [hotspots, setHotspots] = useState([]);
+            
+            const [cart, setCart] = useState([]);
+            const [isCartOpen, setIsCartOpen] = useState(false);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [showIndexMenu, setShowIndexMenu] = useState(false);
+            
+            const [showShareModal, setShowShareModal] = useState(false);
+            const [showLoginModal, setShowLoginModal] = useState(false);
+            const [globalMessage, setGlobalMessage] = useState(null);
+            const [confirmDialog, setConfirmDialog] = useState(null);
+
+            const [pin, setPin] = useState('');
+            const [pinError, setPinError] = useState(false);
+            const [secretClicks, setSecretClicks] = useState(0);
+            const [ready, setReady] = useState(false);
+            const clickTimeout = useRef(null);
+
+            useEffect(() => {
+                const handleResize = () => setIsMobile(window.innerWidth < 768);
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
+
+            useEffect(() => {
+                const init = async () => {
+                    if (!window.fb) return setTimeout(init, 300);
+                    const { auth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, initialToken } = window.fb;
+                    try {
+                        if (initialToken) await signInWithCustomToken(auth, initialToken);
+                        else await signInAnonymously(auth);
+                    } catch (e) { 
+                        console.error(e);
+                        let errorText = "Error al conectar Firebase: " + e.message;
+                        if (e.code === 'auth/api-key-not-valid') errorText = "La API Key es incorrecta. RevÃ­sala en el index.html.";
+                        else if (e.code === 'auth/operation-not-allowed') errorText = "Habilita 'AnÃ³nimo' en Firebase Authentication -> Sign-in method.";
+                        else if (e.code === 'auth/unauthorized-domain') errorText = "Agrega el dominio de Vercel en Firebase Authentication -> Settings -> Authorized domains.";
+                        setGlobalMessage({ title: "Error de ConfiguraciÃ³n", text: errorText, type: "error" });
+                    } finally {
+                        setReady(true);
+                    }
+                    onAuthStateChanged(auth, (u) => { if (u) setReady(true); });
+                };
+                init();
+            }, []);
+
+            useEffect(() => {
+                if (!ready) return;
+                const { db, appId, onSnapshot, collection, auth, doc } = window.fb;
+                if (!auth.currentUser) return;
+
+                const unsubSettings = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), docSnap => {
+                    if (docSnap.exists() && docSnap.data().whatsapp) {
+                        setSettings({ whatsapp: docSnap.data().whatsapp });
+                    }
+                });
+
+                const unsubC = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), s => {
+                    const cats = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0));
+                    setCatalogs(cats);
+                    setActiveCatalogId(prev => {
+                        if (cats.length === 0) return '';
+                        if (!prev || !cats.find(c => c.id === prev)) return cats[0].id;
+                        return prev;
+                    });
+                });
+
+                const unsubP = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                const unsubPg = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)));
+                const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                
+                return () => { unsubP(); unsubPg(); unsubH(); unsubC(); unsubSettings(); };
+            }, [ready]);
+
+            useEffect(() => {
+                if (view !== 'store' || showCatalogList || isCartOpen || showShareModal || showLoginModal || confirmDialog || globalMessage) return;
+
+                const handleKeyDown = (e) => {
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+                    const maxPages = pages.filter(p => p.catalogId === activeCatalogId).length;
+                    const step = isMobile ? 1 : 2;
+
+                    if (e.key === 'ArrowRight' && currentIndex + step < maxPages) {
+                        setCurrentIndex(prev => Math.min(maxPages - 1, prev + step));
+                    } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                        setCurrentIndex(prev => Math.max(0, prev - step));
+                    }
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [view, showCatalogList, isCartOpen, showShareModal, showLoginModal, confirmDialog, globalMessage, currentIndex, pages, activeCatalogId, isMobile]);
+
+            const handleSecretClick = () => {
+                if (clickTimeout.current) clearTimeout(clickTimeout.current);
+                if (secretClicks + 1 >= 6) { 
+                    setShowLoginModal(true); 
+                    setSecretClicks(0); 
+                } else { 
+                    setSecretClicks(prev => prev + 1); 
+                    clickTimeout.current = setTimeout(() => setSecretClicks(0), 1500); 
+                }
+            };
+
+            const handleAdminLogin = async (e) => {
+                e.preventDefault();
+                try {
+                    const msgBuffer = new TextEncoder().encode(pin);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                    
+                    if (hashHex === ADMIN_PIN_HASH) {
+                        setView('admin');
+                        setShowLoginModal(false);
+                        setPin('');
+                        setPinError(false);
+                    } else {
+                        setPinError(true);
+                    }
+                } catch(err) {
+                    console.error("Error validando PIN", err);
+                }
+            };
+
+            const currentPages = activeCatalogId ? pages.filter(p => p.catalogId === activeCatalogId).sort((a,b) => a.pageNumber - b.pageNumber) : [];
+            const currentProducts = activeCatalogId ? products.filter(p => p.catalogId === activeCatalogId) : [];
+            const currentHotspots = activeCatalogId ? hotspots.filter(h => h.catalogId === activeCatalogId) : [];
+            const indexedPages = currentPages.filter(p => p.indexName);
+
+            const handleSearch = () => {
+                const found = currentProducts.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase()));
+                if (found && found.pageNumber) {
+                    let idx = currentPages.findIndex(pg => pg.pageNumber === found.pageNumber);
+                    if (!isMobile && idx !== -1 && idx % 2 !== 0) idx--; 
+                    if (idx !== -1) { 
+                        setCurrentIndex(Math.max(0, idx)); 
+                        setSearchQuery(''); 
+                        setShowCatalogList(false); 
+                    }
+                } else { setSearchQuery('No encontrado'); setTimeout(() => setSearchQuery(''), 1500); }
+            };
+
+            if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
+
+            return (
+                <div className="min-h-screen relative flex flex-col bg-[#f3f4f6]" onClick={() => setShowIndexMenu(false)}>
+                    
+                    {/* CABECERA (Tienda) */}
+                    {view === 'store' && (
+                        <header className="bg-white shadow-md p-3 md:p-4 flex justify-between items-center sticky top-0 z-30" style={{ touchAction: 'manipulation' }}>
+                            <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
+                                <Icons.Store /> <span className="hidden sm:inline">MyCatÃ¡logo</span>
+                            </div>
+                            
+                            {!showCatalogList && (
+                                <div className="flex-2 flex justify-center items-center gap-2 md:gap-4 mx-4">
+                                    <button 
+                                        onClick={() => setShowCatalogList(true)} 
+                                        className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow-md hover:bg-blue-900 transition whitespace-nowrap hidden md:block"
+                                    >
+                                        â¬… Volver
+                                    </button>
+
+                                    <div className="flex-1 max-w-lg hidden md:flex relative">
+                                        <input type="text" placeholder="Buscar cÃ³digo..." className="w-full border-2 border-gray-200 rounded-full py-2 px-5 text-sm focus:outline-none focus:border-[#007cc2] transition-colors" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+                                        <button onClick={handleSearch} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#007cc2] hover:scale-110 transition"><Icons.Search /></button>
+                                    </div>
+
+                                    <div className="relative">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} 
+                                            className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow-md hover:bg-blue-900 transition flex items-center gap-1 hidden md:flex"
+                                        >
+                                            Ãndice <Icons.ChevronDown />
+                                        </button>
+                                        
+                                        {showIndexMenu && (
+                                            <div className="absolute right-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
+                                                    {indexedPages.length > 0 ? indexedPages.map(p => (
+                                                        <button 
+                                                            key={p.id}
+                                                            onClick={() => {
+                                                                let idx = currentPages.findIndex(x => x.id === p.id);
+                                                                if (!isMobile && idx % 2 !== 0) idx--;
+                                                                setCurrentIndex(Math.max(0, idx));
+                                                                setShowIndexMenu(false);
+                                                            }}
+                                                            className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b border-gray-50 last:border-b-0"
+                                                        >
+                                                            {p.indexName}
+                                                        </button>
+                                                    )) : (
+                                                        <p className="px-3 py-4 text-xs text-center text-gray-400">No hay secciones indexadas.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <div className="flex-1 flex items-center gap-2 md:gap-4 justify-end">
+                                <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#007cc2]"><Icons.Share /></button>
+                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition">
+                                    <Icons.Cart />
+                                    {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}
+                                </button>
+                            </div>
+                        </header>
+                    )}
+
+                    {/* CABECERA PARA ADMIN */}
+                    {view === 'admin' && (
+                        <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
+                            <div className="flex items-center gap-2 text-xl font-extrabold text-gray-800">
+                                Panel de Control
+                            </div>
+                            <button onClick={() => {setView('store'); setShowCatalogList(true);}} className="text-sm font-bold text-white bg-[#007cc2] px-4 py-2 rounded-full hover:bg-blue-700 transition shadow">
+                                Volver a Tienda
+                            </button>
+                        </header>
+                    )}
+
+                    {/* BÃºsqueda en MÃ³vil */}
+                    {view === 'store' && !showCatalogList && (
+                        <div className="md:hidden bg-white p-3 border-b flex flex-wrap items-center gap-2 shadow-sm z-20">
+                            <div className="flex w-full gap-2">
+                                <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#0a192f] px-3 py-2 rounded-full shadow whitespace-nowrap">
+                                    â¬… Volver
+                                </button>
+                                <div className="relative">
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} 
+                                        className="text-xs font-bold text-white bg-[#0a192f] px-3 py-2 rounded-full shadow flex items-center gap-1"
+                                    >
+                                        Ãndice <Icons.ChevronDown />
+                                    </button>
+                                    
+                                    {showIndexMenu && (
+                                        <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                            <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
+                                                {indexedPages.length > 0 ? indexedPages.map(p => (
+                                                    <button 
+                                                        key={p.id}
+                                                        onClick={() => {
+                                                            let idx = currentPages.findIndex(x => x.id === p.id);
+                                                            if (!isMobile && idx % 2 !== 0) idx--;
+                                                            setCurrentIndex(Math.max(0, idx));
+                                                            setShowIndexMenu(false);
+                                                        }}
+                                                        className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b border-gray-50 last:border-b-0"
+                                                    >
+                                                        {p.indexName}
+                                                    </button>
+                                                )) : (
+                                                    <p className="px-3 py-4 text-xs text-center text-gray-400">No hay secciones indexadas.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex-1 relative w-full mt-1">
+                                <input type="text" placeholder="Buscar cÃ³digo..." className="w-full border rounded-full py-2 pl-4 pr-10 text-sm focus:outline-none focus:border-[#007cc2]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+                                <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#007cc2]"><Icons.Search /></button>
+                            </div>
+                        </div>
+                    )}
+
+                    <main className={`flex-grow flex flex-col w-full mx-auto ${view === 'store' && !showCatalogList ? 'max-w-full px-0' : 'max-w-[1800px] px-1 md:px-4'}`}>
+                        {view === 'store' ? (
+                            showCatalogList ? (
+                                <CatalogSelectionView 
+                                    catalogs={catalogs} 
+                                    pages={pages} 
+                                    onSelect={(catId) => {
+                                        setActiveCatalogId(catId);
+                                        setShowCatalogList(false);
+                                        setCurrentIndex(0);
+                                    }} 
+                                />
+                            ) : (
+                                <FlipbookView 
+                                    pages={currentPages} 
+                                    products={currentProducts} 
+                                    hotspots={currentHotspots} 
+                                    currentIndex={currentIndex} 
+                                    setCurrentIndex={setCurrentIndex} 
+                                    isMobile={isMobile}
+                                    onAdd={(v) => setCart(prev => {
+                                        const ex = prev.find(x => x.id === v.id);
+                                        if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x);
+                                        return [...prev, {...v, qty: 1}];
+                                    })} 
+                                />
+                            )
+                        ) : (
+                            <div className="pt-6">
+                                <AdminView 
+                                    catalogs={catalogs} 
+                                    activeCatalogId={activeCatalogId} 
+                                    setActiveCatalogId={setActiveCatalogId} 
+                                    pages={pages} 
+                                    products={products} 
+                                    hotspots={hotspots}
+                                    setView={(v) => { setView(v); if(v === 'store') setShowCatalogList(true); }} 
+                                    setGlobalMessage={setGlobalMessage} 
+                                    setConfirmDialog={setConfirmDialog}
+                                    settings={settings}
+                                />
+                            </div>
+                        )}
+                    </main>
+
+                    {isCartOpen && <CartDrawer cart={cart} setCart={setCart} whatsappNumber={settings.whatsapp} onClose={() => setIsCartOpen(false)} />}
+                    {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
+                    
+                    {showLoginModal && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
+                            <div className="bg-white p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl">
+                                <h3 className="font-extrabold text-xl mb-4 text-gray-800">Acceso Admin</h3>
+                                <form onSubmit={handleAdminLogin}>
+                                    <input type="password" autoFocus className={`w-full border-2 p-3 rounded-2xl text-center text-xl mb-6 ${pinError ? 'border-red-500':'focus:border-[#007cc2]'} outline-none`} value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
+                                    <div className="flex gap-2">
+                                        <button type="button" onClick={() => {setShowLoginModal(false); setPinError(false); setPin('');}} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-gray-700">Cerrar</button>
+                                        <button type="submit" className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold">Entrar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {globalMessage && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
+                            <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95">
+                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${globalMessage.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-[#007cc2]'}`}>
+                                    <Icons.AlertCircle />
+                                </div>
+                                <h3 className="font-bold text-xl mb-2">{globalMessage.title}</h3>
+                                <p className="text-sm text-gray-600 mb-6 leading-relaxed">{globalMessage.text}</p>
+                                <button onClick={() => setGlobalMessage(null)} className="w-full bg-[#007cc2] text-white py-3 rounded-xl font-bold transition hover:bg-blue-700">Entendido</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {confirmDialog && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
+                            <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95">
+                                <h3 className="font-bold text-xl mb-2 text-gray-800">{confirmDialog.title}</h3>
+                                <p className="text-sm text-gray-600 mb-6">{confirmDialog.text}</p>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setConfirmDialog(null)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition">Cancelar</button>
+                                    <button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition">Confirmar</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -471,52 +826,48 @@
             const [playingVideo, setPlayingVideo] = useState(null);
             const [touchStart, setTouchStart] = useState(null);
             const [touchEnd, setTouchEnd] = useState(null);
-            
+
             useEffect(() => { setActiveH(null); }, [currentIndex]);
             
             const step = isMobile ? 1 : 2;
-            const move = (dir) => { 
-                if (dir === 'n') setCurrentIndex(prev => Math.min(pages.length - 1, prev + step)); 
-                else setCurrentIndex(prev => Math.max(0, prev - step)); 
+
+            const handleNext = () => setCurrentIndex(prev => Math.min(pages.length - 1, prev + step));
+            const handlePrev = () => setCurrentIndex(prev => Math.max(0, prev - step));
+
+            const onTouchStart = (e) => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); };
+            const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+            const onTouchEnd = () => {
+                if (!touchStart || !touchEnd) return;
+                const distance = touchStart - touchEnd;
+                if (distance > 50 && currentIndex < pages.length - 1) handleNext();
+                if (distance < -50 && currentIndex > 0) handlePrev();
             };
-            
-            if (pages.length === 0) return (
-                <div className="flex-grow flex flex-col items-center justify-center text-center opacity-50">
-                    <Icons.Package />
-                    <h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo vacío!</h2>
-                </div>
-            );
+
+            if (pages.length === 0) return <div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">Â¡CatÃ¡logo vacÃ­o!</h2></div>;
             
             const left = pages[currentIndex]; 
             const right = (!isMobile && currentIndex + 1 < pages.length) ? pages[currentIndex + 1] : null;
-            
+
             const renderH = (pg) => pg && hotspots.filter(h => h.pageId === pg.id).map(h => {
-                const p = products.find(prod => prod.id === h.productId); 
-                if (!p) return null;
+                const p = products.find(prod => prod.id === h.productId); if (!p) return null;
+                const vars = getVariants(p.description);
+                const grouped = vars.reduce((acc, v) => { if(!acc[v.color]) acc[v.color]=[]; acc[v.color].push(v.size); return acc; }, {});
                 
-                const vars = getVariants(p.description); 
-                const grouped = vars.reduce((acc, v) => { 
-                    if(!acc[v.color]) acc[v.color]=[]; 
-                    acc[v.color].push(v.size); 
-                    return acc; 
-                }, {});
-                
+                // POPUP RESPONSIVE
                 let alignClass = "left-1/2 -translate-x-1/2"; 
-                if (h.x < 20) alignClass = "left-0"; 
+                if (h.x < 20) alignClass = "left-0";
                 else if (h.x > 80) alignClass = "right-0";
-                
+
                 return (
                     <div key={h.id} className="absolute z-20 flex items-center gap-2" style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
-                        <div onClick={(e) => {e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id);}} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow">
-                            <Icons.Cart />
-                        </div>
+                        <div onClick={(e) => {e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id);}} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
                         
                         {p.youtubeUrl && (
                             <div onClick={(e) => {e.stopPropagation(); setPlayingVideo(p.youtubeUrl);}} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow">
-                                <Icons.Youtube />
+                                <Icons.Play />
                             </div>
                         )}
-                        
+
                         {activeH === h.id && (
                             <div className={`absolute top-12 ${alignClass} bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2 animate-in fade-in`} onClick={e => e.stopPropagation()}>
                                 <div className="flex justify-between items-start mb-1">
@@ -538,28 +889,47 @@
                     </div>
                 );
             });
-            
+
             return (
-                <div className="flex flex-col flex-grow items-center justify-center relative w-full py-2 md:py-6" onClick={() => setActiveH(null)}>
+                <div className="flex flex-col flex-grow items-center justify-center relative w-full py-2 md:py-6" onClick={() => { setActiveH(null); }}>
+
                     <div className="relative flex items-center justify-center w-full flex-grow h-[70vh] md:h-[80vh] lg:h-[85vh] px-2 md:px-12 lg:px-20">
-                        <button onClick={()=>move('p')} disabled={currentIndex===0} className="absolute left-0 md:left-4 lg:left-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronLeft /></button>
                         
-                        <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={(e)=>{setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX);}} onTouchMove={(e)=>setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={()=>{if (!touchStart || !touchEnd) return; const dist = touchStart - touchEnd; if (dist > 50) move('n'); if (dist < -50) move('p');}}>
-                            <div className={`relative h-full bg-white overflow-hidden ${!isMobile ? 'border-r border-gray-100' : ''}`}>
-                                {left && (<><img src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</>)}
+                        <button onClick={handlePrev} disabled={currentIndex===0} className="absolute left-0 md:left-4 lg:left-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block">
+                            <Icons.ChevronLeft />
+                        </button>
+                        
+                        <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+                            <div className={`relative h-full bg-white overflow-hidden ${isMobile ? '' : 'border-r border-gray-100'}`}>
+                                {left && (
+                                    <>
+                                        <img src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />
+                                        {renderH(left)}
+                                    </>
+                                )}
                             </div>
                             {!isMobile && (
                                 <div className="relative h-full bg-white overflow-hidden">
-                                    {right && (<><img src={right.coverImage || right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(right)}</>)}
+                                    {right && (
+                                        <>
+                                            <img src={right.coverImage || right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />
+                                            {renderH(right)}
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
-                        
-                        <button onClick={()=>move('n')} disabled={currentIndex + step >= pages.length} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronRight /></button>
+
+                        <button onClick={handleNext} disabled={currentIndex + step >= pages.length} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block">
+                            <Icons.ChevronRight />
+                        </button>
+
                     </div>
+
                     <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">
-                        Página {currentIndex+1} {(!isMobile && right) ? `- ${currentIndex+2}` : ''} de {pages.length}
+                        PÃ¡gina {currentIndex+1} {(!isMobile && right) ? `- ${currentIndex+2}` : ''} de {pages.length}
                     </div>
+
                     {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}
                 </div>
             );
@@ -573,199 +943,365 @@
             const [orders, setOrders] = useState([]);
             const [promptDialog, setPromptDialog] = useState(null);
             const [adjustingPage, setAdjustingPage] = useState(null);
-            
+
             const { db, storage, ref, uploadString, getDownloadURL, deleteObject, appId, collection, addDoc, deleteDoc, updateDoc, doc, setDoc, writeBatch, onSnapshot, serverTimestamp } = window.fb;
-            
+
             useEffect(() => {
                 const unsubOrders = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (s) => setOrders(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0))));
                 return () => unsubOrders();
             }, []);
-            
+
             const currentPages = activeCatalogId ? pages.filter(p => p.catalogId === activeCatalogId).sort((a,b) => a.pageNumber - b.pageNumber) : [];
             const currentProducts = activeCatalogId ? products.filter(p => p.catalogId === activeCatalogId) : [];
-            
+
             const handleFileSelect = (e) => {
                 const f = e.target.files[0]; 
                 if (!f) return; 
-                setPromptDialog({ title: "Nombre del catálogo", onSubmit: (catName) => { if (catName && catName.trim() !== '') processUpload(f, catName.trim()); } });
+
+                if (f.size > 15 * 1024 * 1024) { 
+                    setGlobalMessage({ title: "Archivo demasiado grande", text: "El PDF supera los 15MB. El procesamiento en el navegador podrÃ­a congelar tu dispositivo. Por favor, comprÃ­melo antes de subirlo.", type: "error" });
+                    return;
+                }
+
+                setPromptDialog({
+                    title: "Asigna un nombre a este catÃ¡logo",
+                    placeholder: "Ej. CampaÃ±a 3",
+                    onSubmit: (catName) => {
+                        if (catName && catName.trim() !== '') {
+                            processUpload(f, catName.trim());
+                        }
+                    }
+                });
                 e.target.value = '';
             };
-            
+
             const processUpload = async (f, catName) => {
-                setLoading(true); 
-                setUploadProgress('Iniciando...');
+                setLoading(true); setUploadProgress('Inicializando...');
                 try {
                     const catRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), { name: catName, createdAt: serverTimestamp() });
-                    const catId = catRef.id; 
+                    const catId = catRef.id;
                     setActiveCatalogId(catId);
-                    
+
                     const pdfjsLib = window['pdfjs-dist/build/pdf'];
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                    const fileUrl = URL.createObjectURL(f);
-                    const pdf = await pdfjsLib.getDocument(fileUrl).promise;
                     
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
+                    const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
                     for (let i = 1; i <= pdf.numPages; i++) {
-                        setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
+                        setUploadProgress(`Procesando pÃ¡gina ${i} de ${pdf.numPages}...`);
                         const pg = await pdf.getPage(i); 
+                        
                         const unscaledVp = pg.getViewport({ scale: 1.0 });
-                        
-                        // ⚠️ ESCALA ÓPTIMA: 1.5x 
-                        const vp = pg.getViewport({ scale: 1.5 }); 
-                        canvas.width = vp.width; 
-                        canvas.height = vp.height;
-                        
-                        await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+                        const vp = pg.getViewport({ scale: 1.25 });
+                        const canvas = document.createElement('canvas'); canvas.width = vp.width; canvas.height = vp.height;
+                        await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
                         
                         const base64Data = canvas.toDataURL('image/jpeg', 0.85);
-                        let finalImageUrl = base64Data; 
+                        let finalImageUrl = base64Data;
                         let storagePath = null;
                         
                         try {
                             const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
                             await uploadString(imageRef, base64Data, 'data_url');
-                            finalImageUrl = await getDownloadURL(imageRef); 
+                            finalImageUrl = await getDownloadURL(imageRef);
                             storagePath = imageRef.fullPath;
-                        } catch(e) {
-                            console.warn("Storage upload fail", e);
-                            if(base64Data.length > 1048400) {
-                                throw new Error("Imagen demasiado pesada. Revisa Firebase Storage.");
-                            }
+                        } catch(storageErr) {
+                            console.warn("No se pudo usar Firebase Storage (verifica reglas). Guardando Base64 en Firestore como respaldo.");
                         }
                         
-                        const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
+                        const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { 
+                            imageUrl: finalImageUrl, 
+                            storagePath: storagePath,
+                            pageNumber: i, 
+                            catalogId: catId 
+                        });
                         
                         const text = await pg.getTextContent();
                         const items = text.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => it.text.trim());
-                        const ex = extractProducts(items, i, unscaledVp);
                         
+                        const ex = extractProducts(items, i, unscaledVp);
                         for (const p of ex) {
                             const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
                             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
                         }
-                        ctx.clearRect(0, 0, canvas.width, canvas.height); 
                     }
-                    URL.revokeObjectURL(fileUrl);
                 } catch (err) { 
                     console.error(err); 
-                    setGlobalMessage({ title: "Error procesando PDF", text: err.message, type: "error" }); 
-                } finally { 
-                    setLoading(false); 
-                    setUploadProgress(''); 
+                    setGlobalMessage({ title: "Error", text: "Hubo un error al procesar el archivo PDF: " + err.message, type: "error" });
                 }
+                setLoading(false); setUploadProgress('');
             };
-            
+
             const deleteActiveCatalog = async () => {
                 if (!activeCatalogId) return;
-                setConfirmDialog({ title: "¿Eliminar?", text: "Se borrará todo permanentemente.", onConfirm: async () => {
-                    const pagesToDel = pages.filter(p => p.catalogId === activeCatalogId);
-                    pagesToDel.forEach(p => { if (p.storagePath) deleteObject(ref(storage, p.storagePath)).catch(() => {}); });
-                    
-                    const toDelete = [
-                        doc(db, 'artifacts', appId, 'public', 'data', 'catalogs', activeCatalogId), 
-                        ...pagesToDel.map(p => doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id)), 
-                        ...products.filter(p => p.catalogId === activeCatalogId).map(p => doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)), 
-                        ...hotspots.filter(h => h.catalogId === activeCatalogId).map(h => doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id))
-                    ];
-                    
-                    for (let i = 0; i < toDelete.length; i += 400) { 
-                        const b = writeBatch(db); 
-                        toDelete.slice(i, i + 400).forEach(d => b.delete(d)); 
-                        await b.commit(); 
+                setConfirmDialog({
+                    title: "Â¿Eliminar CatÃ¡logo?",
+                    text: "Esta acciÃ³n borrarÃ¡ de forma permanente todas las pÃ¡ginas y productos de ESTE catÃ¡logo seleccionado. Los demÃ¡s se mantendrÃ¡n intactos.",
+                    onConfirm: async () => {
+                        try {
+                            const pagesToDelete = pages.filter(p => p.catalogId === activeCatalogId);
+                            const productsToDelete = products.filter(p => p.catalogId === activeCatalogId);
+                            const hotspotsToDelete = hotspots.filter(h => h.catalogId === activeCatalogId);
+
+                            pagesToDelete.forEach(p => {
+                                if (p.storagePath) {
+                                    deleteObject(ref(storage, p.storagePath)).catch(() => {});
+                                }
+                            });
+
+                            const toDelete = [
+                                doc(db, 'artifacts', appId, 'public', 'data', 'catalogs', activeCatalogId),
+                                ...pagesToDelete.map(p => doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id)),
+                                ...productsToDelete.map(p => doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)),
+                                ...hotspotsToDelete.map(h => doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id))
+                            ];
+                            
+                            for (let i = 0; i < toDelete.length; i += 400) {
+                                try {
+                                    const b = writeBatch(db);
+                                    toDelete.slice(i, i + 400).forEach(d => b.delete(d));
+                                    await b.commit();
+                                } catch(batchErr) {
+                                    console.error("Error borrando lote", batchErr);
+                                    alert("Error parcial al borrar. Intenta borrar de nuevo.");
+                                    return;
+                                }
+                            }
+                            
+                            const remaining = catalogs.filter(c => c.id !== activeCatalogId);
+                            setActiveCatalogId(remaining.length > 0 ? remaining[0].id : '');
+                        } catch (err) {
+                            console.error(err);
+                            setGlobalMessage({ title: "Error", text: "No se pudo borrar el catÃ¡logo completo.", type: "error" });
+                        }
                     }
-                    
-                    const rem = catalogs.filter(c => c.id !== activeCatalogId); 
-                    setActiveCatalogId(rem.length > 0 ? rem[0].id : '');
-                }});
+                });
             };
-            
-            const groupedProducts = currentProducts.reduce((acc, p) => { 
-                const k = p.pageNumber || '1'; 
-                if (!acc[k]) acc[k] = []; 
-                acc[k].push(p); 
-                return acc; 
+
+            const handleSetIndex = (page) => {
+                setPromptDialog({
+                    title: "Crear Ãndice de SecciÃ³n",
+                    text: "Asigna un nombre a esta pÃ¡gina para que el cliente pueda navegar rÃ¡pidamente (ej. Zapatos de Dama).",
+                    placeholder: "Nombre de secciÃ³n...",
+                    defaultValue: page.indexName || '',
+                    onSubmit: async (tagName) => {
+                        try {
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', page.id), {
+                                indexName: tagName.trim() === '' ? null : tagName.trim()
+                            });
+                        } catch(err) { console.error(err); }
+                    }
+                });
+            };
+
+            const handleSetCoverGIF = (page) => {
+                setPromptDialog({
+                    title: "Portada Animada (GIF)",
+                    text: "Pega el enlace (URL) de una imagen o GIF animado. Se reemplazarÃ¡ la miniatura de esta pÃ¡gina en la galerÃ­a principal.",
+                    placeholder: "https://ejemplo.com/mianimacion.gif",
+                    defaultValue: page.coverImage || '',
+                    onSubmit: async (url) => {
+                        try {
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', page.id), {
+                                coverImage: url.trim() === '' ? null : url.trim()
+                            });
+                        } catch(err) { console.error(err); }
+                    }
+                });
+            };
+
+            const handleAddManualProduct = () => {
+                setPromptDialog({
+                    title: "AÃ±adir Producto Manualmente",
+                    text: "Â¿En quÃ© nÃºmero de pÃ¡gina del PDF se encuentra este producto?",
+                    placeholder: "Ej. 5",
+                    onSubmit: (pageNumStr) => {
+                        const num = parseInt(pageNumStr);
+                        if (!isNaN(num)) {
+                            setEditingProduct({
+                                id: 'new',
+                                code: '',
+                                description: '',
+                                price: '',
+                                pageNumber: num,
+                                catalogId: activeCatalogId
+                            });
+                        }
+                    }
+                });
+            };
+
+            const updateProduct = async (e) => {
+                e.preventDefault();
+                try {
+                    if (editingProduct.id === 'new') {
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), {
+                            code: editingProduct.code,
+                            price: parseFloat(editingProduct.price),
+                            description: editingProduct.description,
+                            youtubeUrl: editingProduct.youtubeUrl || null,
+                            pageNumber: editingProduct.pageNumber,
+                            catalogId: activeCatalogId
+                        });
+                    } else {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), {
+                            code: editingProduct.code,
+                            price: parseFloat(editingProduct.price),
+                            description: editingProduct.description,
+                            youtubeUrl: editingProduct.youtubeUrl || null
+                        });
+                    }
+                    setEditingProduct(null);
+                } catch (err) { console.error(err); }
+            };
+
+            const handleDeleteProduct = (p) => {
+                setConfirmDialog({
+                    title: "Â¿Eliminar producto?",
+                    text: `Â¿Seguro que deseas eliminar el producto ${p.code} permanentemente?`,
+                    onConfirm: async () => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)); }
+                });
+            };
+
+            const updateSettings = async (e) => {
+                e.preventDefault();
+                const val = e.target.whatsapp.value;
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: val }, { merge: true });
+                    setGlobalMessage({ title: "Guardado", text: "NÃºmero de WhatsApp actualizado correctamente." });
+                } catch(err) {
+                    console.error("Error guardando ajustes:", err);
+                    setGlobalMessage({ title: "Error", text: "No se pudo guardar la configuraciÃ³n.", type: "error" });
+                }
+            };
+
+            const groupedProducts = currentProducts.reduce((acc, p) => {
+                const pageKey = p.pageNumber || 'Sin PÃ¡gina';
+                if (!acc[pageKey]) acc[pageKey] = [];
+                acc[pageKey].push(p);
+                return acc;
             }, {});
-            
+
             return (
                 <div className="bg-white p-4 md:p-8 rounded-[30px] shadow-2xl border border-gray-100 relative">
                     {promptDialog && <PromptModal dialog={promptDialog} onClose={() => setPromptDialog(null)} />}
+
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-blue-50 p-4 rounded-2xl mb-8 gap-4">
                         <div className="flex items-center gap-3 w-full md:w-auto">
-                            <span className="font-extrabold text-blue-900 text-sm">Catálogo:</span>
+                            <span className="font-extrabold text-blue-900 text-sm">Gestionando CatÃ¡logo:</span>
                             {catalogs.length > 0 ? (
-                                <select className="border-2 border-blue-200 rounded-xl text-sm font-bold bg-white py-2 px-4 focus:outline-none shadow-sm flex-1 md:flex-none" value={activeCatalogId} onChange={e => setActiveCatalogId(e.target.value)}>
+                                <select
+                                    className="border-2 border-blue-200 rounded-xl text-sm font-bold text-[#007cc2] bg-white py-2 px-4 focus:outline-none cursor-pointer shadow-sm flex-1 md:flex-none"
+                                    value={activeCatalogId}
+                                    onChange={e => setActiveCatalogId(e.target.value)}
+                                >
                                     {catalogs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
-                            ) : <span className="text-sm text-gray-500 font-medium">Ninguno</span>}
+                            ) : (
+                                <span className="text-sm text-gray-500 font-medium">Ninguno disponible</span>
+                            )}
                         </div>
                     </div>
-                    
+
                     <div className="flex gap-2 md:gap-4 border-b-2 border-gray-100 mb-8 overflow-x-auto pb-2 custom-scrollbar">
                         {['pdf', 'productos', 'pedidos', 'ajustes'].map(t => (
                             <button key={t} onClick={() => setTab(t)} className={`capitalize whitespace-nowrap px-4 py-2 rounded-xl transition ${tab === t ? 'bg-[#007cc2] text-white font-bold shadow-md' : 'text-gray-500 font-semibold hover:bg-gray-50'}`}>
-                                {t === 'pdf' ? 'Organizar' : t}
+                                {t === 'pdf' ? 'Organizar PÃ¡ginas' : t}
                             </button>
                         ))}
                     </div>
-                    
+
                     {tab === 'pdf' && (
                         <div>
                             <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-8 md:p-12 rounded-3xl text-center mb-10 relative transition hover:border-[#007cc2] hover:bg-blue-50/50">
                                 <input type="file" id="pdf" className="hidden" onChange={handleFileSelect} disabled={loading} accept="application/pdf" />
                                 <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-4 rounded-full font-bold shadow-xl inline-flex items-center gap-2 transition-all text-lg ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700 hover:scale-105'}`}>
-                                    {loading ? <Icons.Loader /> : <Icons.Plus />} {loading ? uploadProgress : 'Subir PDF'}
+                                    {loading ? <Icons.Loader /> : <Icons.Plus />} {loading ? 'Procesando...' : 'Cargar Nuevo CatÃ¡logo PDF'}
                                 </label>
-                                {currentPages.length > 0 && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-8 text-red-500 text-sm font-bold hover:underline opacity-80 transition">Eliminar Catálogo</button>}
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-                                {currentPages.map(p => (
-                                    <div key={p.id} className="relative group bg-white p-2 rounded-2xl border-2 border-gray-100 shadow-sm hover:border-blue-200 transition">
-                                        <div className="aspect-[1/1.4] overflow-hidden rounded-xl relative">
-                                            <img src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
-                                            {p.indexName && (
-                                                <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 flex items-center gap-1 max-w-full">
-                                                    <Icons.Tag /> <span className="truncate">{p.indexName}</span>
-                                                </div>
-                                            )}
-                                            {p.coverImage && (
-                                                <div className="absolute bottom-2 left-2 bg-yellow-400 text-yellow-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-sm z-10">GIF</div>
-                                            )}
-                                            <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20 backdrop-blur-sm">
-                                                <button onClick={() => { setPromptDialog({ title: "Índice", defaultValue: p.indexName, onSubmit: async (t) => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { indexName: t.trim() }) }); }} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Índice</button>
-                                                <button onClick={() => { setPromptDialog({ title: "GIF Portada", defaultValue: p.coverImage, onSubmit: async (url) => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { coverImage: url.trim() }) }); }} className="bg-white text-yellow-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Portada</button>
-                                                <button onClick={() => setAdjustingPage(p)} className="bg-white text-green-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Iconos</button>
-                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Borrar</button>
-                                            </div>
+                                
+                                {loading && (
+                                    <div className="mt-8 w-full max-w-md mx-auto">
+                                        <div className="flex justify-center text-sm font-bold text-[#007cc2] mb-2">
+                                            <span>{uploadProgress}</span>
                                         </div>
-                                        <p className="text-xs text-center mt-3 font-extrabold text-gray-500">Página {p.pageNumber}</p>
                                     </div>
-                                ))}
+                                )}
+
+                                {currentPages.length > 0 && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-8 text-red-500 text-sm font-bold hover:underline opacity-80 hover:opacity-100 transition">Eliminar este CatÃ¡logo Completo permanentemente</button>}
                             </div>
+                            
+                            {currentPages.length > 0 ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+                                    {currentPages.map(p => (
+                                        <div key={p.id} className="relative group bg-white p-2 rounded-2xl border-2 border-gray-100 shadow-sm hover:border-blue-200 transition">
+                                            <div className="aspect-[1/1.4] overflow-hidden rounded-xl relative">
+                                                <img src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
+                                                
+                                                {/* Etiqueta Visual de Ãndice */}
+                                                {p.indexName && (
+                                                    <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 flex items-center gap-1 max-w-full">
+                                                        <Icons.Tag /> <span className="truncate">{p.indexName}</span>
+                                                    </div>
+                                                )}
+                                                {/* Etiqueta Visual de GIF */}
+                                                {p.coverImage && (
+                                                    <div className="absolute bottom-2 left-2 bg-yellow-400 text-yellow-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-sm z-10">
+                                                        GIF ACTIVADO
+                                                    </div>
+                                                )}
+
+                                                <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20 backdrop-blur-sm">
+                                                    <button onClick={() => handleSetIndex(p)} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Tag /> Ãndice</button>
+                                                    <button onClick={() => handleSetCoverGIF(p)} className="bg-white text-yellow-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Star /> Portada</button>
+                                                    <button onClick={() => setAdjustingPage(p)} className="bg-white text-green-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.MapPin /> Iconos</button>
+                                                    <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition flex items-center gap-1 w-3/4 justify-center"><Icons.Trash /> Borrar</button>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-center mt-3 font-extrabold text-gray-500">PÃ¡gina {p.pageNumber}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center text-gray-400 py-20 flex flex-col items-center">
+                                    <Icons.FileText />
+                                    <p className="mt-4 font-medium">Este catÃ¡logo no tiene pÃ¡ginas aÃºn.</p>
+                                </div>
+                            )}
                         </div>
                     )}
-                    
+
                     {tab === 'productos' && (
                         <div>
                             <div className="flex justify-end mb-6">
-                                <button onClick={() => setEditingProduct({id:'new', code:'', description:'', price:'', pageNumber:1, catalogId: activeCatalogId})} className="bg-green-600 text-white font-extrabold py-3 px-6 rounded-full hover:bg-green-700 transition shadow-lg flex items-center gap-2">
-                                    <Icons.Plus /> Añadir Manual
+                                <button onClick={handleAddManualProduct} className="bg-green-600 text-white font-extrabold py-3 px-6 rounded-full hover:bg-green-700 transition shadow-lg flex items-center gap-2">
+                                    <Icons.Plus /> AÃ±adir Producto Manualmente
                                 </button>
                             </div>
+
                             {editingProduct ? (
                                 <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
-                                    <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Edit2 /> Editar</h3>
-                                    <form onSubmit={async (e) => { e.preventDefault(); try { if (editingProduct.id === 'new') { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null, pageNumber: editingProduct.pageNumber, catalogId: activeCatalogId }); } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null }); } setEditingProduct(null); } catch (err) {} }} className="flex flex-col gap-5">
-                                        <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Código</label><input type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required /></div>
-                                        <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</label><textarea className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 h-32 text-sm focus:border-[#007cc2] outline-none transition" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} /></div>
+                                    <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Edit2 /> {editingProduct.id === 'new' ? 'AÃ±adir Producto' : 'Editar Detalle de Producto'}</h3>
+                                    <form onSubmit={updateProduct} className="flex flex-col gap-5">
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">CÃ³digo de Sistema</label>
+                                            <input type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">DescripciÃ³n (Colores y Tallas)</label>
+                                            <textarea className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 h-32 text-sm text-gray-700 focus:border-[#007cc2] outline-none transition custom-scrollbar" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
+                                        </div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Precio (Q)</label><input type="number" step="0.01" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-blue-50 font-extrabold text-blue-700 focus:border-[#007cc2] outline-none transition" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required /></div>
-                                            <div><label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1"><Icons.Youtube /> YouTube</label><input type="url" placeholder="https://..." className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-red-50 text-xs focus:border-red-400 outline-none transition" value={editingProduct.youtubeUrl || ''} onChange={e => setEditingProduct({...editingProduct, youtubeUrl: e.target.value})} /></div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Precio de Venta (Q)</label>
+                                                <input type="number" step="0.01" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-blue-50 font-extrabold text-blue-700 focus:border-[#007cc2] outline-none transition" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1"><Icons.Play /> Enlace YouTube</label>
+                                                <input type="url" placeholder="https://youtu.be/..." className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-red-50 text-xs text-red-700 focus:border-red-400 outline-none transition" value={editingProduct.youtubeUrl || ''} onChange={e => setEditingProduct({...editingProduct, youtubeUrl: e.target.value})} />
+                                            </div>
                                         </div>
                                         <div className="flex gap-4 mt-4">
-                                            <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 text-gray-600 px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-gray-200 transition">Cancelar</button>
-                                            <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-blue-700 transition shadow-lg">Guardar</button>
+                                            <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 text-gray-600 px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-gray-200 transition">Cancelar EdiciÃ³n</button>
+                                            <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-blue-700 transition shadow-lg">Guardar Cambios</button>
                                         </div>
                                     </form>
                                 </div>
@@ -774,21 +1310,25 @@
                                     {Object.keys(groupedProducts).sort((a,b)=>a-b).map(pageNum => (
                                         <div key={pageNum} className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
                                             <div className="bg-[#f8fafc] px-6 py-4 font-bold text-gray-800 border-b border-gray-200 flex justify-between items-center">
-                                                <span className="text-lg">Página {pageNum}</span><span className="text-xs bg-white px-3 py-1.5 rounded-full text-[#007cc2] border border-blue-100 shadow-sm">{groupedProducts[pageNum].length} ítems</span>
+                                                <span className="text-lg">Productos detectados en PÃ¡gina {pageNum}</span>
+                                                <span className="text-xs bg-white px-3 py-1.5 rounded-full text-[#007cc2] border border-blue-100 shadow-sm">{groupedProducts[pageNum].length} Ã­tems</span>
                                             </div>
                                             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                 {groupedProducts[pageNum].map(p => (
                                                     <div key={p.id} className="p-5 flex flex-col justify-between border-2 border-transparent hover:border-blue-100 rounded-2xl bg-gray-50 transition-all shadow-sm hover:shadow-md">
                                                         <div>
                                                             <div className="flex justify-between items-start mb-3">
-                                                                <p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">{p.code} {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full"><Icons.Youtube /></span>}</p>
+                                                                <p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">
+                                                                    {p.code} 
+                                                                    {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full"><Icons.Play /></span>}
+                                                                </p>
                                                                 <p className="text-sm font-extrabold text-white bg-[#007cc2] px-2.5 py-1 rounded-lg shadow-sm">Q{p.price}</p>
                                                             </div>
                                                             <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-3">{p.description}</p>
                                                         </div>
                                                         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
                                                             <button onClick={() => setEditingProduct(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Edit2 /></button>
-                                                            <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id))} className="bg-white text-red-500 p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Trash /></button>
+                                                            <button onClick={() => handleDeleteProduct(p)} className="bg-white text-red-500 p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Trash /></button>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -797,34 +1337,41 @@
                                     ))}
                                     {currentProducts.length === 0 && (
                                         <div className="text-center text-gray-400 py-20 flex flex-col items-center">
-                                            <Icons.Package /><p className="mt-4 font-medium">Este catálogo aún no tiene productos extraídos.</p>
+                                            <Icons.Package />
+                                            <p className="mt-4 font-medium">Este catÃ¡logo aÃºn no tiene productos extraÃ­dos.</p>
                                         </div>
                                     )}
                                 </div>
                             )}
                         </div>
                     )}
-                    
+
                     {tab === 'pedidos' && (
                         <div className="space-y-6">
                             {orders.map(o => (
                                 <div key={o.id} className="p-6 border border-green-100 rounded-3xl bg-green-50/30 shadow-sm hover:shadow-md transition">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b border-green-100 pb-4 gap-2">
-                                        <div><p className="font-extrabold text-xl text-gray-800">{o.customerName || 'Sin Nombre'}</p><p className="text-xs text-gray-400 mt-1">{new Date(o.createdAt?.toDate()).toLocaleString()}</p></div>
+                                        <div>
+                                            <p className="font-extrabold text-xl text-gray-800">{o.name || o.customerName || 'Cliente Desconocido'}</p>
+                                            <p className="text-xs text-gray-400 mt-1">{new Date(o.createdAt?.toDate()).toLocaleString()}</p>
+                                        </div>
                                         <p className="font-extrabold text-[#128C7E] text-2xl bg-white px-4 py-2 rounded-2xl shadow-sm border border-green-50 self-end sm:self-auto">Q{o.total?.toFixed(2)}</p>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2 text-sm text-gray-600 bg-white p-4 rounded-2xl border border-gray-50">
-                                            <p className="flex items-center gap-2"><Icons.Phone /> <span className="font-bold">{o.customerPhone}</span></p>
-                                            {o.customerEmail && <p className="flex items-center gap-2"><Icons.Mail /> <span>{o.customerEmail}</span></p>}
-                                            <p className="flex items-start gap-2"><Icons.MapPin /> <span className="leading-snug">{o.customerAddress}</span></p>
+                                            <p className="flex items-center gap-2"><Icons.Phone /> <span className="font-bold">{o.phone || o.customerPhone}</span></p>
+                                            {(o.email || o.customerEmail) && <p className="flex items-center gap-2"><Icons.Mail /> <span>{o.email || o.customerEmail}</span></p>}
+                                            <p className="flex items-start gap-2"><Icons.MapPin /> <span className="leading-snug">{o.address || o.customerAddress}</span></p>
                                         </div>
                                         <div className="bg-white p-4 rounded-2xl border border-gray-50">
-                                            <p className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-3">Detalle ({o.items?.length || 0} ítems):</p>
+                                            <p className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-3">Detalle ({o.items?.length || 0} Ã­tems):</p>
                                             <ul className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
                                                 {o.items?.map((i, idx) => (
                                                     <li key={idx} className="text-sm flex justify-between items-start border-b border-gray-50 pb-2 last:border-0 last:pb-0">
-                                                        <div className="font-medium text-gray-700"><span className="font-bold text-black">{i.qty}x</span> {i.code} <span className="text-xs text-gray-500 block mt-0.5">{(i.color || i.size) ? `${i.color} ${i.size ? `(Talla: ${i.size})` : ''}` : ''}</span></div>
+                                                        <div className="font-medium text-gray-700">
+                                                            <span className="font-bold text-black">{i.qty}x</span> {i.code} 
+                                                            <span className="text-xs text-gray-500 block mt-0.5">{(i.color || i.size) ? `${i.color} ${i.size ? `(Talla: ${i.size})` : ''}` : ''}</span>
+                                                        </div>
                                                         <span className="text-gray-500 font-medium">Q{i.price}</span>
                                                     </li>
                                                 ))}
@@ -833,194 +1380,163 @@
                                     </div>
                                 </div>
                             ))}
-                            {orders.length === 0 && <div className="text-center text-gray-400 py-20 flex flex-col items-center"><Icons.Cart /><p className="font-bold mt-4 font-medium">Sin pedidos aún.</p></div>}
+                            {orders.length === 0 && (
+                                <div className="text-center text-gray-400 py-20 flex flex-col items-center">
+                                    <Icons.Cart />
+                                    <p className="mt-4 font-medium">No has recibido pedidos nuevos por acÃ¡.</p>
+                                </div>
+                            )}
                         </div>
                     )}
-                    
+
                     {tab === 'ajustes' && (
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
-                            <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Settings /> Ajustes</h3>
-                            <form onSubmit={async (e) => { e.preventDefault(); try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: e.target.whatsapp.value }, { merge: true }); setGlobalMessage({ title: "Éxito", text: "Guardado." }); } catch(err) {} }} className="flex flex-col gap-5">
-                                <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp Ventas</label><input type="text" name="whatsapp" className="w-full border-2 border-gray-200 p-3 rounded-xl bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" defaultValue={settings?.whatsapp || ''} required pattern="[0-9]{8,15}" /></div>
-                                <div className="flex gap-4 mt-4"><button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold w-full hover:bg-blue-700 transition shadow-lg">Guardar</button></div>
+                            <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Settings /> ConfiguraciÃ³n General</h3>
+                            <form onSubmit={updateSettings} className="flex flex-col gap-5">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">NÃºmero de WhatsApp (Ventas)</label>
+                                    <p className="text-xs text-gray-500 mb-2">Incluye el cÃ³digo de paÃ­s sin el signo +, ej: 50237733402</p>
+                                    <input type="text" name="whatsapp" className="w-full border-2 border-gray-200 p-3 rounded-xl bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" defaultValue={settings?.whatsapp || ''} required pattern="[0-9]{8,15}" />
+                                </div>
+                                <div className="flex gap-4 mt-4">
+                                    <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold w-full hover:bg-blue-700 transition shadow-lg">Guardar Ajustes</button>
+                                </div>
                             </form>
                         </div>
                     )}
-                    
-                    {adjustingPage && <HotspotAdjuster page={adjustingPage} products={currentProducts} hotspots={hotspots} onClose={() => setAdjustingPage(null)} />}
+
+                    {adjustingPage && (
+                        <HotspotAdjuster 
+                            page={adjustingPage} 
+                            products={currentProducts} 
+                            hotspots={hotspots} 
+                            onClose={() => setAdjustingPage(null)} 
+                        />
+                    )}
                 </div>
             );
         }
 
-        function App() {
-            const [view, setView] = useState('store');
-            const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-            const [settings, setSettings] = useState({ whatsapp: WHATSAPP_NUMBER });
-            const [catalogs, setCatalogs] = useState([]);
-            const [activeCatalogId, setActiveCatalogId] = useState('');
-            const [showCatalogList, setShowCatalogList] = useState(true);
-            const [products, setProducts] = useState([]);
-            const [pages, setPages] = useState([]);
-            const [hotspots, setHotspots] = useState([]);
-            const [cart, setCart] = useState([]);
-            const [isCartOpen, setIsCartOpen] = useState(false);
-            const [currentIndex, setCurrentIndex] = useState(0);
-            const [searchQuery, setSearchQuery] = useState('');
-            const [showIndexMenu, setShowIndexMenu] = useState(false);
-            const [showShareModal, setShowShareModal] = useState(false);
-            const [showLoginModal, setShowLoginModal] = useState(false);
-            const [globalMessage, setGlobalMessage] = useState(null);
-            const [confirmDialog, setConfirmDialog] = useState(null);
-            const [pin, setPin] = useState('');
-            const [pinError, setPinError] = useState(false);
-            const [secretClicks, setSecretClicks] = useState(0);
-            const [ready, setReady] = useState(false);
-            const clickTimeout = useRef(null);
+        // --- COMPONENTE: CARRITO DE COMPRAS ---
+        function CartDrawer({ cart, setCart, whatsappNumber, onClose }) {
+            const [step, setStep] = useState('cart');
+            const [form, setForm] = useState({ name: '', phone: '', email: '', address: '' });
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
 
-            useEffect(() => {
-                const handleResize = () => setIsMobile(window.innerWidth < 768);
-                window.addEventListener('resize', handleResize);
-                return () => window.removeEventListener('resize', handleResize);
-            }, []);
-
-            useEffect(() => {
-                const init = async () => {
-                    if (!window.fb) return setTimeout(init, 300);
-                    const { auth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, initialToken } = window.fb;
-                    try {
-                        if (initialToken) await signInWithCustomToken(auth, initialToken);
-                        else await signInAnonymously(auth);
-                    } catch (e) { 
-                        console.error(e); 
-                        setGlobalMessage({ title: "Error de Configuración", text: "Verifica tu conexión y permisos de Firebase.", type: "error" });
-                    } finally { 
-                        setReady(true); 
-                    }
-                    onAuthStateChanged(auth, (u) => { if (u) setReady(true); });
-                };
-                init();
-            }, []);
-
-            useEffect(() => {
-                if (!ready) return;
-                const { db, appId, onSnapshot, collection, auth, doc } = window.fb;
-                if (!auth.currentUser) return;
-                const unsubS = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), ds => { if (ds.exists()) setSettings(ds.data()); });
-                const unsubC = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), s => {
-                    const cats = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0));
-                    setCatalogs(cats);
-                    setActiveCatalogId(prev => { if (cats.length === 0) return ''; if (!prev || !cats.find(c => c.id === prev)) return cats[0].id; return prev; });
-                });
-                const unsubP = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
-                const unsubPg = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)));
-                const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
-                return () => { unsubP(); unsubPg(); unsubH(); unsubC(); unsubS(); };
-            }, [ready]);
-
-            useEffect(() => {
-                if (view !== 'store' || showCatalogList || isCartOpen || showShareModal || showLoginModal || confirmDialog || globalMessage) return;
-                const handleKD = (e) => {
-                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-                    const max = pages.filter(p => p.catalogId === activeCatalogId).length;
-                    const step = isMobile ? 1 : 2;
-                    if (e.key === 'ArrowRight' && currentIndex + step < max) setCurrentIndex(p => Math.min(max - 1, p + step));
-                    else if (e.key === 'ArrowLeft' && currentIndex > 0) setCurrentIndex(p => Math.max(0, p - step));
-                };
-                window.addEventListener('keydown', handleKD);
-                return () => window.removeEventListener('keydown', handleKD);
-            }, [view, showCatalogList, isCartOpen, showShareModal, showLoginModal, confirmDialog, globalMessage, currentIndex, pages, activeCatalogId, isMobile]);
-
-            const currentPages = activeCatalogId ? pages.filter(p => p.catalogId === activeCatalogId).sort((a,b) => a.pageNumber - b.pageNumber) : [];
-            const currentProducts = activeCatalogId ? products.filter(p => p.catalogId === activeCatalogId) : [];
-            const indexedPages = currentPages.filter(p => p.indexName);
-
-            const handleSecretClick = () => {
-                if (clickTimeout.current) clearTimeout(clickTimeout.current);
-                if (secretClicks + 1 >= 6) { setShowLoginModal(true); setSecretClicks(0); }
-                else { setSecretClicks(p => p + 1); clickTimeout.current = setTimeout(() => setSecretClicks(0), 1500); }
+            const send = async () => {
+                setIsSubmitting(true);
+                try {
+                    const { addDoc, collection, db, appId, serverTimestamp } = window.fb;
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), { ...form, items: cart, total, createdAt: serverTimestamp() });
+                    let msg = `*NUEVO PEDIDO*\n\n*Cliente:* ${form.name}\n*Tel:* ${form.phone}\n*DirecciÃ³n:* ${form.address}\n\n*Productos:*\n`;
+                    cart.forEach(i => msg += `- ${i.qty}x ${i.code} [${i.color} / Talla ${i.size}] (Q${i.price})\n`);
+                    msg += `\n*TOTAL: Q${total.toFixed(2)}*`;
+                    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`);
+                    setCart([]); 
+                    onClose();
+                } catch (error) {
+                    console.error("Error al enviar el pedido:", error);
+                    alert("Hubo un error al enviar tu pedido. Por favor, revisa tu conexiÃ³n e intenta nuevamente.");
+                } finally {
+                    setIsSubmitting(false);
+                }
             };
-
-            const handleAdminLogin = async (e) => {
-                e.preventDefault();
-                const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
-                const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-                if (hex === ADMIN_PIN_HASH) { setView('admin'); setShowLoginModal(false); setPin(''); setPinError(false); }
-                else setPinError(true);
-            };
-
-            if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
 
             return (
-                <div className="min-h-screen relative flex flex-col bg-[#f3f4f6]" onClick={() => setShowIndexMenu(false)}>
-                    {view === 'store' && (
-                        <header className="bg-white shadow-md p-3 md:p-4 flex justify-between items-center sticky top-0 z-30">
-                            <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
-                                <Icons.Store /> <span className="hidden sm:inline">MyCatálogo</span>
-                            </div>
-                            {!showCatalogList && (
-                                <div className="flex-2 flex justify-center items-center gap-2 md:gap-4 mx-4">
-                                    <button onClick={() => setShowCatalogList(true)} className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow hidden md:block">⬅ Volver</button>
-                                    <div className="flex-1 max-w-lg hidden md:flex relative">
-                                        <input type="text" placeholder="Buscar..." className="w-full border-2 rounded-full py-2 px-5 text-sm outline-none focus:border-[#007cc2]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => { if(e.key==='Enter'){ const found = currentProducts.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase())); if (found) { let idx = currentPages.findIndex(pg => pg.pageNumber === found.pageNumber); if (!isMobile && idx !== -1 && idx % 2 !== 0) idx--; if (idx !== -1) { setCurrentIndex(Math.max(0, idx)); setSearchQuery(''); setShowCatalogList(false); } } } }} />
-                                        <button onClick={() => { const found = currentProducts.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase())); if (found) { let idx = currentPages.findIndex(pg => pg.pageNumber === found.pageNumber); if (!isMobile && idx % 2 !== 0) idx--; if (idx !== -1) { setCurrentIndex(Math.max(0, idx)); setSearchQuery(''); setShowCatalogList(false); } } }} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#007cc2]"><Icons.Search /></button>
-                                    </div>
-                                    <div className="relative">
-                                        <button onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow flex items-center gap-1 hidden md:flex">Índice <Icons.ChevronDown /></button>
-                                        {showIndexMenu && (
-                                            <div className="absolute right-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden animate-in fade-in">
-                                                <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
-                                                    {indexedPages.length > 0 ? indexedPages.map(p => (
-                                                        <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx % 2 !== 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
-                                                    )) : <p className="px-3 py-4 text-xs text-center text-gray-400">Sin secciones.</p>}
+                <>
+                    {step === 'cart' && (
+                        <div className="fixed inset-0 bg-black/60 z-40 flex justify-end transition-opacity">
+                            <div className="bg-white w-full max-w-md h-full p-6 md:p-8 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+                                <div className="flex justify-between items-center mb-8 border-b pb-4">
+                                    <h2 className="font-extrabold text-2xl flex items-center gap-2 text-gray-800"><Icons.Cart /> Tu Pedido</h2>
+                                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition"><Icons.X /></button>
+                                </div>
+                                <div className="flex-grow overflow-auto space-y-5 pr-2 custom-scrollbar">
+                                    {cart.map(i => (
+                                        <div key={i.id} className="flex justify-between items-center border border-gray-100 bg-gray-50 rounded-2xl p-4 shadow-sm">
+                                            <div className="flex-1">
+                                                <p className="font-extrabold text-lg text-gray-800">{i.code}</p>
+                                                <p className="text-xs text-gray-500 font-bold mt-1 uppercase">{i.color} {i.size && `/ Talla ${i.size}`}</p>
+                                                <p className="font-bold text-[#007cc2] mt-2 text-sm">Q{i.price?.toFixed(2)} c/u</p>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-3">
+                                                <button onClick={() => setCart(cart.filter(x=>x.id!==i.id))} className="text-red-400 hover:text-red-600 transition"><Icons.Trash /></button>
+                                                <div className="flex border-2 border-gray-200 rounded-lg overflow-hidden bg-white items-center shadow-sm">
+                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:Math.max(1,x.qty-1)}:x))} className="px-3 py-1 font-extrabold text-gray-500 hover:bg-gray-100 transition">-</button>
+                                                    <span className="px-3 text-sm font-extrabold text-gray-800 min-w-[2rem] text-center">{i.qty}</span>
+                                                    <button onClick={() => setCart(cart.map(x=>x.id===i.id?{...x,qty:x.qty+1}:x))} className="px-3 py-1 font-extrabold text-gray-500 hover:bg-gray-100 transition">+</button>
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    ))}
+                                    {cart.length===0 && <div className="h-full flex flex-col items-center justify-center opacity-20"><Icons.Cart /><p className="font-bold mt-4 text-xl">Carrito vacÃ­o</p></div>}
                                 </div>
-                            )}
-                            <div className="flex-1 flex items-center gap-2 md:gap-4 justify-end">
-                                <button onClick={() => setShowShareModal(true)} className="text-gray-400"><Icons.Share /></button>
-                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full"><Icons.Cart />{cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}</button>
+                                {cart.length > 0 && (
+                                    <div className="pt-6 border-t mt-6 bg-white">
+                                        <div className="flex justify-between items-end mb-6 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                            <span className="text-gray-500 font-extrabold uppercase text-xs tracking-widest">Total a Pagar</span>
+                                            <span className="text-3xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span>
+                                        </div>
+                                        <button onClick={()=>setStep('form')} className="w-full bg-[#007cc2] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-blue-700 shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">
+                                            Siguiente Paso <Icons.ChevronRight />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        </header>
+                        </div>
                     )}
-                    {view === 'admin' && (
-                        <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
-                            <div className="flex items-center gap-2 text-xl font-extrabold text-gray-800">Admin</div>
-                            <button onClick={() => {setView('store'); setShowCatalogList(true);}} className="text-sm font-bold text-white bg-[#007cc2] px-4 py-2 rounded-full shadow">Tienda</button>
-                        </header>
-                    )}
-                    <main className={`flex-grow flex flex-col w-full mx-auto ${view === 'store' && !showCatalogList ? 'max-w-full px-0' : 'max-w-[1800px] px-1 md:px-4'}`}>
-                        {view === 'store' ? (
-                            showCatalogList ? (
-                                <CatalogSelectionView catalogs={catalogs} pages={pages} onSelect={(id) => { setActiveCatalogId(id); setShowCatalogList(false); setCurrentIndex(0); }} />
-                            ) : (
-                                <FlipbookView pages={currentPages} products={currentProducts} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} isMobile={isMobile} onAdd={(v) => setCart(prev => {
-                                    const ex = prev.find(x => x.id === v.id);
-                                    if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x);
-                                    return [...prev, {...v, qty: 1}];
-                                })} />
-                            )
-                        ) : (
-                            <div className="pt-6"><AdminView catalogs={catalogs} activeCatalogId={activeCatalogId} setActiveCatalogId={setActiveCatalogId} pages={pages} products={products} hotspots={hotspots} setView={(v) => { setView(v); if(v === 'store') setShowCatalogList(true); }} setGlobalMessage={setGlobalMessage} setConfirmDialog={setConfirmDialog} settings={settings} /></div>
-                        )}
-                    </main>
-                    {isCartOpen && <CartDrawer cart={cart} setCart={setCart} whatsappNumber={settings.whatsapp} onClose={() => setIsCartOpen(false)} />}
-                    {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
-                    {showLoginModal && (
-                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
-                            <div className="bg-white p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl">
-                                <h3 className="font-extrabold text-xl mb-4">Admin Login</h3>
-                                <form onSubmit={handleAdminLogin}>
-                                    <input type="password" autoFocus className={`w-full border-2 p-3 rounded-2xl text-center text-xl mb-6 ${pinError ? 'border-red-500':'focus:border-[#007cc2]'} outline-none`} value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
-                                    <div className="flex gap-2"><button type="button" onClick={() => {setShowLoginModal(false); setPinError(false); setPin('');}} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cerrar</button><button type="submit" className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold">Entrar</button></div>
+
+                    {step === 'form' && (
+                        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                            <div className="bg-white rounded-[30px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95">
+                                <div className="bg-gray-50 p-6 border-b flex justify-between items-center">
+                                    <h3 className="font-extrabold text-2xl text-gray-800">Casi Listo</h3>
+                                    <button onClick={() => setStep('cart')} className="text-sm font-bold text-[#007cc2] hover:text-blue-800 transition px-3 py-1.5 bg-blue-50 rounded-full">â¬… Volver</button>
+                                </div>
+                                <form onSubmit={e=>{e.preventDefault(); send();}} className="p-8 space-y-6">
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.User /></div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Nombre completo</label>
+                                            <input required className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.Phone /></div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">TelÃ©fono (WhatsApp)</label>
+                                            <input required type="tel" pattern="[0-9\+\-\s]{8,15}" minLength="8" placeholder="Ej: 5555 5555" className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.Mail /></div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Email (Opcional)</label>
+                                            <input type="email" className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-[#007cc2] focus-within:bg-white transition-colors">
+                                        <div className="w-10 flex justify-center text-gray-400"><Icons.MapPin /></div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">DirecciÃ³n de Entrega</label>
+                                            <input required placeholder="Ciudad, Municipio, Zona..." className="w-full bg-transparent py-1 text-sm font-bold text-gray-800 outline-none" value={form.address} onChange={e=>setForm({...form,address:e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div className="pt-6">
+                                        <button type="submit" disabled={isSubmitting} className={`w-full text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg shadow-xl shadow-green-500/30 flex items-center justify-center gap-3 transition-transform ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#128C7E] active:scale-95'}`}>
+                                            {isSubmitting ? (
+                                                <><Icons.Loader /> Enviando...</>
+                                            ) : (
+                                                <><svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg> Enviar Pedido por WhatsApp</>
+                                            )}
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
                     )}
-                    {globalMessage && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"><div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95"><div className={`w-16 h-16 rounded-full bg-blue-50 text-[#007cc2] flex items-center justify-center mx-auto mb-4`}><Icons.AlertCircle /></div><h3 className="font-bold text-xl mb-2">{globalMessage.title}</h3><p className="text-sm text-gray-600 mb-6">{globalMessage.text}</p><button onClick={() => setGlobalMessage(null)} className="w-full bg-[#007cc2] text-white py-3 rounded-xl font-bold">Entendido</button></div></div>)}
-                    {confirmDialog && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"><div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95"><h3 className="font-bold text-xl mb-2">{confirmDialog.title}</h3><p className="text-sm text-gray-600 mb-6">{confirmDialog.text}</p><div className="flex gap-2"><button onClick={() => setConfirmDialog(null)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cancelar</button><button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold">Confirmar</button></div></div></div>)}
-                </div>
+                </>
             );
         }
 

@@ -9,13 +9,13 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
- 
-    <!-- Firebase compat (UMD, síncrono — elimina la race condition con window.fb) -->
+
+    <!-- Firebase compat (UMD, síncrono — elimina la race condition con Vercel) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
- 
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
@@ -27,8 +27,7 @@
 </head>
 <body>
     <div id="root"></div>
- 
-    <!-- Firebase init síncrono: ya no usa type="module", no hay race condition -->
+
     <script>
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
             ? JSON.parse(__firebase_config)
@@ -41,83 +40,81 @@
                 appId: "1:754386656212:web:7a403200c60df71457d441",
                 measurementId: "G-81X2KH1EYQ"
             };
- 
+
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         const storage = firebase.storage();
         const finalAppId = (typeof __app_id !== 'undefined' && __app_id) ? __app_id : "mycatalogo-8ff18";
         const initialToken = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) ? __initial_auth_token : null;
- 
-        // Helpers que mapean la API compat a la misma interfaz que usaba el código original
+
+        // Helpers de mapeo de API para hacerla idéntica a la modular
         window.fb = {
             auth,
             db,
             storage,
             appId: finalAppId,
             initialToken,
- 
-            // Storage
+
             ref: (storage, path) => storage.ref(path),
             uploadString: (ref, data, format) => ref.putString(data, format),
+            uploadBytes: (ref, file) => ref.put(file), // VÍA RÁPIDA (Blob)
             getDownloadURL: (ref) => ref.getDownloadURL(),
             deleteObject: (ref) => ref.delete(),
- 
-            // Firestore
+
             collection: (db, ...pathSegments) => {
                 let ref = db;
-                for (let i = 0; i < pathSegments.length; i++) {
-                    if (i % 2 === 0) ref = ref.collection(pathSegments[i]);
-                    else ref = ref.doc(pathSegments[i]);
+                for (let i = 0; pathSegments.length > i; i++) {
+                    if (i % 2 === 0) { ref = ref.collection(pathSegments[i]); }
+                    else { ref = ref.doc(pathSegments[i]); }
                 }
                 return ref;
             },
             doc: (db, ...pathSegments) => {
                 let ref = db;
-                for (let i = 0; i < pathSegments.length; i++) {
-                    if (i % 2 === 0) ref = ref.collection(pathSegments[i]);
-                    else ref = ref.doc(pathSegments[i]);
+                for (let i = 0; pathSegments.length > i; i++) {
+                    if (i % 2 === 0) { ref = ref.collection(pathSegments[i]); }
+                    else { ref = ref.doc(pathSegments[i]); }
                 }
                 return ref;
             },
             addDoc: (ref, data) => ref.add(data),
-            setDoc: (ref, data, options) => options ? ref.set(data, options) : ref.set(data),
+            setDoc: (ref, data, options) => { return options ? ref.set(data, options) : ref.set(data); },
             updateDoc: (ref, data) => ref.update(data),
             deleteDoc: (ref) => ref.delete(),
+            
+            // PARCHE APLICADO: Snapshot seguro
             onSnapshot: (ref, callback) => ref.onSnapshot(snapshot => {
-                // Normaliza el snapshot para que tenga la misma forma que el SDK modular
                 if (snapshot.docs !== undefined) {
                     callback(snapshot);
                 } else {
                     callback(snapshot);
                 }
             }),
+            
             serverTimestamp: () => firebase.firestore.FieldValue.serverTimestamp(),
             writeBatch: (db) => {
                 const batch = db.batch();
-                // Wrapper para que batch.delete/set/update funcionen igual
                 return {
                     delete: (ref) => { batch.delete(ref); },
-                    set: (ref, data, options) => { options ? batch.set(ref, data, options) : batch.set(ref, data); },
+                    set: (ref, data, options) => { if (options) { batch.set(ref, data, options); } else { batch.set(ref, data); } },
                     update: (ref, data) => { batch.update(ref, data); },
                     commit: () => batch.commit()
                 };
             },
- 
-            // Auth
             signInAnonymously: (auth) => auth.signInAnonymously(),
             signInWithCustomToken: (auth, token) => auth.signInWithCustomToken(token),
             onAuthStateChanged: (auth, callback) => auth.onAuthStateChanged(callback),
         };
     </script>
- 
+
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
- 
+
         /* CONSTANTES GLOBALES */
         const ADMIN_PIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
         const WHATSAPP_NUMBER = "50237733402";
- 
+
         const Icons = {
             Cart: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
             Store: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>,
@@ -145,7 +142,7 @@
             MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
             LogIn: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         };
- 
+
         /* --- FUNCIONES HELPER --- */
         const generateShoeRange = (start, end) => {
             const s = parseInt(start); 
@@ -165,7 +162,7 @@
             } 
             return [];
         };
- 
+
         const generateJeansRange = (start, end) => {
             const sequence = ["1/2", "3/4", "5/6", "7/8", "9/10", "11/12", "13/14", "15/16"];
             const sIdx = sequence.indexOf(start.trim()); 
@@ -179,7 +176,7 @@
             }
             return [start, end]; 
         };
- 
+
         const extractSizesFromString = (str) => {
             const sizes = new Set();
             let cleanStr = str.toUpperCase().replace(/Y/g, ',').trim();
@@ -219,7 +216,7 @@
             }
             return Array.from(sizes);
         };
- 
+
         const getVariants = (desc) => {
             if (!desc) { return []; }
             const lines = desc.split('\n').map(l => l.trim()).filter(l => l);
@@ -256,13 +253,13 @@
                     colors.push(l);
                 }
             });
- 
+
             if (colors.length > 0) {
                 if (globalSizes.length > 0) {
                     colors.forEach(c => { globalSizes.forEach(s => { variants.push({ color: c, size: s }); }); });
                 }
             }
- 
+
             const unique = []; 
             const seen = new Set();
             variants.forEach(v => { 
@@ -274,7 +271,7 @@
             });
             return unique;
         };
- 
+
         const extractProducts = (items, pageNum, unscaledVp) => {
             const codes = []; 
             const prices = [];
@@ -287,7 +284,7 @@
                     prices.push({ ...it, price: parseFloat(m[1]) });
                 }
             });
- 
+
             codes.sort((a, b) => { return b.transform[5] - a.transform[5]; });
             
             return codes.map(c => {
@@ -315,7 +312,7 @@
                 };
             });
         };
- 
+
         /* --- COMPONENTES DE UI --- */
         function PromptModal({ dialog, onClose }) {
             const [val, setVal] = useState(dialog.defaultValue || '');
@@ -348,7 +345,7 @@
                 </div>
             );
         }
- 
+
         function ShareModal({ onClose }) {
             const [copied, setCopied] = useState(false); 
             const link = window.location.href;
@@ -375,7 +372,7 @@
                 </div>
             );
         }
- 
+
         function CartDrawer({ cart, setCart, whatsappNumber, onClose }) {
             const [step, setStep] = useState('cart');
             const [form, setForm] = useState({ name: '', phone: '', address: '' });
@@ -459,22 +456,22 @@
                                 )}
                             </div>
                         ) : (
-                            <div className="p-8 space-y-6">
+                            <form onSubmit={e => { e.preventDefault(); send(); }} className="p-8 space-y-6">
                                 <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Nombre completo" value={form.name} onChange={e=>{ setForm({...form,name:e.target.value}); }} />
                                 <input required type="tel" className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Teléfono" value={form.phone} onChange={e=>{ setForm({...form,phone:e.target.value}); }} />
                                 <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Dirección de entrega" value={form.address} onChange={e=>{ setForm({...form,address:e.target.value}); }} />
                                 
-                                <button onClick={send} disabled={isSubmitting || !form.name || !form.phone || !form.address} className={`w-full text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg shadow-xl flex items-center justify-center gap-3 transition-transform ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#128C7E] active:scale-95'}`}>
+                                <button type="submit" disabled={isSubmitting || !form.name || !form.phone || !form.address} className={`w-full text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg shadow-xl flex items-center justify-center gap-3 transition-transform ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#128C7E] active:scale-95'}`}>
                                     {isSubmitting ? 'Enviando...' : 'Enviar Pedido por WhatsApp'}
                                 </button>
                                 <button type="button" onClick={()=>{ setStep('cart'); }} className="w-full text-gray-500 font-bold hover:underline">Volver al carrito</button>
-                            </div>
+                            </form>
                         )}
                     </div>
                 </div>
             );
         }
- 
+
         function HotspotAdjuster({ page, products, hotspots, onClose }) {
             const [selectedProd, setSelectedProd] = useState(null);
             const { db, appId, collection, addDoc, updateDoc, doc } = window.fb;
@@ -543,7 +540,7 @@
                 </div>
             );
         }
- 
+
         function CatalogSelectionView({ catalogs, pages, onSelect }) {
             const getThumbnail = (catId) => {
                 const catPages = pages.filter(p => { return p.catalogId === catId; });
@@ -585,7 +582,7 @@
                 </div>
             );
         }
- 
+
         function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, isMobile }) {
             const [activeH, setActiveH] = useState(null);
             const [playingVideo, setPlayingVideo] = useState(null);
@@ -693,7 +690,7 @@
                 </div>
             );
         }
- 
+
         function AdminView({ catalogs, activeCatalogId, setActiveCatalogId, pages, products, hotspots, setView, setGlobalMessage, setConfirmDialog, settings }) {
             const [tab, setTab] = useState('pdf');
             const [loading, setLoading] = useState(false);
@@ -703,7 +700,7 @@
             const [promptDialog, setPromptDialog] = useState(null);
             const [adjustingPage, setAdjustingPage] = useState(null);
             
-            const { db, storage, ref, uploadString, getDownloadURL, deleteObject, appId, collection, addDoc, deleteDoc, updateDoc, doc, setDoc, writeBatch, onSnapshot, serverTimestamp } = window.fb;
+            const { db, storage, ref, uploadBytes, getDownloadURL, deleteObject, appId, collection, addDoc, deleteDoc, updateDoc, doc, setDoc, writeBatch, onSnapshot, serverTimestamp } = window.fb;
             
             useEffect(() => {
                 const unsubOrders = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (s) => { setOrders(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => { return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0); })); });
@@ -739,11 +736,11 @@
                     
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
- 
+
                     for (let i = 1; pdf.numPages >= i; i++) {
                         setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
-                        await new Promise(r => { setTimeout(r, 100); }); 
- 
+                        await new Promise(r => { setTimeout(r, 50); }); 
+
                         const pg = await pdf.getPage(i); 
                         const unscaledVp = pg.getViewport({ scale: 1.0 });
                         const vp = pg.getViewport({ scale: 1.5 }); 
@@ -752,24 +749,20 @@
                         
                         await pg.render({ canvasContext: ctx, viewport: vp }).promise;
                         
-                        let quality = 0.85;
-                        let base64Data = canvas.toDataURL('image/jpeg', quality);
-                        let finalImageUrl = base64Data; 
+                        // --- VÍA RÁPIDA: Convertir a Blob y subir a Storage ---
+                        const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.8); });
+                        const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
+                        
+                        let finalImageUrl = ""; 
                         let storagePath = null;
                         
                         try {
-                            const storageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
-                            const uploadResult = await uploadString(storageRef, base64Data, 'data_url');
-                            finalImageUrl = await getDownloadURL(uploadResult.ref || storageRef); 
-                            storagePath = storageRef.fullPath;
+                            await uploadBytes(imageRef, blob);
+                            finalImageUrl = await getDownloadURL(imageRef); 
+                            storagePath = imageRef.fullPath;
                         } catch(e) {
-                            console.warn("Storage falló, comprimiendo para Firestore...");
-                            while(base64Data.length > 850000 && quality > 0.3) {
-                                quality -= 0.15;
-                                base64Data = canvas.toDataURL('image/jpeg', quality);
-                            }
-                            if(base64Data.length > 1000000) { throw new Error("La página " + i + " es demasiado pesada."); }
-                            finalImageUrl = base64Data;
+                            console.error("Storage falló. Revisa las reglas en la consola de Firebase.");
+                            throw new Error("No se pudo subir la imagen a Storage.");
                         }
                         
                         const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
@@ -854,7 +847,7 @@
                                 <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-4 rounded-full font-bold shadow-xl inline-flex items-center gap-2 transition-all text-lg ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700 hover:scale-105'}`}>
                                     {loading ? <Icons.Loader /> : <Icons.Plus />} {loading ? uploadProgress : 'Subir PDF'}
                                 </label>
-                                {currentPages.length > 0 && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-8 text-red-500 text-sm font-bold hover:underline opacity-80 transition">Eliminar Catálogo</button>}
+                                {activeCatalogId && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-8 text-red-500 text-sm font-bold hover:underline opacity-80 transition">Eliminar Catálogo Actual</button>}
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
                                 {currentPages.map(p => (
@@ -893,7 +886,7 @@
                             {editingProduct ? (
                                 <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
                                     <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Edit2 /> Editar</h3>
-                                    <div className="flex flex-col gap-5">
+                                    <form onSubmit={async (e) => { e.preventDefault(); try { if (editingProduct.id === 'new') { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null, pageNumber: editingProduct.pageNumber, catalogId: activeCatalogId }); } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null }); } setEditingProduct(null); } catch (err) {} }} className="flex flex-col gap-5">
                                         <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Código</label><input type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" value={editingProduct.code || ''} onChange={e => { setEditingProduct({...editingProduct, code: e.target.value}); }} required /></div>
                                         <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</label><textarea className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 h-32 text-sm focus:border-[#007cc2] outline-none transition" value={editingProduct.description || ''} onChange={e => { setEditingProduct({...editingProduct, description: e.target.value}); }} /></div>
                                         <div className="grid grid-cols-2 gap-4">
@@ -902,9 +895,9 @@
                                         </div>
                                         <div className="flex gap-4 mt-4">
                                             <button type="button" onClick={() => { setEditingProduct(null); }} className="bg-gray-100 text-gray-600 px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-gray-200 transition">Cancelar</button>
-                                            <button type="button" onClick={async () => { try { if (editingProduct.id === 'new') { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null, pageNumber: editingProduct.pageNumber, catalogId: activeCatalogId }); } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null }); } setEditingProduct(null); } catch (err) { console.error(err); } }} className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-blue-700 transition shadow-lg">Guardar</button>
+                                            <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-blue-700 transition shadow-lg">Guardar</button>
                                         </div>
-                                    </div>
+                                    </form>
                                 </div>
                             ) : (
                                 <div className="space-y-8">
@@ -977,12 +970,12 @@
                     {tab === 'ajustes' && (
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
                             <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Settings /> Ajustes</h3>
-                            <div className="flex flex-col gap-5">
+                            <form onSubmit={async (e) => { e.preventDefault(); try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: e.target.whatsapp.value }, { merge: true }); setGlobalMessage({ title: "Éxito", text: "Guardado." }); } catch(err) {} }} className="flex flex-col gap-5">
                                 <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp Ventas</label><input type="text" id="whatsapp-input" className="w-full border-2 border-gray-200 p-3 rounded-xl bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" defaultValue={settings?.whatsapp || ''} pattern="[0-9]{8,15}" /></div>
                                 <div className="flex gap-4 mt-4">
                                     <button type="button" onClick={async () => { try { const val = document.getElementById('whatsapp-input').value; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: val }, { merge: true }); setGlobalMessage({ title: "Éxito", text: "Guardado." }); } catch(err) { console.error(err); } }} className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold w-full hover:bg-blue-700 transition shadow-lg">Guardar</button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     )}
                     
@@ -990,8 +983,8 @@
                 </div>
             );
         }
- 
-        function App() {
+
+        function MainApp() {
             const [view, setView] = useState('store');
             const [isMobile, setIsMobile] = useState(768 > window.innerWidth);
             const [settings, setSettings] = useState({ whatsapp: WHATSAPP_NUMBER });
@@ -1015,15 +1008,16 @@
             const [secretClicks, setSecretClicks] = useState(0);
             const [ready, setReady] = useState(false);
             const clickTimeout = useRef(null);
- 
+
             useEffect(() => {
                 const handleResize = () => { setIsMobile(768 > window.innerWidth); };
                 window.addEventListener('resize', handleResize);
                 return () => { window.removeEventListener('resize', handleResize); };
             }, []);
- 
+
             useEffect(() => {
                 const init = async () => {
+                    if (!window.fb) { return setTimeout(init, 300); }
                     const { auth, signInAnonymously, signInWithCustomToken, initialToken } = window.fb;
                     try {
                         if (initialToken) { await signInWithCustomToken(auth, initialToken); }
@@ -1035,25 +1029,32 @@
                         setReady(true); 
                     }
                 };
-                // window.fb ya está disponible de forma síncrona, no hay race condition
                 init();
             }, []);
- 
+
             useEffect(() => {
                 if (!ready) { return; }
                 const { db, appId, onSnapshot, collection, doc } = window.fb;
-                const unsubS = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), ds => { if (ds.exists()) { setSettings(ds.data()); } });
+                
+                // Parche de ds.exists() para evitar que se congele
+                const unsubS = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), ds => { 
+                    const isExisting = typeof ds.exists === 'function' ? ds.exists() : ds.exists;
+                    if (isExisting) setSettings(ds.data()); 
+                });
+                
                 const unsubC = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), s => {
                     const cats = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => { return (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0); });
                     setCatalogs(cats);
                     setActiveCatalogId(prev => { if (cats.length === 0) { return ''; } if (!prev || !cats.find(c => { return c.id === prev; })) { return cats[0].id; } return prev; });
                 });
+                
                 const unsubP = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => { setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))); });
                 const unsubPg = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => { setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => { return a.pageNumber - b.pageNumber; })); });
                 const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => { setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))); });
+                
                 return () => { unsubP(); unsubPg(); unsubH(); unsubC(); unsubS(); };
             }, [ready]);
- 
+
             useEffect(() => {
                 if (view !== 'store' || showCatalogList || isCartOpen || showShareModal || showLoginModal || confirmDialog || globalMessage) { return; }
                 const handleKD = (e) => {
@@ -1066,11 +1067,11 @@
                 window.addEventListener('keydown', handleKD);
                 return () => { window.removeEventListener('keydown', handleKD); };
             }, [view, showCatalogList, isCartOpen, showShareModal, showLoginModal, confirmDialog, globalMessage, currentIndex, pages, activeCatalogId, isMobile]);
- 
+
             const currentPages = activeCatalogId ? pages.filter(p => { return p.catalogId === activeCatalogId; }).sort((a,b) => { return a.pageNumber - b.pageNumber; }) : [];
             const currentProducts = activeCatalogId ? products.filter(p => { return p.catalogId === activeCatalogId; }) : [];
             const indexedPages = currentPages.filter(p => { return p.indexName; });
- 
+
             const handleSecretClick = () => {
                 if (clickTimeout.current) { clearTimeout(clickTimeout.current); }
                 if (secretClicks + 1 >= 6) { 
@@ -1081,7 +1082,7 @@
                     clickTimeout.current = setTimeout(() => { setSecretClicks(0); }, 1500); 
                 }
             };
- 
+
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
                 const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
@@ -1095,11 +1096,11 @@
                     setPinError(true); 
                 }
             };
- 
+
             if (!ready) { 
                 return (<div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>); 
             }
- 
+
             return (
                 <div className="min-h-screen relative flex flex-col bg-[#f3f4f6]" onClick={() => { setShowIndexMenu(false); }}>
                     {view === 'store' && (
@@ -1173,10 +1174,9 @@
                 </div>
             );
         }
- 
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<MainApp />);
     </script>
 </body>
 </html>
- 

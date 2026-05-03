@@ -96,9 +96,9 @@
         /* --- FUNCIONES HELPER --- */
         const generateShoeRange = (start, end) => {
             const s = parseInt(start); const e = parseInt(end);
-            if (!isNaN(s) && !isNaN(e) && s <= e && (e - s) < 20) {
+            if (!isNaN(s) && !isNaN(e) && e >= s && 20 > (e - s)) {
                 const res = []; 
-                for (let i = s; i <= e; i++) res.push(i.toString()); 
+                for (let i = s; e >= i; i++) res.push(i.toString()); 
                 return res;
             } 
             return [];
@@ -108,7 +108,7 @@
             const sequence = ["1/2", "3/4", "5/6", "7/8", "9/10", "11/12", "13/14", "15/16"];
             const sIdx = sequence.indexOf(start.trim()); 
             const eIdx = sequence.indexOf(end.trim());
-            if (sIdx !== -1 && eIdx !== -1 && sIdx <= eIdx) {
+            if (sIdx !== -1 && eIdx !== -1 && eIdx >= sIdx) {
                 return sequence.slice(sIdx, eIdx + 1);
             }
             return [start, end]; 
@@ -186,13 +186,16 @@
             codes.sort((a, b) => b.transform[5] - a.transform[5]);
             return codes.map(c => {
                 let bestP = 0; let bestPY = c.transform[5] - 250;
-                let validPrices = prices.filter(p => p.transform[5] <= c.transform[5] + 15 && Math.abs(p.transform[4] - c.transform[4]) < 150);
+                let validPrices = prices.filter(p => c.transform[5] + 15 >= p.transform[5] && 150 > Math.abs(p.transform[4] - c.transform[4]));
+                
                 if (validPrices.length > 0) {
                     validPrices.sort((a, b) => b.transform[5] - a.transform[5]); 
                     bestP = validPrices[0].price; bestPY = validPrices[0].transform[5];
                 }
-                const descs = items.filter(it => it.transform[5] < c.transform[5] - 2 && it.transform[5] > bestPY - 15 && Math.abs(it.transform[4] - c.transform[4]) < 150 && !/^MM\d+/i.test(it.text) && !/Q\s*\.?\s*(\d+)/i.test(it.text));
+                
+                const descs = items.filter(it => c.transform[5] - 2 > it.transform[5] && it.transform[5] > bestPY - 15 && 150 > Math.abs(it.transform[4] - c.transform[4]) && !/^MM\d+/i.test(it.text) && !/Q\s*\.?\s*(\d+)/i.test(it.text));
                 descs.sort((a,b) => b.transform[5] - a.transform[5]);
+                
                 return { 
                     code: c.text, 
                     description: descs.map(d => d.text).join('\n'), 
@@ -256,7 +259,7 @@
                         <div className="flex gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-200 mb-2 focus-within:border-[#007cc2] transition-colors">
                             <input readOnly value={link} className="flex-1 bg-transparent text-xs text-gray-600 outline-none px-3 font-bold overflow-hidden text-ellipsis" />
                             <button onClick={copy} className={`px-6 py-3.5 rounded-xl font-bold text-white transition-all shadow-md flex items-center gap-2 ${copied ? 'bg-green-500' : 'bg-[#007cc2] hover:bg-blue-700'}`}>
-                                {copied ? <><Icons.Check /> Copiado</> : <><Icons.Copy /> Copiar</>}
+                                {copied ? (<><Icons.Check /> Copiado</>) : (<><Icons.Copy /> Copiar</>)}
                             </button>
                         </div>
                     </div>
@@ -486,7 +489,7 @@
             );
             
             const left = pages[currentIndex]; 
-            const right = (!isMobile && currentIndex + 1 < pages.length) ? pages[currentIndex + 1] : null;
+            const right = (!isMobile && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;
             
             const renderH = (pg) => pg && hotspots.filter(h => h.pageId === pg.id).map(h => {
                 const p = products.find(prod => prod.id === h.productId); 
@@ -500,7 +503,7 @@
                 }, {});
                 
                 let alignClass = "left-1/2 -translate-x-1/2"; 
-                if (h.x < 20) alignClass = "left-0"; 
+                if (20 > h.x) alignClass = "left-0"; 
                 else if (h.x > 80) alignClass = "right-0";
                 
                 return (
@@ -542,7 +545,7 @@
                     <div className="relative flex items-center justify-center w-full flex-grow h-[70vh] md:h-[80vh] lg:h-[85vh] px-2 md:px-12 lg:px-20">
                         <button onClick={()=>move('p')} disabled={currentIndex===0} className="absolute left-0 md:left-4 lg:left-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronLeft /></button>
                         
-                        <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={(e)=>{setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX);}} onTouchMove={(e)=>setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={()=>{if (!touchStart || !touchEnd) return; const dist = touchStart - touchEnd; if (dist > 50) move('n'); if (dist < -50) move('p');}}>
+                        <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={(e)=>{setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX);}} onTouchMove={(e)=>setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={()=>{if (!touchStart || !touchEnd) return; const dist = touchStart - touchEnd; if (dist > 50) move('n'); if (-50 > dist) move('p');}}>
                             <div className={`relative h-full bg-white overflow-hidden ${!isMobile ? 'border-r border-gray-100' : ''}`}>
                                 {left && (<><img src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</>)}
                             </div>
@@ -585,6 +588,7 @@
             const handleFileSelect = (e) => {
                 const f = e.target.files[0]; 
                 if (!f) return; 
+                if (f.size > 30 * 1024 * 1024) { setGlobalMessage({ title: "PDF demasiado pesado", text: "Comprímelo a menos de 30MB antes de subir.", type: "error" }); return; }
                 setPromptDialog({ title: "Nombre del catálogo", onSubmit: (catName) => { if (catName && catName.trim() !== '') processUpload(f, catName.trim()); } });
                 e.target.value = '';
             };
@@ -605,14 +609,12 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-                    for (let i = 1; i <= pdf.numPages; i++) {
+                    for (let i = 1; pdf.numPages >= i; i++) {
                         setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
                         await new Promise(r => setTimeout(r, 100)); 
 
                         const pg = await pdf.getPage(i); 
                         const unscaledVp = pg.getViewport({ scale: 1.0 });
-                        
-                        /* ESCALA ÓPTIMA: 1.5x */
                         const vp = pg.getViewport({ scale: 1.5 }); 
                         canvas.width = vp.width; 
                         canvas.height = vp.height;
@@ -678,7 +680,7 @@
                         ...hotspots.filter(h => h.catalogId === activeCatalogId).map(h => doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id))
                     ];
                     
-                    for (let i = 0; i < toDelete.length; i += 400) { 
+                    for (let i = 0; toDelete.length > i; i += 400) { 
                         const b = writeBatch(db); 
                         toDelete.slice(i, i + 400).forEach(d => b.delete(d)); 
                         await b.commit(); 
@@ -862,7 +864,7 @@
 
         function App() {
             const [view, setView] = useState('store');
-            const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+            const [isMobile, setIsMobile] = useState(768 > window.innerWidth);
             const [settings, setSettings] = useState({ whatsapp: WHATSAPP_NUMBER });
             const [catalogs, setCatalogs] = useState([]);
             const [activeCatalogId, setActiveCatalogId] = useState('');
@@ -886,7 +888,7 @@
             const clickTimeout = useRef(null);
 
             useEffect(() => {
-                const handleResize = () => setIsMobile(window.innerWidth < 768);
+                const handleResize = () => setIsMobile(768 > window.innerWidth);
                 window.addEventListener('resize', handleResize);
                 return () => window.removeEventListener('resize', handleResize);
             }, []);
@@ -931,7 +933,7 @@
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
                     const max = pages.filter(p => p.catalogId === activeCatalogId).length;
                     const step = isMobile ? 1 : 2;
-                    if (e.key === 'ArrowRight' && currentIndex + step < max) setCurrentIndex(p => Math.min(max - 1, p + step));
+                    if (e.key === 'ArrowRight' && max > currentIndex + step) setCurrentIndex(p => Math.min(max - 1, p + step));
                     else if (e.key === 'ArrowLeft' && currentIndex > 0) setCurrentIndex(p => Math.max(0, p - step));
                 };
                 window.addEventListener('keydown', handleKD);

@@ -736,6 +736,8 @@
                     
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    
+                    let skipStorage = false;
 
                     for (let i = 1; pdf.numPages >= i; i++) {
                         setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
@@ -749,24 +751,35 @@
                         
                         await pg.render({ canvasContext: ctx, viewport: vp }).promise;
                         
-                        // --- VÍA RÁPIDA: Convertir a Blob y subir a Storage ---
                         const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.8); });
-                        if (!blob) throw new Error("No se pudo generar la imagen (Blob) de la página.");
-                        
-                        const metadata = { contentType: 'image/jpeg' };
-                        const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
+                        if (!blob) throw new Error(`No se pudo generar la imagen de la página ${i}.`);
                         
                         let finalImageUrl = ""; 
                         let storagePath = null;
                         
-                        try {
-                            await uploadBytes(imageRef, blob, metadata);
-                            finalImageUrl = await getDownloadURL(imageRef); 
-                            storagePath = imageRef.fullPath;
-                        } catch(e) {
-                            console.warn("Storage no autorizado (Posiblemente entorno Canvas). Aplicando fallback de emergencia a Base64...", e);
-                            // FALLBACK: Si las reglas de Storage bloquean la subida (ej. en vista previa de Canvas), usa Base64 ligero en Firestore
-                            finalImageUrl = canvas.toDataURL('image/jpeg', 0.5);
+                        if (!skipStorage) {
+                            try {
+                                const metadata = { contentType: 'image/jpeg' };
+                                const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
+                                await uploadBytes(imageRef, blob, metadata);
+                                finalImageUrl = await getDownloadURL(imageRef); 
+                                storagePath = imageRef.fullPath;
+                            } catch(e) {
+                                console.warn("Storage bloqueado. Activando fallback de Base64 optimizado para el resto de páginas...", e);
+                                skipStorage = true;
+                            }
+                        }
+                        
+                        if (skipStorage) {
+                            // FALLBACK: Reducimos la resolución drásticamente para evitar que Firestore colapse por exceso de tamaño (límite 1MB)
+                            const thumbCanvas = document.createElement('canvas');
+                            const thumbCtx = thumbCanvas.getContext('2d');
+                            const scaleDown = Math.min(800 / canvas.width, 1); // Forzamos un ancho máximo de 800px
+                            thumbCanvas.width = canvas.width * scaleDown;
+                            thumbCanvas.height = canvas.height * scaleDown;
+                            thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+                            
+                            finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.5); // Calidad reducida
                             storagePath = null;
                         }
                         
@@ -780,6 +793,9 @@
                             const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
                             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
                         }
+                        
+                        // IMPORTANTE: Liberar memoria para no colapsar la RAM con PDFs grandes (ej. 63 páginas)
+                        pg.cleanup();
                         ctx.clearRect(0, 0, canvas.width, canvas.height); 
                     }
                     URL.revokeObjectURL(fileUrl);

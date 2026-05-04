@@ -676,8 +676,8 @@
                         if (ex.length > 0) {
                             const b = writeBatch(db);
                             ex.forEach(p => {
-                                const pRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'products'));
-                                const hRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'));
+                                const pRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('products').doc();
+                                const hRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('hotspots').doc();
                                 b.set(pRef, { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
                                 b.set(hRef, { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
                             });

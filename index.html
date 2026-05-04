@@ -84,9 +84,7 @@
             deleteDoc: (ref) => ref.delete(),
             
             onSnapshot: (ref, callback) => ref.onSnapshot(snapshot => {
-                if (snapshot.docs !== undefined) {
-                    callback(snapshot);
-                } else {
+                if (snapshot !== undefined) {
                     callback(snapshot);
                 }
             }),
@@ -125,21 +123,16 @@
             Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
             X: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
             Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-            Copy: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+            Phone: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+            MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+            Package: () => <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
             Loader: () => <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>,
             AlertCircle: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
             Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
             Edit2: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
             Tag: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>,
-            Star: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
             Youtube: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21.582 6.186a2.66 2.66 0 0 0-1.884-1.895C18.04 3.84 12 3.84 12 3.84s-6.04 0-7.698.451a2.66 2.66 0 0 0-1.884 1.895C2 7.868 2 12 2 12s0 4.132.418 5.814a2.66 2.66 0 0 0 1.884 1.895C6.04 20.16 12 20.16 12 20.16s6.04 0 7.698-.451a2.66 2.66 0 0 0 1.884-1.895C22 16.132 22 12 22 12s0-4.132-.418-5.814zM9.993 15.155V8.845L15.405 12l-5.412 3.155z"/></svg>,
-            Settings: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
-            Package: () => <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
-            Phone: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
-            User: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-            Mail: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
-            MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-            LogIn: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Settings: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         };
 
         /* --- FUNCIONES HELPER --- */
@@ -287,7 +280,6 @@
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
                     <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95">
                         <h3 className="font-bold text-lg mb-2 text-gray-800">{dialog.title}</h3>
-                        {dialog.text && <p className="text-xs text-gray-500 mb-4">{dialog.text}</p>}
                         <input autoFocus className="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-[#007cc2] text-center font-bold" placeholder={dialog.placeholder || ''} value={val} onChange={e=>{ setVal(e.target.value); }} onKeyDown={e=>{ if(e.key==='Enter') sub(); }} />
                         <div className="flex gap-3">
                             <button onClick={onClose} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition">Cancelar</button>
@@ -349,9 +341,7 @@
                     msg += `\n*TOTAL: Q${total.toFixed(2)}*`;
                     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`);
                     setCart([]); onClose();
-                } catch (error) { 
-                    alert("Error enviando pedido."); 
-                } finally { setIsSubmitting(false); }
+                } catch (error) { alert("Error enviando pedido."); } finally { setIsSubmitting(false); }
             };
             
             return (
@@ -381,9 +371,7 @@
                                             </div>
                                         </div>
                                     ))}
-                                    {cart.length === 0 && (
-                                        <div className="h-full flex flex-col items-center justify-center opacity-20"><Icons.Cart /><p className="font-bold mt-4 text-xl">Carrito vacío</p></div>
-                                    )}
+                                    {cart.length === 0 && <div className="h-full flex flex-col items-center justify-center opacity-20"><Icons.Cart /><p className="font-bold mt-4 text-xl">Carrito vacío</p></div>}
                                 </div>
                                 {cart.length > 0 && (
                                     <div className="pt-6 border-t mt-6 bg-white">
@@ -400,7 +388,7 @@
                                 <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Nombre completo" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
                                 <input required type="tel" className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Teléfono" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} />
                                 <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Dirección de entrega" value={form.address} onChange={e=>setForm({...form,address:e.target.value})} />
-                                <button type="submit" disabled={isSubmitting || !form.name || !form.phone || !form.address} className={`w-full text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg shadow-xl flex items-center justify-center gap-3 transition-transform ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#128C7E] active:scale-95'}`}>{isSubmitting ? 'Enviando...' : 'Enviar Pedido por WhatsApp'}</button>
+                                <button type="submit" disabled={isSubmitting} className={`w-full text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg shadow-xl flex items-center justify-center gap-3 transition-transform ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#128C7E]'}`}>{isSubmitting ? 'Enviando...' : 'Enviar Pedido por WhatsApp'}</button>
                                 <button type="button" onClick={()=>setStep('cart')} className="w-full text-gray-500 font-bold hover:underline">Volver al carrito</button>
                             </form>
                         )}
@@ -434,12 +422,9 @@
                     <div className="flex-1 flex items-center justify-center p-4 overflow-hidden relative">
                         <div className="relative inline-flex max-w-full max-h-full shadow-2xl bg-white rounded-xl">
                             <img src={page.imageUrl} alt="Página" onClick={handleImageClick} className="block max-w-full max-h-[85vh] w-auto h-auto cursor-crosshair rounded-xl" />
-                            {pageHotspots.map(h => {
-                                const isSelected = selectedProd === h.productId;
-                                return (
-                                    <div key={h.id} className={`absolute flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] rounded-full ${isSelected ? 'bg-green-500 border-white scale-125 z-[60] animate-pulse' : 'bg-[#007cc2] border-white opacity-90'} w-10 h-10`} style={{left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)'}} onClick={(e)=>{ e.stopPropagation(); setSelectedProd(h.productId); }}><Icons.Cart /></div>
-                                );
-                            })}
+                            {pageHotspots.map(h => (
+                                <div key={h.id} className={`absolute flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] rounded-full ${selectedProd === h.productId ? 'bg-green-500 border-white scale-125 z-[60]' : 'bg-[#007cc2] border-white opacity-90'} w-10 h-10`} style={{left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)'}} onClick={(e)=>{ e.stopPropagation(); setSelectedProd(h.productId); }}><Icons.Cart /></div>
+                            ))}
                         </div>
                     </div>
                     <div className="w-full md:w-80 bg-white flex flex-col shadow-2xl">
@@ -448,16 +433,12 @@
                             <button onClick={onClose} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition"><Icons.X /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-gray-50">
-                            {pageProducts.length === 0 ? <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p> : pageProducts.map(p => {
-                                const hasIcon = pageHotspots.some(h => h.productId === p.id);
-                                const isSelected = selectedProd === p.id;
-                                return (
-                                    <button key={p.id} onClick={() => setSelectedProd(p.id)} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${isSelected ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]' : 'border-white hover:border-blue-200 bg-white shadow-sm'}`}>
-                                        <div><p className="font-extrabold text-lg">{p.code}</p><p className="text-[11px] font-bold text-gray-400">Q{p.price}</p></div>
-                                        {hasIcon && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
-                                    </button>
-                                );
-                            })}
+                            {pageProducts.length === 0 ? <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p> : pageProducts.map(p => (
+                                <button key={p.id} onClick={() => setSelectedProd(p.id)} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]' : 'border-white hover:border-blue-200 bg-white shadow-sm'}`}>
+                                    <div><p className="font-extrabold text-lg">{p.code}</p><p className="text-[11px] font-bold text-gray-400">Q{p.price}</p></div>
+                                    {pageHotspots.some(h => h.productId === p.id) && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -471,29 +452,20 @@
                 const firstPage = catPages.find(p => p.pageNumber === 1) || catPages[0];
                 return firstPage.coverImage || firstPage.imageUrl;
             };
-            
-            if (catalogs.length === 0) {
-                return (
-                    <div className="flex flex-col items-center justify-center h-[60vh] text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo en preparación!</h2></div>
-                );
-            }
-            
+            if (catalogs.length === 0) return <div className="flex flex-col items-center justify-center h-[60vh] text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo en preparación!</h2></div>;
             return (
                 <div className="py-8 w-full min-h-screen">
                     <h2 className="text-2xl md:text-4xl font-extrabold text-center text-gray-800 mb-10 tracking-wide">Descubre Nuestras Campañas</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8 max-w-[1600px] mx-auto px-2 md:px-6">
-                        {catalogs.map(cat => {
-                            const thumb = getThumbnail(cat.id);
-                            return (
-                                <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full">
-                                    <div className="bg-white p-1 md:p-2 rounded-2xl shadow-xl border-4 border-transparent group-hover:border-[#007cc2] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden mb-4 relative">
-                                        {thumb ? <img src={thumb} className="w-full h-full object-cover rounded-xl" alt={cat.name} /> : <div className="flex flex-col items-center opacity-30 text-gray-800"><Icons.Package /><span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span></div>}
-                                    </div>
-                                    <h3 className="font-bold text-sm md:text-xl text-gray-800 group-hover:text-[#007cc2] transition text-center px-1 w-full truncate">{cat.name}</h3>
-                                    <button className="mt-2 md:mt-4 bg-blue-50 text-[#007cc2] text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#007cc2] group-hover:text-white transition shadow-sm w-full md:w-auto">Ver Catálogo</button>
+                        {catalogs.map(cat => (
+                            <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full">
+                                <div className="bg-white p-1 md:p-2 rounded-2xl shadow-xl border-4 border-transparent group-hover:border-[#007cc2] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden mb-4 relative">
+                                    {getThumbnail(cat.id) ? <img src={getThumbnail(cat.id)} className="w-full h-full object-cover rounded-xl" alt={cat.name} /> : <div className="flex flex-col items-center opacity-30 text-gray-800"><Icons.Package /><span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span></div>}
                                 </div>
-                            );
-                        })}
+                                <h3 className="font-bold text-sm md:text-xl text-gray-800 group-hover:text-[#007cc2] transition text-center px-1 w-full truncate">{cat.name}</h3>
+                                <button className="mt-2 md:mt-4 bg-blue-50 text-[#007cc2] text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#007cc2] group-hover:text-white shadow-sm w-full md:w-auto">Ver Catálogo</button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
@@ -504,37 +476,24 @@
             const [playingVideo, setPlayingVideo] = useState(null);
             const [touchStart, setTouchStart] = useState(null);
             const [touchEnd, setTouchEnd] = useState(null);
-            
             useEffect(() => setActiveH(null), [currentIndex]);
-            
             const step = isMobile ? 1 : 2;
             const move = (dir) => { 
                 if (dir === 'n') setCurrentIndex(prev => Math.min(pages.length - 1, prev + step));
                 else setCurrentIndex(prev => Math.max(0, prev - step));
             };
-            
             if (pages.length === 0) return (<div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo vacío!</h2></div>);
-            
             const left = pages[currentIndex]; 
             const right = (!isMobile && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;
-            
             const renderH = (pg) => {
                 if (!pg) return null;
                 return hotspots.filter(h => h.pageId === pg.id).map(h => {
                     const p = products.find(prod => prod.id === h.productId); 
                     if (!p) return null;
-                    
                     const vars = getVariants(p.description); 
-                    const grouped = vars.reduce((acc, v) => { 
-                        if(!acc[v.color]) acc[v.color]=[];
-                        acc[v.color].push(v.size); 
-                        return acc; 
-                    }, {});
-                    
+                    const grouped = vars.reduce((acc, v) => { if(!acc[v.color]) acc[v.color]=[]; acc[v.color].push(v.size); return acc; }, {});
                     let alignClass = "left-1/2 -translate-x-1/2"; 
-                    if (20 > h.x) alignClass = "left-0";
-                    else if (h.x > 80) alignClass = "right-0";
-                    
+                    if (20 > h.x) alignClass = "left-0"; else if (h.x > 80) alignClass = "right-0";
                     return (
                         <div key={h.id} className="absolute z-20 flex items-center gap-2" style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
                             <div onClick={(e) => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
@@ -546,12 +505,12 @@
                                     <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                                         {Object.entries(grouped).length > 0 ? Object.entries(grouped).map(([c, szs]) => (
                                             <div key={c} className="text-left border-t pt-2">
-                                                <p className="text-[10px] font-extrabold text-gray-500 uppercase leading-none mb-1.5">{c}:</p>
+                                                <p className="text-[10px] font-extrabold text-gray-500 uppercase mb-1.5">{c}:</p>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {szs.map(s => <button key={s} onClick={() => { onAdd({id:`${p.id}_${c}_${s}`, code:p.code, color:c, size:s, price:p.price}); setActiveH(null); }} className="bg-blue-50 text-[#007cc2] text-xs font-bold px-2.5 py-1 rounded hover:bg-[#007cc2] hover:text-white transition">{s}</button>)}
                                                 </div>
                                             </div>
-                                        )) : <button onClick={() => { onAdd({id:p.id, code:p.code, color:'', size:'', price:p.price}); setActiveH(null); }} className="w-full bg-[#007cc2] text-white text-xs font-bold py-2.5 rounded hover:bg-blue-700 transition">AGREGAR AL CARRITO</button>}
+                                        )) : <button onClick={() => { onAdd({id:p.id, code:p.code, color:'', size:'', price:p.price}); setActiveH(null); }} className="w-full bg-[#007cc2] text-white text-xs font-bold py-2.5 rounded hover:bg-blue-700">AGREGAR</button>}
                                     </div>
                                 </div>
                             )}
@@ -559,7 +518,6 @@
                     );
                 });
             };
-            
             return (
                 <div className="flex flex-col flex-grow items-center justify-center relative w-full py-2 md:py-6" onClick={() => setActiveH(null)}>
                     <div className="relative flex items-center justify-center w-full flex-grow h-[70vh] md:h-[80vh] lg:h-[85vh] px-2 md:px-12 lg:px-20">
@@ -574,7 +532,7 @@
                                 </div>
                             )}
                         </div>
-                        <button onClick={()=>move('n')} disabled={currentIndex + step >= pages.length} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronRight /></button>
+                        <button onClick={()=>move('n')} disabled={pages.length > currentIndex + step ? false : true} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronRight /></button>
                     </div>
                     <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">Página {currentIndex+1} {(!isMobile && right) ? `- ${currentIndex+2}` : ''} de {pages.length}</div>
                     {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}
@@ -590,7 +548,6 @@
             const [orders, setOrders] = useState([]);
             const [promptDialog, setPromptDialog] = useState(null);
             const [adjustingPage, setAdjustingPage] = useState(null);
-            
             const { db, storage, ref, uploadBytes, getDownloadURL, deleteObject, appId, collection, addDoc, deleteDoc, updateDoc, doc, setDoc, writeBatch, onSnapshot, serverTimestamp } = window.fb;
             
             useEffect(() => {
@@ -600,7 +557,8 @@
             
             const currentPages = activeCatalogId ? pages.filter(p => p.catalogId === activeCatalogId).sort((a,b) => a.pageNumber - b.pageNumber) : [];
             const currentProducts = activeCatalogId ? products.filter(p => p.catalogId === activeCatalogId) : [];
-            
+            const groupedProducts = currentProducts.reduce((acc, p) => { const k = p.pageNumber || '1'; if (!acc[k]) acc[k] = []; acc[k].push(p); return acc; }, {});
+
             const handleFileSelect = (e) => {
                 const f = e.target.files[0]; 
                 if (!f) return;
@@ -608,74 +566,49 @@
                 setPromptDialog({ title: "Nombre del catálogo", onSubmit: (catName) => { if (catName && catName.trim() !== '') processUpload(f, catName.trim()); } });
                 e.target.value = '';
             };
-            
+
             const processUpload = async (f, catName) => {
                 setLoading(true); setUploadProgress('Iniciando...');
                 try {
                     const catRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), { name: catName, createdAt: serverTimestamp() });
                     const catId = catRef.id; setActiveCatalogId(catId);
-                    
                     const pdfjsLib = window['pdfjs-dist/build/pdf'];
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
                     const fileUrl = URL.createObjectURL(f);
                     const pdf = await pdfjsLib.getDocument(fileUrl).promise;
-                    
                     let skipStorage = false;
-
                     for (let i = 1; i <= pdf.numPages; i++) {
                         setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
                         await new Promise(r => setTimeout(r, 10)); 
-
                         const pg = await pdf.getPage(i); 
                         const unscaledVp = pg.getViewport({ scale: 1.0 });
                         const vp = pg.getViewport({ scale: 1.2 }); 
-                        
                         const canvas = document.createElement('canvas'); 
                         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                        canvas.width = vp.width; 
-                        canvas.height = vp.height;
-                        
-                        await pg.render({ canvasContext: ctx, viewport: vp }).promise;
-                        
+                        canvas.width = vp.width; canvas.height = vp.height;
+                        try { await pg.render({ canvasContext: ctx, viewport: vp }).promise; } catch (e) {}
                         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7));
-                        if (!blob) throw new Error(`No se pudo generar la imagen de la página ${i}.`);
-                        
                         let finalImageUrl = ""; let storagePath = null;
-                        
                         if (!skipStorage) {
                             try {
-                                const metadata = { contentType: 'image/jpeg' };
                                 const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
-                                await Promise.race([
-                                    uploadBytes(imageRef, blob, metadata),
-                                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout_Firebase_Storage")), 4000))
-                                ]);
-                                finalImageUrl = await getDownloadURL(imageRef); 
-                                storagePath = imageRef.fullPath;
-                            } catch(e) {
-                                skipStorage = true;
-                            }
+                                await Promise.race([uploadBytes(imageRef, blob, { contentType: 'image/jpeg' }), new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), 4000))]);
+                                finalImageUrl = await getDownloadURL(imageRef); storagePath = imageRef.fullPath;
+                            } catch(e) { skipStorage = true; }
                         }
-                        
                         if (skipStorage) {
-                            const thumbCanvas = document.createElement('canvas');
-                            const thumbCtx = thumbCanvas.getContext('2d');
-                            const scaleDown = Math.min(600 / canvas.width, 1);
-                            thumbCanvas.width = canvas.width * scaleDown;
-                            thumbCanvas.height = canvas.height * scaleDown;
-                            thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-                            finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.4); 
-                            storagePath = null;
+                            const tC = document.createElement('canvas'); const tX = tC.getContext('2d');
+                            const sD = Math.min(600 / canvas.width, 1); tC.width = canvas.width * sD; tC.height = canvas.height * sD;
+                            tX.drawImage(canvas, 0, 0, tC.width, tC.height);
+                            finalImageUrl = tC.toDataURL('image/jpeg', 0.4); 
                         }
-                        
-                        const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
-                        const text = await pg.getTextContent();
-                        const items = text.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => it.text.trim());
+                        const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath, pageNumber: i, catalogId: catId });
+                        let items = []; try { const t = await pg.getTextContent(); items = t.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => it.text.trim()); } catch (e) {}
                         const ex = extractProducts(items, i, unscaledVp);
-                        
                         if (ex.length > 0) {
                             const b = writeBatch(db);
                             ex.forEach(p => {
+                                // CORRECCIÓN SINTAXIS COMPAT PARA BATCH
                                 const pRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('products').doc();
                                 const hRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('hotspots').doc();
                                 b.set(pRef, { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
@@ -683,40 +616,33 @@
                             });
                             await b.commit();
                         }
-                        
                         pg.cleanup(); canvas.width = 0; canvas.height = 0;
                     }
                     URL.revokeObjectURL(fileUrl);
-                } catch (err) { setGlobalMessage({ title: "Error procesando PDF", text: err.message, type: "error" }); 
-                } finally { setLoading(false); setUploadProgress(''); }
+                } catch (err) { setGlobalMessage({ title: "Error", text: err.message, type: "error" }); } finally { setLoading(false); setUploadProgress(''); }
             };
-            
+
             const deleteActiveCatalog = async () => {
                 if (!activeCatalogId) return;
                 setConfirmDialog({ title: "¿Eliminar?", text: "Se borrará todo permanentemente.", onConfirm: async () => {
                     const pagesToDel = pages.filter(p => p.catalogId === activeCatalogId);
                     pagesToDel.forEach(p => { if (p.storagePath) deleteObject(ref(storage, p.storagePath)).catch(()=>{}); });
-                    
                     const toDelete = [
                         doc(db, 'artifacts', appId, 'public', 'data', 'catalogs', activeCatalogId), 
                         ...pagesToDel.map(p => doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id)), 
                         ...products.filter(p => p.catalogId === activeCatalogId).map(p => doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)), 
                         ...hotspots.filter(h => h.catalogId === activeCatalogId).map(h => doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id))
                     ];
-                    
                     for (let i = 0; i < toDelete.length; i += 400) { 
                         const b = writeBatch(db); 
                         toDelete.slice(i, i + 400).forEach(d => b.delete(d)); 
                         await b.commit(); 
                     }
-                    
                     const rem = catalogs.filter(c => c.id !== activeCatalogId); 
                     setActiveCatalogId(rem.length > 0 ? rem[0].id : '');
                 }});
             };
-            
-            const groupedProducts = currentProducts.reduce((acc, p) => { const k = p.pageNumber || '1'; if (!acc[k]) acc[k] = []; acc[k].push(p); return acc; }, {});
-            
+
             return (
                 <div className="bg-white p-4 md:p-8 rounded-[30px] shadow-2xl border border-gray-100 relative">
                     {promptDialog && <PromptModal dialog={promptDialog} onClose={() => setPromptDialog(null)} />}
@@ -724,7 +650,7 @@
                         <div className="flex items-center gap-3 w-full md:w-auto">
                             <span className="font-extrabold text-blue-900 text-sm">Catálogo:</span>
                             {catalogs.length > 0 ? (
-                                <select className="border-2 border-blue-200 rounded-xl text-sm font-bold bg-white py-2 px-4 focus:outline-none shadow-sm flex-1 md:flex-none" value={activeCatalogId} onChange={e => setActiveCatalogId(e.target.value)}>
+                                <select className="border-2 border-blue-200 rounded-xl text-sm font-bold bg-white py-2 px-4 focus:outline-none shadow-sm" value={activeCatalogId} onChange={e => setActiveCatalogId(e.target.value)}>
                                     {catalogs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             ) : <span className="text-sm text-gray-500 font-medium">Ninguno</span>}
@@ -733,31 +659,27 @@
                     
                     <div className="flex gap-2 md:gap-4 border-b-2 border-gray-100 mb-8 overflow-x-auto pb-2 custom-scrollbar">
                         {['pdf', 'productos', 'pedidos', 'ajustes'].map(t => (
-                            <button key={t} onClick={() => setTab(t)} className={`capitalize whitespace-nowrap px-4 py-2 rounded-xl transition ${tab === t ? 'bg-[#007cc2] text-white font-bold shadow-md' : 'text-gray-500 font-semibold hover:bg-gray-50'}`}>{t === 'pdf' ? 'Organizar' : t}</button>
+                            <button key={t} onClick={() => setTab(t)} className={`capitalize px-4 py-2 rounded-xl transition ${tab === t ? 'bg-[#007cc2] text-white font-bold shadow-md' : 'text-gray-500 font-semibold hover:bg-gray-50'}`}>{t === 'pdf' ? 'Organizar' : t}</button>
                         ))}
                     </div>
                     
                     {tab === 'pdf' && (
                         <div>
-                            <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-8 md:p-12 rounded-3xl text-center mb-10 relative transition hover:border-[#007cc2] hover:bg-blue-50/50">
+                            <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-8 md:p-12 rounded-3xl text-center mb-10 relative transition hover:border-[#007cc2]">
                                 <input type="file" id="pdf" className="hidden" onChange={handleFileSelect} disabled={loading} accept="application/pdf" />
-                                <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-4 rounded-full font-bold shadow-xl inline-flex items-center gap-2 transition-all text-lg ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700 hover:scale-105'}`}>
-                                    {loading ? <Icons.Loader /> : <Icons.Plus />} {loading ? uploadProgress : 'Subir PDF'}
-                                </label>
-                                {activeCatalogId && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-8 text-red-500 text-sm font-bold hover:underline opacity-80 transition">Eliminar Catálogo Actual</button>}
+                                <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-4 rounded-full font-bold shadow-xl inline-flex items-center gap-2 transition-all ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700'}`}>{loading ? uploadProgress : 'Subir PDF'}</label>
+                                {activeCatalogId && !loading && <button onClick={deleteActiveCatalog} className="block mx-auto mt-8 text-red-500 text-sm font-bold hover:underline">Eliminar Catálogo Actual</button>}
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
                                 {currentPages.map(p => (
-                                    <div key={p.id} className="relative group bg-white p-2 rounded-2xl border-2 border-gray-100 shadow-sm hover:border-blue-200 transition">
+                                    <div key={p.id} className="relative group bg-white p-2 rounded-2xl border-2 border-gray-100 shadow-sm transition">
                                         <div className="aspect-[1/1.4] overflow-hidden rounded-xl relative">
                                             <img src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
-                                            {p.indexName && <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 flex items-center gap-1 max-w-full"><Icons.Tag /> <span className="truncate">{p.indexName}</span></div>}
-                                            {p.coverImage && <div className="absolute bottom-2 left-2 bg-yellow-400 text-yellow-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-sm z-10">GIF</div>}
-                                            <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20 backdrop-blur-sm">
-                                                <button onClick={() => setPromptDialog({ title: "Índice", defaultValue: p.indexName, onSubmit: async (t) => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { indexName: t.trim() }) })} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Índice</button>
-                                                <button onClick={() => setPromptDialog({ title: "GIF Portada", defaultValue: p.coverImage, onSubmit: async (url) => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { coverImage: url.trim() }) })} className="bg-white text-yellow-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Portada</button>
-                                                <button onClick={() => setAdjustingPage(p)} className="bg-white text-green-600 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Iconos</button>
-                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition w-3/4 justify-center">Borrar</button>
+                                            {p.indexName && <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 truncate max-w-full">{p.indexName}</div>}
+                                            <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20">
+                                                <button onClick={() => setPromptDialog({ title: "Índice", defaultValue: p.indexName, onSubmit: async (t) => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { indexName: t.trim() }) })} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full w-3/4 shadow-lg hover:scale-105 transition">Índice</button>
+                                                <button onClick={() => setAdjustingPage(p)} className="bg-white text-green-600 text-[10px] font-bold px-3 py-1.5 rounded-full w-3/4 shadow-lg hover:scale-105 transition">Iconos</button>
+                                                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id))} className="bg-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full w-3/4 shadow-lg hover:scale-105 transition">Borrar</button>
                                             </div>
                                         </div>
                                         <p className="text-xs text-center mt-3 font-extrabold text-gray-500">Página {p.pageNumber}</p>
@@ -770,38 +692,31 @@
                     {tab === 'productos' && (
                         <div>
                             <div className="flex justify-end mb-6">
-                                <button onClick={() => setEditingProduct({id:'new', code:'', description:'', price:'', pageNumber:1, catalogId: activeCatalogId})} className="bg-green-600 text-white font-extrabold py-3 px-6 rounded-full hover:bg-green-700 transition shadow-lg flex items-center gap-2"><Icons.Plus /> Añadir Manual</button>
+                                <button onClick={() => setEditingProduct({id:'new', code:'', description:'', price:'', pageNumber:1, catalogId: activeCatalogId})} className="bg-green-600 text-white font-extrabold py-3 px-6 rounded-full flex items-center gap-2"><Icons.Plus /> Añadir Manual</button>
                             </div>
                             {editingProduct ? (
                                 <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
-                                    <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Edit2 /> Editar</h3>
                                     <form onSubmit={async (e) => { e.preventDefault(); try { if (editingProduct.id === 'new') await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null, pageNumber: editingProduct.pageNumber, catalogId: activeCatalogId }); else await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', editingProduct.id), { code: editingProduct.code, price: parseFloat(editingProduct.price), description: editingProduct.description, youtubeUrl: editingProduct.youtubeUrl || null }); setEditingProduct(null); } catch (err) {} }} className="flex flex-col gap-5">
-                                        <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Código</label><input type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required /></div>
-                                        <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</label><textarea className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-gray-50 h-32 text-sm focus:border-[#007cc2] outline-none transition" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} /></div>
+                                        <div><label className="text-xs font-bold text-gray-400 uppercase">Código</label><input type="text" className="w-full border-2 p-3 rounded-xl bg-gray-50 font-bold focus:border-[#007cc2] outline-none" value={editingProduct.code || ''} onChange={e => setEditingProduct({...editingProduct, code: e.target.value})} required /></div>
+                                        <div><label className="text-xs font-bold text-gray-400 uppercase">Descripción</label><textarea className="w-full border-2 p-3 rounded-xl bg-gray-50 h-32 focus:border-[#007cc2] outline-none" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} /></div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Precio (Q)</label><input type="number" step="0.01" className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-blue-50 font-extrabold text-blue-700 focus:border-[#007cc2] outline-none transition" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required /></div>
-                                            <div><label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1"><Icons.Youtube /> YouTube</label><input type="url" placeholder="https://..." className="w-full border-2 border-gray-200 p-3 rounded-xl mt-1 bg-red-50 text-xs focus:border-red-400 outline-none transition" value={editingProduct.youtubeUrl || ''} onChange={e => setEditingProduct({...editingProduct, youtubeUrl: e.target.value})} /></div>
+                                            <div><label className="text-xs font-bold text-gray-400 uppercase">Precio (Q)</label><input type="number" step="0.01" className="w-full border-2 p-3 rounded-xl bg-blue-50 font-extrabold text-blue-700 focus:border-[#007cc2] outline-none" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} required /></div>
+                                            <div><label className="text-xs font-bold text-red-400 uppercase flex items-center gap-1"><Icons.Youtube /> YouTube</label><input type="url" placeholder="https://..." className="w-full border-2 p-3 rounded-xl bg-red-50 text-xs focus:border-red-400 outline-none" value={editingProduct.youtubeUrl || ''} onChange={e => setEditingProduct({...editingProduct, youtubeUrl: e.target.value})} /></div>
                                         </div>
-                                        <div className="flex gap-4 mt-4">
-                                            <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 text-gray-600 px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-gray-200 transition">Cancelar</button>
-                                            <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1 hover:bg-blue-700 transition shadow-lg">Guardar</button>
-                                        </div>
+                                        <div className="flex gap-4 mt-4"><button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 px-4 py-3.5 rounded-xl font-bold flex-1">Cancelar</button><button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1">Guardar</button></div>
                                     </form>
                                 </div>
                             ) : (
                                 <div className="space-y-8">
                                     {Object.keys(groupedProducts).sort((a,b)=>a-b).map(pageNum => (
                                         <div key={pageNum} className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
-                                            <div className="bg-[#f8fafc] px-6 py-4 font-bold text-gray-800 border-b border-gray-200 flex justify-between items-center"><span className="text-lg">Página {pageNum}</span><span className="text-xs bg-white px-3 py-1.5 rounded-full text-[#007cc2] border border-blue-100 shadow-sm">{groupedProducts[pageNum].length} ítems</span></div>
+                                            <div className="bg-[#f8fafc] px-6 py-4 font-bold border-b border-gray-200 flex justify-between items-center"><span className="text-lg">Página {pageNum}</span><span className="text-xs bg-white px-3 py-1.5 rounded-full text-[#007cc2] border border-blue-100 shadow-sm">{groupedProducts[pageNum].length} ítems</span></div>
                                             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                 {groupedProducts[pageNum].map(p => (
-                                                    <div key={p.id} className="p-5 flex flex-col justify-between border-2 border-transparent hover:border-blue-100 rounded-2xl bg-gray-50 transition-all shadow-sm hover:shadow-md">
+                                                    <div key={p.id} className="p-5 flex flex-col justify-between border-2 border-transparent hover:border-blue-100 rounded-2xl bg-gray-50 transition-all shadow-sm">
                                                         <div>
-                                                            <div className="flex justify-between items-start mb-3">
-                                                                <p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">{p.code} {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full"><Icons.Youtube /></span>}</p>
-                                                                <p className="text-sm font-extrabold text-white bg-[#007cc2] px-2.5 py-1 rounded-lg shadow-sm">Q{p.price}</p>
-                                                            </div>
-                                                            <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mt-3">{p.description}</p>
+                                                            <div className="flex justify-between items-start mb-3"><p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">{p.code} {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full"><Icons.Youtube /></span>}</p><p className="text-sm font-extrabold text-white bg-[#007cc2] px-2.5 py-1 rounded-lg">Q{p.price}</p></div>
+                                                            <p className="text-xs text-gray-600 whitespace-pre-wrap mt-3">{p.description}</p>
                                                         </div>
                                                         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
                                                             <button onClick={() => setEditingProduct(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow border hover:scale-110 transition"><Icons.Edit2 /></button>
@@ -821,45 +736,37 @@
                     {tab === 'pedidos' && (
                         <div className="space-y-6">
                             {orders.map(o => (
-                                <div key={o.id} className="p-6 border border-green-100 rounded-3xl bg-green-50/30 shadow-sm hover:shadow-md transition">
+                                <div key={o.id} className="p-6 border border-green-100 rounded-3xl bg-green-50/30 shadow-sm transition">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b border-green-100 pb-4 gap-2">
                                         <div><p className="font-extrabold text-xl text-gray-800">{o.customerName || 'Sin Nombre'}</p><p className="text-xs text-gray-400 mt-1">{o.createdAt ? new Date(o.createdAt.toDate()).toLocaleString() : ''}</p></div>
-                                        <p className="font-extrabold text-[#128C7E] text-2xl bg-white px-4 py-2 rounded-2xl shadow-sm border border-green-50 self-end sm:self-auto">Q{o.total?.toFixed(2)}</p>
+                                        <p className="font-extrabold text-[#128C7E] text-2xl bg-white px-4 py-2 rounded-2xl shadow-sm border border-green-50">Q{o.total?.toFixed(2)}</p>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2 text-sm text-gray-600 bg-white p-4 rounded-2xl border border-gray-50">
                                             <p className="flex items-center gap-2"><Icons.Phone /> <span className="font-bold">{o.customerPhone}</span></p>
-                                            {o.customerEmail && <p className="flex items-center gap-2"><Icons.Mail /> <span>{o.customerEmail}</span></p>}
-                                            <p className="flex items-start gap-2"><Icons.MapPin /> <span className="leading-snug">{o.customerAddress}</span></p>
+                                            <p className="flex items-start gap-2"><Icons.MapPin /> <span>{o.customerAddress}</span></p>
                                         </div>
                                         <div className="bg-white p-4 rounded-2xl border border-gray-50">
-                                            <p className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-3">Detalle ({o.items?.length || 0} ítems):</p>
-                                            <ul className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
-                                                {o.items?.map((i, idx) => (
-                                                    <li key={idx} className="text-sm flex justify-between items-start border-b border-gray-50 pb-2 last:border-0 last:pb-0">
-                                                        <div className="font-medium text-gray-700"><span className="font-bold text-black">{i.qty}x</span> {i.code} <span className="text-xs text-gray-500 block mt-0.5">{(i.color || i.size) ? `${i.color} ${i.size ? `(Talla: ${i.size})` : ''}` : ''}</span></div>
-                                                        <span className="text-gray-500 font-medium">Q{i.price}</span>
-                                                    </li>
-                                                ))}
+                                            <p className="font-bold text-xs text-gray-400 uppercase mb-3">Detalle:</p>
+                                            <ul className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                                                {o.items?.map((i, idx) => (<li key={idx} className="text-sm flex justify-between border-b pb-2 last:border-0 last:pb-0"><span><span className="font-bold">{i.qty}x</span> {i.code} <span className="text-xs text-gray-500">{i.color} {i.size}</span></span><span>Q{i.price}</span></li>))}
                                             </ul>
                                         </div>
                                     </div>
                                 </div>
                             ))}
-                            {orders.length === 0 && <div className="text-center text-gray-400 py-20 flex flex-col items-center"><Icons.Cart /><p className="font-bold mt-4 font-medium">Sin pedidos aún.</p></div>}
+                            {orders.length === 0 && <div className="text-center text-gray-400 py-20 flex flex-col items-center"><Icons.Cart /><p className="font-bold mt-4">Sin pedidos aún.</p></div>}
                         </div>
                     )}
                     
                     {tab === 'ajustes' && (
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl mb-8 max-w-xl mx-auto animate-in zoom-in-95">
-                            <h3 className="font-extrabold text-xl mb-6 flex items-center gap-2 text-[#007cc2]"><Icons.Settings /> Ajustes</h3>
                             <form onSubmit={async (e) => { e.preventDefault(); try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: e.target.whatsapp.value }, { merge: true }); setGlobalMessage({ title: "Éxito", text: "Guardado." }); } catch(err) {} }} className="flex flex-col gap-5">
-                                <div><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp Ventas</label><input type="text" id="whatsapp-input" className="w-full border-2 border-gray-200 p-3 rounded-xl bg-gray-50 font-bold text-gray-800 focus:border-[#007cc2] outline-none transition" defaultValue={settings?.whatsapp || ''} pattern="[0-9]{8,15}" /></div>
-                                <div className="flex gap-4 mt-4"><button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold w-full hover:bg-blue-700 transition shadow-lg">Guardar</button></div>
+                                <div><label className="text-xs font-bold text-gray-400 uppercase">WhatsApp Ventas</label><input name="whatsapp" type="text" className="w-full border-2 p-3 rounded-xl bg-gray-50 font-bold focus:border-[#007cc2] outline-none" defaultValue={settings?.whatsapp || ''} pattern="[0-9]{8,15}" /></div>
+                                <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-lg hover:bg-blue-700 transition">Guardar</button>
                             </form>
                         </div>
                     )}
-                    
                     {adjustingPage && <HotspotAdjuster page={adjustingPage} products={currentProducts} hotspots={hotspots} onClose={() => setAdjustingPage(null)} />}
                 </div>
             );
@@ -868,7 +775,7 @@
         function MainApp() {
             const [user, setUser] = useState(null);
             const [view, setView] = useState('store');
-            const [isMobile, setIsMobile] = useState(768 > window.innerWidth);
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
             const [settings, setSettings] = useState({ whatsapp: WHATSAPP_NUMBER });
             const [catalogs, setCatalogs] = useState([]);
             const [activeCatalogId, setActiveCatalogId] = useState('');
@@ -886,13 +793,11 @@
             const [globalMessage, setGlobalMessage] = useState(null);
             const [confirmDialog, setConfirmDialog] = useState(null);
             const [pin, setPin] = useState('');
-            const [pinError, setPinError] = useState(false);
-            const [secretClicks, setSecretClicks] = useState(0);
             const [ready, setReady] = useState(false);
-            const clickTimeout = useRef(null);
+            const [secretClicks, setSecretClicks] = useState(0);
 
             useEffect(() => {
-                const handleResize = () => setIsMobile(768 > window.innerWidth);
+                const handleResize = () => setIsMobile(window.innerWidth < 768);
                 window.addEventListener('resize', handleResize);
                 return () => window.removeEventListener('resize', handleResize);
             }, []);
@@ -901,19 +806,9 @@
                 const init = async () => {
                     if (!window.fb) return setTimeout(init, 300);
                     const { auth, signInAnonymously, signInWithCustomToken, initialToken, onAuthStateChanged } = window.fb;
-                    
-                    onAuthStateChanged(auth, (u) => {
-                        setUser(u);
-                        setReady(true);
-                    });
-
-                    try {
-                        if (initialToken) await signInWithCustomToken(auth, initialToken);
-                        else await signInAnonymously(auth);
-                    } catch (e) { 
-                        setGlobalMessage({ title: "Error de Configuración", text: "Verifica tu conexión y permisos de Firebase.", type: "error" });
-                        setReady(true);
-                    }
+                    onAuthStateChanged(auth, (u) => { setUser(u); setReady(true); });
+                    try { if (initialToken) await signInWithCustomToken(auth, initialToken); else await signInAnonymously(auth); } 
+                    catch (e) { setReady(true); }
                 };
                 init();
             }, []);
@@ -922,126 +817,90 @@
                 if (!ready || !user) return;
                 const { db, appId, onSnapshot, collection, doc } = window.fb;
                 
-                const unsubS = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), ds => { 
-                    const isExisting = typeof ds.exists === 'function' ? ds.exists() : ds.exists;
-                    if (isExisting) setSettings(ds.data()); 
+                onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), ds => { 
+                    const exists = typeof ds.exists === 'function' ? ds.exists() : ds.exists;
+                    if(exists) setSettings(ds.data()); 
                 });
                 
-                const unsubC = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), s => {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), s => {
                     const cats = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.createdAt?.toMillis()||0) - (b.createdAt?.toMillis()||0));
                     setCatalogs(cats);
-                    setActiveCatalogId(prev => { if (cats.length === 0) return ''; if (!prev || !cats.find(c => c.id === prev)) return cats[0].id; return prev; });
+                    setActiveCatalogId(prev => (prev && cats.find(c=>c.id===prev)) ? prev : (cats.length > 0 ? cats[0].id : ''));
                 });
-                
-                const unsubP = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
-                const unsubPg = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.pageNumber - b.pageNumber)));
-                const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
-                
-                return () => { unsubP(); unsubPg(); unsubH(); unsubC(); unsubS(); };
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), s => setProducts(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), s => setPages(s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b)=>a.pageNumber - b.pageNumber)));
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))));
             }, [ready, user]);
 
-            useEffect(() => {
-                if (view !== 'store' || showCatalogList || isCartOpen || showShareModal || showLoginModal || confirmDialog || globalMessage) return;
-                const handleKD = (e) => {
-                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-                    const max = pages.filter(p => p.catalogId === activeCatalogId).length;
-                    const step = isMobile ? 1 : 2;
-                    if (e.key === 'ArrowRight' && max > currentIndex + step) setCurrentIndex(p => Math.min(max - 1, p + step));
-                    else if (e.key === 'ArrowLeft' && currentIndex > 0) setCurrentIndex(p => Math.max(0, p - step));
-                };
-                window.addEventListener('keydown', handleKD);
-                return () => window.removeEventListener('keydown', handleKD);
-            }, [view, showCatalogList, isCartOpen, showShareModal, showLoginModal, confirmDialog, globalMessage, currentIndex, pages, activeCatalogId, isMobile]);
-
-            const currentPages = activeCatalogId ? pages.filter(p => p.catalogId === activeCatalogId).sort((a,b) => a.pageNumber - b.pageNumber) : [];
+            const currentPages = activeCatalogId ? pages.filter(p => p.catalogId === activeCatalogId) : [];
             const currentProducts = activeCatalogId ? products.filter(p => p.catalogId === activeCatalogId) : [];
-            const indexedPages = currentPages.filter(p => p.indexName);
-
-            const handleSecretClick = () => {
-                if (clickTimeout.current) clearTimeout(clickTimeout.current);
-                if (secretClicks + 1 >= 6) { 
-                    setShowLoginModal(true); setSecretClicks(0); 
-                } else { 
-                    setSecretClicks(p => p + 1); clickTimeout.current = setTimeout(() => setSecretClicks(0), 1500); 
-                }
-            };
 
             const handleAdminLogin = async (e) => {
                 e.preventDefault();
                 const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
                 const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-                if (hex === ADMIN_PIN_HASH) { setView('admin'); setShowLoginModal(false); setPin(''); setPinError(false); } 
-                else setPinError(true);
+                if (hex === ADMIN_PIN_HASH) { setView('admin'); setShowLoginModal(false); setPin(''); } 
+                else { setGlobalMessage({ title: "PIN Incorrecto", text: "Intenta de nuevo." }); }
             };
 
             if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
 
             return (
-                <div className="min-h-screen relative flex flex-col bg-[#f3f4f6]" onClick={() => setShowIndexMenu(false)}>
-                    {view === 'store' && (
+                <div className="min-h-screen flex flex-col bg-[#f3f4f6]" onClick={() => setShowIndexMenu(false)}>
+                    {view === 'store' ? (
                         <header className="bg-white shadow-md p-3 md:p-4 flex justify-between items-center sticky top-0 z-30">
-                            <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={handleSecretClick}>
+                            <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={() => { setSecretClicks(prev => prev + 1); if(secretClicks + 1 >= 6) { setShowLoginModal(true); setSecretClicks(0); } }}>
                                 <Icons.Store /> <span className="hidden sm:inline">MyCatálogo</span>
                             </div>
                             {!showCatalogList && (
                                 <div className="flex-2 flex justify-center items-center gap-2 md:gap-4 mx-4">
-                                    <button onClick={() => setShowCatalogList(true)} className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow hidden md:block">⬅ Volver</button>
-                                    <div className="flex-1 max-w-lg hidden md:flex relative">
-                                        <input type="text" placeholder="Buscar..." className="w-full border-2 rounded-full py-2 px-5 text-sm outline-none focus:border-[#007cc2]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => { if(e.key==='Enter'){ const found = currentProducts.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase())); if (found) { let idx = currentPages.findIndex(pg => pg.pageNumber === found.pageNumber); if (!isMobile && idx !== -1 && idx % 2 !== 0) idx--; if (idx !== -1) { setCurrentIndex(Math.max(0, idx)); setSearchQuery(''); setShowCatalogList(false); } } } }} />
-                                        <button onClick={() => { const found = currentProducts.find(p => p.code.toLowerCase().includes(searchQuery.toLowerCase())); if (found) { let idx = currentPages.findIndex(pg => pg.pageNumber === found.pageNumber); if (!isMobile && idx % 2 !== 0) idx--; if (idx !== -1) { setCurrentIndex(Math.max(0, idx)); setSearchQuery(''); setShowCatalogList(false); } } }} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#007cc2]"><Icons.Search /></button>
-                                    </div>
-                                    <div className="relative">
-                                        <button onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs md:text-sm font-bold text-white bg-[#0a192f] px-3 py-2 md:px-5 md:py-2.5 rounded-full shadow flex items-center gap-1 hidden md:flex">Índice <Icons.ChevronDown /></button>
+                                    <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#0a192f] px-3 py-2 rounded-full hover:bg-slate-800 transition">⬅ Volver</button>
+                                    <div className="relative hidden md:flex">
+                                        <button onClick={(e) => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#0a192f] px-4 py-2 rounded-full flex items-center gap-1 hover:bg-slate-800 transition">Índice <Icons.ChevronDown /></button>
                                         {showIndexMenu && (
-                                            <div className="absolute right-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden animate-in fade-in">
+                                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden animate-in fade-in">
                                                 <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
-                                                    {indexedPages.length > 0 ? indexedPages.map(p => (
+                                                    {currentPages.filter(p=>p.indexName).map(p => (
                                                         <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx % 2 !== 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
-                                                    )) : <p className="px-3 py-4 text-xs text-center text-gray-400">Sin secciones.</p>}
+                                                    ))}
                                                 </div>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             )}
-                            <div className="flex-1 flex items-center gap-2 md:gap-4 justify-end">
-                                <button onClick={() => setShowShareModal(true)} className="text-gray-400"><Icons.Share /></button>
-                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full"><Icons.Cart />{cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}</button>
+                            <div className="flex-1 flex items-center gap-2 justify-end">
+                                <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#007cc2] transition"><Icons.Share /></button>
+                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition"><Icons.Cart />{cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s,i)=>s+i.qty,0)}</span>}</button>
                             </div>
                         </header>
-                    )}
-                    {view === 'admin' && (
-                        <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center sticky top-0 z-30 border-b">
-                            <div className="flex items-center gap-2 text-xl font-extrabold text-gray-800">Admin</div>
-                            <button onClick={() => { setView('store'); setShowCatalogList(true); }} className="text-sm font-bold text-white bg-[#007cc2] px-4 py-2 rounded-full shadow">Tienda</button>
+                    ) : (
+                        <header className="bg-white shadow-sm p-3 flex justify-between items-center sticky top-0 z-30 border-b px-4 md:px-8">
+                            <div className="font-extrabold text-[#0a192f] flex items-center gap-2">Admin Panel</div>
+                            <button onClick={() => { setView('store'); setShowCatalogList(true); }} className="text-sm font-bold text-white bg-[#007cc2] px-4 py-2 rounded-full hover:bg-blue-700 transition shadow-md">Tienda</button>
                         </header>
                     )}
-                    <main className={`flex-grow flex flex-col w-full mx-auto ${view === 'store' && !showCatalogList ? 'max-w-full px-0' : 'max-w-[1800px] px-1 md:px-4'}`}>
+                    <main className="flex-grow flex flex-col w-full max-w-[1800px] mx-auto px-1 md:px-4">
                         {view === 'store' ? (
-                            showCatalogList ? (
-                                <CatalogSelectionView catalogs={catalogs} pages={pages} onSelect={(id) => { setActiveCatalogId(id); setShowCatalogList(false); setCurrentIndex(0); }} />
-                            ) : (
-                                <FlipbookView pages={currentPages} products={currentProducts} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} isMobile={isMobile} onAdd={(v) => setCart(prev => { const ex = prev.find(x => x.id === v.id); if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x); return [...prev, {...v, qty: 1}]; })} />
-                            )
-                        ) : (
-                            <div className="pt-6"><AdminView catalogs={catalogs} activeCatalogId={activeCatalogId} setActiveCatalogId={setActiveCatalogId} pages={pages} products={products} hotspots={hotspots} setView={(v) => { setView(v); if(v === 'store') setShowCatalogList(true); }} setGlobalMessage={setGlobalMessage} setConfirmDialog={setConfirmDialog} settings={settings} /></div>
-                        )}
+                            showCatalogList ? <CatalogSelectionView catalogs={catalogs} pages={pages} onSelect={(id) => { setActiveCatalogId(id); setShowCatalogList(false); setCurrentIndex(0); }} /> : 
+                            <FlipbookView pages={currentPages} products={currentProducts} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} isMobile={isMobile} onAdd={(v) => setCart(prev => { const ex = prev.find(x => x.id === v.id); if (ex) return prev.map(x => x.id === v.id ? {...x, qty: x.qty+1} : x); return [...prev, {...v, qty: 1}]; })} />
+                        ) : <div className="pt-6"><AdminView catalogs={catalogs} activeCatalogId={activeCatalogId} setActiveCatalogId={setActiveCatalogId} pages={pages} products={products} hotspots={hotspots} setView={setView} setGlobalMessage={setGlobalMessage} setConfirmDialog={setConfirmDialog} settings={settings} /></div>}
                     </main>
                     {isCartOpen && <CartDrawer cart={cart} setCart={setCart} whatsappNumber={settings.whatsapp} onClose={() => setIsCartOpen(false)} />}
                     {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} />}
                     {showLoginModal && (
                         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]">
-                            <div className="bg-white p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl">
+                            <div className="bg-white p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl animate-in zoom-in-95">
                                 <h3 className="font-extrabold text-xl mb-4">Admin Login</h3>
                                 <form onSubmit={handleAdminLogin}>
-                                    <input type="password" autoFocus className={`w-full border-2 p-3 rounded-2xl text-center text-xl mb-6 ${pinError ? 'border-red-500':'focus:border-[#007cc2]'} outline-none`} value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
-                                    <div className="flex gap-2"><button type="button" onClick={() => { setShowLoginModal(false); setPinError(false); setPin(''); }} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cerrar</button><button type="submit" className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold">Entrar</button></div>
+                                    <input type="password" autoFocus className="w-full border-2 p-3 rounded-2xl text-center text-xl mb-6 outline-none focus:border-[#007cc2]" value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
+                                    <div className="flex gap-2"><button type="button" onClick={() => { setShowLoginModal(false); setPin(''); }} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold hover:bg-gray-200 transition">Cerrar</button><button type="submit" className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Entrar</button></div>
                                 </form>
                             </div>
                         </div>
                     )}
-                    {globalMessage && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"><div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95"><div className={`w-16 h-16 rounded-full bg-blue-50 text-[#007cc2] flex items-center justify-center mx-auto mb-4`}><Icons.AlertCircle /></div><h3 className="font-bold text-xl mb-2">{globalMessage.title}</h3><p className="text-sm text-gray-600 mb-6">{globalMessage.text}</p><button onClick={() => setGlobalMessage(null)} className="w-full bg-[#007cc2] text-white py-3 rounded-xl font-bold">Entendido</button></div></div>)}
-                    {confirmDialog && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"><div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95"><h3 className="font-bold text-xl mb-2">{confirmDialog.title}</h3><p className="text-sm text-gray-600 mb-6">{confirmDialog.text}</p><div className="flex gap-2"><button onClick={() => setConfirmDialog(null)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Cancelar</button><button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold">Confirmar</button></div></div></div>)}
+                    {globalMessage && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"><div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95"><h3 className="font-bold text-xl mb-2">{globalMessage.title}</h3><p className="text-sm text-gray-600 mb-6">{globalMessage.text}</p><button onClick={() => setGlobalMessage(null)} className="w-full bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Entendido</button></div></div>)}
+                    {confirmDialog && (<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100]"><div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95"><h3 className="font-bold text-xl mb-2">{confirmDialog.title}</h3><p className="text-sm text-gray-600 mb-6">{confirmDialog.text}</p><div className="flex gap-2"><button onClick={() => setConfirmDialog(null)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold hover:bg-gray-200 transition">Cancelar</button><button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition">Confirmar</button></div></div></div>)}
                 </div>
             );
         }

@@ -58,7 +58,7 @@
 
             ref: (storage, path) => storage.ref(path),
             uploadString: (ref, data, format) => ref.putString(data, format),
-            uploadBytes: (ref, file) => ref.put(file), // VÍA RÁPIDA (Blob)
+            uploadBytes: (ref, file, metadata) => ref.put(file, metadata), // VÍA RÁPIDA (Blob) + Metadata
             getDownloadURL: (ref) => ref.getDownloadURL(),
             deleteObject: (ref) => ref.delete(),
 
@@ -751,18 +751,23 @@
                         
                         // --- VÍA RÁPIDA: Convertir a Blob y subir a Storage ---
                         const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.8); });
+                        if (!blob) throw new Error("No se pudo generar la imagen (Blob) de la página.");
+                        
+                        const metadata = { contentType: 'image/jpeg' };
                         const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
                         
                         let finalImageUrl = ""; 
                         let storagePath = null;
                         
                         try {
-                            await uploadBytes(imageRef, blob);
+                            await uploadBytes(imageRef, blob, metadata);
                             finalImageUrl = await getDownloadURL(imageRef); 
                             storagePath = imageRef.fullPath;
                         } catch(e) {
-                            console.error("Storage falló. Revisa las reglas en la consola de Firebase.");
-                            throw new Error("No se pudo subir la imagen a Storage.");
+                            console.warn("Storage no autorizado (Posiblemente entorno Canvas). Aplicando fallback de emergencia a Base64...", e);
+                            // FALLBACK: Si las reglas de Storage bloquean la subida (ej. en vista previa de Canvas), usa Base64 ligero en Firestore
+                            finalImageUrl = canvas.toDataURL('image/jpeg', 0.5);
+                            storagePath = null;
                         }
                         
                         const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
@@ -985,6 +990,7 @@
         }
 
         function MainApp() {
+            const [user, setUser] = useState(null);
             const [view, setView] = useState('store');
             const [isMobile, setIsMobile] = useState(768 > window.innerWidth);
             const [settings, setSettings] = useState({ whatsapp: WHATSAPP_NUMBER });
@@ -1018,7 +1024,12 @@
             useEffect(() => {
                 const init = async () => {
                     if (!window.fb) { return setTimeout(init, 300); }
-                    const { auth, signInAnonymously, signInWithCustomToken, initialToken } = window.fb;
+                    const { auth, signInAnonymously, signInWithCustomToken, initialToken, onAuthStateChanged } = window.fb;
+                    
+                    onAuthStateChanged(auth, (u) => {
+                        setUser(u);
+                    });
+
                     try {
                         if (initialToken) { await signInWithCustomToken(auth, initialToken); }
                         else { await signInAnonymously(auth); }
@@ -1033,7 +1044,7 @@
             }, []);
 
             useEffect(() => {
-                if (!ready) { return; }
+                if (!ready || !user) { return; }
                 const { db, appId, onSnapshot, collection, doc } = window.fb;
                 
                 // Parche de ds.exists() para evitar que se congele
@@ -1053,7 +1064,7 @@
                 const unsubH = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), s => { setHotspots(s.docs.map(d => ({id: d.id, ...d.data()}))); });
                 
                 return () => { unsubP(); unsubPg(); unsubH(); unsubC(); unsubS(); };
-            }, [ready]);
+            }, [ready, user]);
 
             useEffect(() => {
                 if (view !== 'store' || showCatalogList || isCartOpen || showShareModal || showLoginModal || confirmDialog || globalMessage) { return; }

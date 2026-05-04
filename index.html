@@ -734,24 +734,21 @@
                     const fileUrl = URL.createObjectURL(f);
                     const pdf = await pdfjsLib.getDocument(fileUrl).promise;
                     
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    
                     let skipStorage = false;
 
-                    for (let i = 1; pdf.numPages >= i; i++) {
-                        setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
-                        await new Promise(r => { setTimeout(r, 50); }); 
-
+                    const processPage = async (i) => {
                         const pg = await pdf.getPage(i); 
                         const unscaledVp = pg.getViewport({ scale: 1.0 });
-                        const vp = pg.getViewport({ scale: 1.5 }); 
+                        const vp = pg.getViewport({ scale: 1.2 }); 
+                        
+                        const canvas = document.createElement('canvas'); 
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
                         canvas.width = vp.width; 
                         canvas.height = vp.height;
                         
                         await pg.render({ canvasContext: ctx, viewport: vp }).promise;
                         
-                        const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.8); });
+                        const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.7); });
                         if (!blob) throw new Error(`No se pudo generar la imagen de la página ${i}.`);
                         
                         let finalImageUrl = ""; 
@@ -771,15 +768,14 @@
                         }
                         
                         if (skipStorage) {
-                            // FALLBACK: Reducimos la resolución drásticamente para evitar que Firestore colapse por exceso de tamaño (límite 1MB)
                             const thumbCanvas = document.createElement('canvas');
                             const thumbCtx = thumbCanvas.getContext('2d');
-                            const scaleDown = Math.min(800 / canvas.width, 1); // Forzamos un ancho máximo de 800px
+                            const scaleDown = Math.min(800 / canvas.width, 1);
                             thumbCanvas.width = canvas.width * scaleDown;
                             thumbCanvas.height = canvas.height * scaleDown;
                             thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
                             
-                            finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.5); // Calidad reducida
+                            finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.5); 
                             storagePath = null;
                         }
                         
@@ -789,15 +785,29 @@
                         const items = text.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => { return it.text.trim(); });
                         const ex = extractProducts(items, i, unscaledVp);
                         
-                        for (const p of ex) {
-                            const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
-                            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
-                        }
+                        const b = writeBatch(db);
+                        ex.forEach(p => {
+                            const prodColl = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+                            const hotColl = collection(db, 'artifacts', appId, 'public', 'data', 'hotspots');
+                            const pRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('products').doc();
+                            const hRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('hotspots').doc();
+                            
+                            b.set(pRef, { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
+                            b.set(hRef, { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
+                        });
+                        await b.commit();
                         
-                        // IMPORTANTE: Liberar memoria para no colapsar la RAM con PDFs grandes (ej. 63 páginas)
                         pg.cleanup();
-                        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+                    };
+
+                    for (let i = 1; i <= pdf.numPages; i += 2) {
+                        setUploadProgress(`Procesando páginas ${i}${i+1 <= pdf.numPages ? ` y ${i+1}` : ''} de ${pdf.numPages}...`);
+                        await Promise.all([
+                            processPage(i),
+                            i + 1 <= pdf.numPages ? processPage(i + 1) : Promise.resolve()
+                        ]);
                     }
+
                     URL.revokeObjectURL(fileUrl);
                 } catch (err) { 
                     console.error(err); 

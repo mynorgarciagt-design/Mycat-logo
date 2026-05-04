@@ -787,8 +787,6 @@
                         
                         const b = writeBatch(db);
                         ex.forEach(p => {
-                            const prodColl = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-                            const hotColl = collection(db, 'artifacts', appId, 'public', 'data', 'hotspots');
                             const pRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('products').doc();
                             const hRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('hotspots').doc();
                             

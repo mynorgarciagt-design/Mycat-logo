@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
-    <!-- Firebase compat (UMD, síncrono — elimina la race condition con Vercel) -->
+    <!-- Firebase compat (UMD, síncrono) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -58,7 +58,7 @@
 
             ref: (storage, path) => storage.ref(path),
             uploadString: (ref, data, format) => ref.putString(data, format),
-            uploadBytes: (ref, file, metadata) => ref.put(file, metadata), // VÍA RÁPIDA (Blob) + Metadata
+            uploadBytes: (ref, file, metadata) => ref.put(file, metadata),
             getDownloadURL: (ref) => ref.getDownloadURL(),
             deleteObject: (ref) => ref.delete(),
 
@@ -83,7 +83,6 @@
             updateDoc: (ref, data) => ref.update(data),
             deleteDoc: (ref) => ref.delete(),
             
-            // PARCHE APLICADO: Snapshot seguro
             onSnapshot: (ref, callback) => ref.onSnapshot(snapshot => {
                 if (snapshot.docs !== undefined) {
                     callback(snapshot);
@@ -734,21 +733,23 @@
                     const fileUrl = URL.createObjectURL(f);
                     const pdf = await pdfjsLib.getDocument(fileUrl).promise;
                     
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    
                     let skipStorage = false;
 
-                    const processPage = async (i) => {
+                    for (let i = 1; pdf.numPages >= i; i++) {
+                        setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
+
                         const pg = await pdf.getPage(i); 
                         const unscaledVp = pg.getViewport({ scale: 1.0 });
-                        const vp = pg.getViewport({ scale: 1.2 }); 
-                        
-                        const canvas = document.createElement('canvas'); 
-                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        const vp = pg.getViewport({ scale: 1.0 }); // ← optimizado: escala 1.0 en vez de 1.5
                         canvas.width = vp.width; 
                         canvas.height = vp.height;
                         
                         await pg.render({ canvasContext: ctx, viewport: vp }).promise;
                         
-                        const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.7); });
+                        const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.5); }); // ← calidad 0.5 en vez de 0.8
                         if (!blob) throw new Error(`No se pudo generar la imagen de la página ${i}.`);
                         
                         let finalImageUrl = ""; 
@@ -762,20 +763,20 @@
                                 finalImageUrl = await getDownloadURL(imageRef); 
                                 storagePath = imageRef.fullPath;
                             } catch(e) {
-                                console.warn("Storage bloqueado. Activando fallback de Base64 optimizado para el resto de páginas...", e);
+                                console.warn("Storage bloqueado. Activando fallback de placeholder miniatura...", e);
                                 skipStorage = true;
                             }
                         }
                         
                         if (skipStorage) {
+                            // Fallback: imagen diminuta para no exceder el límite de 1 MiB de Firestore
                             const thumbCanvas = document.createElement('canvas');
                             const thumbCtx = thumbCanvas.getContext('2d');
-                            const scaleDown = Math.min(800 / canvas.width, 1);
+                            const scaleDown = Math.min(200 / canvas.width, 1);   // máximo 200px de ancho
                             thumbCanvas.width = canvas.width * scaleDown;
                             thumbCanvas.height = canvas.height * scaleDown;
                             thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-                            
-                            finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.5); 
+                            finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.3); // calidad baja
                             storagePath = null;
                         }
                         
@@ -785,29 +786,14 @@
                         const items = text.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => { return it.text.trim(); });
                         const ex = extractProducts(items, i, unscaledVp);
                         
-                        const b = writeBatch(db);
-                        ex.forEach(p => {
-                            const prodColl = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-                            const hotColl = collection(db, 'artifacts', appId, 'public', 'data', 'hotspots');
-                            const pRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('products').doc();
-                            const hRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('hotspots').doc();
-                            
-                            b.set(pRef, { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
-                            b.set(hRef, { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
-                        });
-                        await b.commit();
+                        for (const p of ex) {
+                            const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
+                            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
+                        }
                         
                         pg.cleanup();
-                    };
-
-                    for (let i = 1; i <= pdf.numPages; i += 2) {
-                        setUploadProgress(`Procesando páginas ${i}${i+1 <= pdf.numPages ? ` y ${i+1}` : ''} de ${pdf.numPages}...`);
-                        await Promise.all([
-                            processPage(i),
-                            i + 1 <= pdf.numPages ? processPage(i + 1) : Promise.resolve()
-                        ]);
+                        ctx.clearRect(0, 0, canvas.width, canvas.height); 
                     }
-
                     URL.revokeObjectURL(fileUrl);
                 } catch (err) { 
                     console.error(err); 
@@ -1073,7 +1059,6 @@
                 if (!ready || !user) { return; }
                 const { db, appId, onSnapshot, collection, doc } = window.fb;
                 
-                // Parche de ds.exists() para evitar que se congele
                 const unsubS = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), ds => { 
                     const isExisting = typeof ds.exists === 'function' ? ds.exists() : ds.exists;
                     if (isExisting) setSettings(ds.data()); 

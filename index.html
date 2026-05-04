@@ -721,88 +721,95 @@
             };
             
             const processUpload = async (f, catName) => {
-                setLoading(true); 
-                setUploadProgress('Iniciando...');
+    setLoading(true); 
+    setUploadProgress('Iniciando...');
+    try {
+        const catRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), { name: catName, createdAt: serverTimestamp() });
+        const catId = catRef.id; 
+        setActiveCatalogId(catId);
+        
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        const fileUrl = URL.createObjectURL(f);
+        const pdf = await pdfjsLib.getDocument(fileUrl).promise;
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const MAX_IMG_WIDTH = 1200;  // ← límite para imágenes (acelera render y subida)
+        
+        let skipStorage = false;
+
+        for (let i = 1; pdf.numPages >= i; i++) {
+            setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
+
+            const pg = await pdf.getPage(i); 
+            const unscaledVp = pg.getViewport({ scale: 1.0 }); // para texto y coordenadas, no tocar
+            
+            // Escala inteligente: si la página es muy ancha, la reducimos a MAX_IMG_WIDTH
+            const renderScale = Math.min(1.0, MAX_IMG_WIDTH / unscaledVp.width);
+            const vp = pg.getViewport({ scale: renderScale });
+            canvas.width = vp.width; 
+            canvas.height = vp.height;
+            
+            await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+            
+            // Calidad JPEG baja para reducir peso
+            const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.4); }); // 0.4 en vez de 0.5
+            if (!blob) throw new Error(`No se pudo generar la imagen de la página ${i}.`);
+            
+            let finalImageUrl = ""; 
+            let storagePath = null;
+            
+            if (!skipStorage) {
                 try {
-                    const catRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'catalogs'), { name: catName, createdAt: serverTimestamp() });
-                    const catId = catRef.id; 
-                    setActiveCatalogId(catId);
-                    
-                    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                    const fileUrl = URL.createObjectURL(f);
-                    const pdf = await pdfjsLib.getDocument(fileUrl).promise;
-                    
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    
-                    let skipStorage = false;
-
-                    for (let i = 1; pdf.numPages >= i; i++) {
-                        setUploadProgress(`Procesando página ${i} de ${pdf.numPages}...`);
-
-                        const pg = await pdf.getPage(i); 
-                        const unscaledVp = pg.getViewport({ scale: 1.0 });
-                        const vp = pg.getViewport({ scale: 1.0 }); // ← optimizado: escala 1.0 en vez de 1.5
-                        canvas.width = vp.width; 
-                        canvas.height = vp.height;
-                        
-                        await pg.render({ canvasContext: ctx, viewport: vp }).promise;
-                        
-                        const blob = await new Promise(resolve => { canvas.toBlob(resolve, 'image/jpeg', 0.5); }); // ← calidad 0.5 en vez de 0.8
-                        if (!blob) throw new Error(`No se pudo generar la imagen de la página ${i}.`);
-                        
-                        let finalImageUrl = ""; 
-                        let storagePath = null;
-                        
-                        if (!skipStorage) {
-                            try {
-                                const metadata = { contentType: 'image/jpeg' };
-                                const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
-                                await uploadBytes(imageRef, blob, metadata);
-                                finalImageUrl = await getDownloadURL(imageRef); 
-                                storagePath = imageRef.fullPath;
-                            } catch(e) {
-                                console.warn("Storage bloqueado. Activando fallback de placeholder miniatura...", e);
-                                skipStorage = true;
-                            }
-                        }
-                        
-                        if (skipStorage) {
-                            // Fallback: imagen diminuta para no exceder el límite de 1 MiB de Firestore
-                            const thumbCanvas = document.createElement('canvas');
-                            const thumbCtx = thumbCanvas.getContext('2d');
-                            const scaleDown = Math.min(200 / canvas.width, 1);   // máximo 200px de ancho
-                            thumbCanvas.width = canvas.width * scaleDown;
-                            thumbCanvas.height = canvas.height * scaleDown;
-                            thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
-                            finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.3); // calidad baja
-                            storagePath = null;
-                        }
-                        
-                        const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
-                        
-                        const text = await pg.getTextContent();
-                        const items = text.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => { return it.text.trim(); });
-                        const ex = extractProducts(items, i, unscaledVp);
-                        
-                        for (const p of ex) {
-                            const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
-                            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
-                        }
-                        
-                        pg.cleanup();
-                        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-                    }
-                    URL.revokeObjectURL(fileUrl);
-                } catch (err) { 
-                    console.error(err); 
-                    setGlobalMessage({ title: "Error procesando PDF", text: err.message, type: "error" }); 
-                } finally { 
-                    setLoading(false); 
-                    setUploadProgress(''); 
+                    const metadata = { contentType: 'image/jpeg' };
+                    const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/${catId}_${i}_${Date.now()}.jpg`);
+                    await uploadBytes(imageRef, blob, metadata);
+                    finalImageUrl = await getDownloadURL(imageRef); 
+                    storagePath = imageRef.fullPath;
+                } catch(e) {
+                    console.warn("Storage bloqueado, usando placeholder miniatura...", e);
+                    skipStorage = true;
                 }
-            };
+            }
+            
+            if (skipStorage) {
+                // placeholder miniatura para Firestore (ya no debería ser necesario con el límite de ancho, pero por si acaso)
+                const thumbCanvas = document.createElement('canvas');
+                const thumbCtx = thumbCanvas.getContext('2d');
+                const thumbW = Math.min(200, canvas.width);
+                const scaleDown = thumbW / canvas.width;
+                thumbCanvas.width = thumbW;
+                thumbCanvas.height = canvas.height * scaleDown;
+                thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+                finalImageUrl = thumbCanvas.toDataURL('image/jpeg', 0.3);
+                storagePath = null;
+            }
+            
+            const pgRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), { imageUrl: finalImageUrl, storagePath: storagePath, pageNumber: i, catalogId: catId });
+            
+            // Extracción de texto (usamos el viewport sin escalar para coordenadas precisas)
+            const text = await pg.getTextContent();
+            const items = text.items.map(it => ({ text: it.str, transform: it.transform, height: it.height })).filter(it => { return it.text.trim(); });
+            const ex = extractProducts(items, i, unscaledVp); // unscaledVp es la original (1.0)
+            
+            for (const p of ex) {
+                const pRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { code: p.code, description: p.description, price: p.price, pageNumber: p.pageNumber, catalogId: catId });
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: pgRef.id, productId: pRef.id, x: p.x, y: p.y, catalogId: catId });
+            }
+            
+            pg.cleanup();
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        }
+        URL.revokeObjectURL(fileUrl);
+    } catch (err) { 
+        console.error(err); 
+        setGlobalMessage({ title: "Error procesando PDF", text: err.message, type: "error" }); 
+    } finally { 
+        setLoading(false); 
+        setUploadProgress(''); 
+    }
+};
             
             const deleteActiveCatalog = async () => {
                 if (!activeCatalogId) { return; }

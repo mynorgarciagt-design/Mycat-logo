@@ -492,6 +492,17 @@
                 if (dir === 'n') setCurrentIndex(prev => Math.min(pages.length - 1, prev + step));
                 else setCurrentIndex(prev => Math.max(0, prev - step));
             };
+            useEffect(() => {
+                const handleKD = (e) => {
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                    if (document.querySelector('.fixed.inset-0')) return;
+                    if (e.key === 'ArrowRight' && pages.length > currentIndex + step) move('n');
+                    else if (e.key === 'ArrowLeft' && currentIndex > 0) move('p');
+                };
+                window.addEventListener('keydown', handleKD);
+                return () => window.removeEventListener('keydown', handleKD);
+            }, [pages.length, step, currentIndex]);
+
             if (pages.length === 0) return (<div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo vacío!</h2></div>);
             const left = pages[currentIndex]; 
             const right = (!isMobile && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;

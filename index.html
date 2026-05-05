@@ -285,13 +285,30 @@
                 setIsSubmitting(true);
                 try {
                     const { addDoc, collection, db, appId, serverTimestamp } = window.fb;
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), { customerName: form.name, customerPhone: form.phone, customerAddress: form.address, items: cart, total, createdAt: serverTimestamp() });
+                    
+                    // 1. Preparamos el mensaje y la URL primero
                     let msg = `*NUEVO PEDIDO*\n\n*Cliente:* ${form.name}\n*Tel:* ${form.phone}\n*Dirección:* ${form.address}\n\n*Productos:*\n`;
                     cart.forEach(i => { msg += `- ${i.qty}x ${i.code} [${i.color} / Talla ${i.size}] (Q${i.price})\n`; });
                     msg += `\n*TOTAL: Q${total.toFixed(2)}*`;
-                    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`);
-                    setCart([]); onClose();
-                } catch (error) { alert("Error enviando pedido."); } finally { setIsSubmitting(false); }
+                    const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`;
+
+                    // 2. Guardamos en la base de datos
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), { customerName: form.name, customerPhone: form.phone, customerAddress: form.address, items: cart, total, createdAt: serverTimestamp() });
+                    
+                    // 3. Vaciamos carrito y cerramos ventana
+                    setCart([]); 
+                    onClose();
+                    
+                    // 4. TRUCO ANTI-BLOQUEO: Intentamos abrir pestaña nueva, si falla, usamos la misma
+                    const newWindow = window.open(waUrl, '_blank');
+                    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                        window.location.href = waUrl;
+                    }
+                } catch (error) { 
+                    alert("Error enviando pedido."); 
+                } finally { 
+                    setIsSubmitting(false); 
+                }
             };
             return (
                 <div className="fixed inset-0 bg-black/60 z-40 flex justify-end">
@@ -951,6 +968,7 @@
             }, [cart]);
             const [currentIndex, setCurrentIndex] = useState(0);
             const [searchQuery, setSearchQuery] = useState('');
+            const [isSearchFocused, setIsSearchFocused] = useState(false); // <--- Nueva variable
             const [showIndexMenu, setShowIndexMenu] = useState(false);
             const [showShareModal, setShowShareModal] = useState(false);
             const [showLoginModal, setShowLoginModal] = useState(false);
@@ -1023,49 +1041,56 @@
                                 <Icons.Store /> <span className="hidden sm:inline">MyCatálogo</span>
                             </div>
                             {!showCatalogList && (
-                                <div className="flex-1 flex justify-center items-center gap-2 md:gap-4 px-2 max-w-lg w-full">
-                                    <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 py-2 rounded-full hover:bg-#290A2B transition whitespace-nowrap">⬅ Volver</button>
-                                    
-                                    {/* Barra de Búsqueda Inteligente */}
-                                    <form onSubmit={e => {
-                                        e.preventDefault();
-                                        if(!searchQuery.trim()) return;
-                                        const q = searchQuery.trim().toUpperCase();
-                                        const prod = currentProducts.find(p => p.code.toUpperCase().includes(q));
-                                        if(prod) {
-                                            let idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
-                                            if(idx !== -1) {
-                                                if (!isMobile && idx > 0 && idx % 2 === 0) idx--;
-                                                setCurrentIndex(Math.max(0, idx));
+                                    <div className="flex-1 flex justify-center items-center gap-2 md:gap-4 px-2 max-w-lg w-full transition-all duration-300">
+                                        {(!isMobile || !isSearchFocused) && (
+                                            <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 py-2 rounded-full hover:bg-[#290A2B] transition whitespace-nowrap">⬅ Volver</button>
+                                        )}
+                                        
+                                        {/* Barra de Búsqueda Inteligente */}
+                                        <form onSubmit={e => {
+                                            e.preventDefault();
+                                            if(!searchQuery.trim()) return;
+                                            const q = searchQuery.trim().toUpperCase();
+                                            const prod = currentProducts.find(p => p.code.toUpperCase().includes(q));
+                                            if(prod) {
+                                                let idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
+                                                if(idx !== -1) {
+                                                    if (!isMobile && idx > 0 && idx % 2 === 0) idx--;
+                                                    setCurrentIndex(Math.max(0, idx));
+                                                }
+                                            } else {
+                                                setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${q}" en este catálogo.` });
                                             }
-                                        } else {
-                                            setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${q}" en este catálogo.` });
-                                        }
-                                    }} className="relative flex items-center w-full flex-1">
-                                        <div className="absolute left-3 text-[#631A65]"><Icons.Search /></div>
-                                        <input
-                                            type="text"
-                                            placeholder="Buscar estilo..."
-                                            className="w-full bg-purple-50 text-sm font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#631A65] transition-all border border-purple-100 shadow-inner placeholder-blue-300"
-                                            value={searchQuery}
-                                            onChange={e => setSearchQuery(e.target.value)}
-                                        />
-                                    </form>
+                                            document.activeElement.blur(); // Oculta el teclado en móviles tras darle Enter
+                                        }} className="relative flex items-center w-full flex-1 transition-all duration-300">
+                                            <div className="absolute left-3 text-[#631A65]"><Icons.Search /></div>
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar estilo..."
+                                                className="w-full bg-purple-50 text-sm font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#631A65] transition-all border border-purple-100 shadow-inner placeholder-blue-300"
+                                                value={searchQuery}
+                                                onChange={e => setSearchQuery(e.target.value)}
+                                                onFocus={() => setIsSearchFocused(true)}
+                                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 150)}
+                                            />
+                                        </form>
 
-                                    <div className="relative flex">
-                                        <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 md:px-4 py-2 rounded-full flex items-center gap-1 hover:bg-#290A2B transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
-                                        {showIndexMenu && (
-                                            <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
-                                                <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
-                                                    {currentPages.filter(p => p.indexName).map(p => (
-                                                        <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-purple-50 hover:text-[#631A65] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
-                                                    ))}
-                                                </div>
+                                        {(!isMobile || !isSearchFocused) && (
+                                            <div className="relative flex">
+                                                <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 md:px-4 py-2 rounded-full flex items-center gap-1 hover:bg-[#290A2B] transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
+                                                {showIndexMenu && (
+                                                    <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
+                                                        <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
+                                                            {currentPages.filter(p => p.indexName).map(p => (
+                                                                <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-purple-50 hover:text-[#631A65] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            )}
+                                )}
                             <div className="flex-1 flex items-center gap-2 justify-end">
                                 <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#631A65] transition"><Icons.Share /></button>
                                 <button onClick={() => setIsCartOpen(true)} className={`relative p-2 active:scale-90 rounded-full transition-all duration-300 ${cartAnim ? 'bg-[#BE2B86] text-white scale-125 shadow-[0_0_15px_rgba(190,43,134,0.6)]' : 'bg-purple-50 text-[#631A65] hover:bg-purple-100'}`}>

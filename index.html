@@ -454,12 +454,16 @@
                     const grouped = vars.reduce((acc, v) => { if (!acc[v.color]) acc[v.color] = []; acc[v.color].push(v.size); return acc; }, {});
                     let alignClass = "left-1/2 -translate-x-1/2";
                     if (h.x < 20) alignClass = "left-0"; else if (h.x > 80) alignClass = "right-0";
+                    
+                    // Nueva lógica para saber si el popup va para arriba o para abajo
+                    let verticalClass = h.y > 55 ? "bottom-12" : "top-12";
+
                     return (
                         <div key={h.id} className="absolute z-20 flex items-center gap-2" style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
                             <div onClick={e => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
                             {p.youtubeUrl && <div onClick={e => { e.stopPropagation(); setPlayingVideo(p.youtubeUrl); }} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Youtube /></div>}
                             {activeH === h.id && (
-                                <div className={`absolute top-12 ${alignClass} bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2`} onClick={e => e.stopPropagation()}>
+                                <div className={`absolute ${verticalClass} ${alignClass} bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2`} onClick={e => e.stopPropagation()}>
                                     <p className="text-[12px] font-extrabold text-gray-800 leading-none mb-1">{p.code}</p>
                                     <p className="text-sm font-bold text-[#007cc2] mb-3">Q{p.price?.toFixed(2)}</p>
                                     <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">

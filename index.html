@@ -225,10 +225,10 @@
                     <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl">
                         <h3 className="font-bold text-lg mb-2 text-gray-800">{dialog.title}</h3>
                         {dialog.subtitle && <p className="text-xs text-gray-500 mb-4">{dialog.subtitle}</p>}
-                        <input autoFocus type={dialog.type || 'text'} className="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-[#007cc2] text-center font-bold" placeholder={dialog.placeholder || ''} value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sub(); }} />
+                        <input autoFocus type={dialog.type || 'text'} className="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-[#631A65] text-center font-bold" placeholder={dialog.placeholder || ''} value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sub(); }} />
                         <div className="flex gap-3">
                             <button onClick={onClose} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-200 transition">Cancelar</button>
-                            <button onClick={sub} className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Guardar</button>
+                            <button onClick={sub} className="flex-1 bg-[#631A65] text-white py-3 rounded-xl font-bold hover:bg-#BE2B86 transition">Guardar</button>
                         </div>
                     </div>
                 </div>
@@ -263,11 +263,11 @@
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
                     <div className="bg-white p-8 rounded-[40px] w-full max-w-sm text-center shadow-2xl relative" onClick={e => e.stopPropagation()}>
                         <button onClick={onClose} className="absolute right-6 top-6 text-gray-300 hover:text-gray-600 transition"><Icons.X /></button>
-                        <div className="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner"><Icons.Share /></div>
+                        <div className="bg-purple-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner"><Icons.Share /></div>
                         <h3 className="font-extrabold text-2xl mb-2 text-gray-800">¡Comparte tu Tienda!</h3>
                         <div className="flex gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-200 mb-2">
                             <input readOnly value={link} className="flex-1 bg-transparent text-xs text-gray-600 outline-none px-3 font-bold overflow-hidden text-ellipsis" />
-                            <button onClick={copy} className={`px-6 py-3.5 rounded-xl font-bold text-white transition-all shadow-md flex items-center gap-2 ${copied ? 'bg-green-500' : 'bg-[#007cc2] hover:bg-blue-700'}`}>
+                            <button onClick={copy} className={`px-6 py-3.5 rounded-xl font-bold text-white transition-all shadow-md flex items-center gap-2 ${copied ? 'bg-green-500' : 'bg-[#631A65] hover:bg-#BE2B86'}`}>
                                 {copied ? <span className="flex items-center gap-2"><Icons.Check /> Copiado</span> : <span className="flex items-center gap-2"><Icons.Copy /> Copiar</span>}
                             </button>
                         </div>
@@ -308,7 +308,7 @@
                                             <div className="flex-1">
                                                 <p className="font-extrabold text-lg text-gray-800">{i.code}</p>
                                                 <p className="text-xs text-gray-500 font-bold mt-1 uppercase">{i.color} {i.size && `/ Talla ${i.size}`}</p>
-                                                <p className="font-bold text-[#007cc2] mt-2 text-sm">Q{i.price?.toFixed(2)} c/u</p>
+                                                <p className="font-bold text-[#631A65] mt-2 text-sm">Q{i.price?.toFixed(2)} c/u</p>
                                             </div>
                                             <div className="flex flex-col items-end gap-3">
                                                 <button onClick={() => setCart(cart.filter(x => x.id !== i.id))} className="text-red-400 hover:text-red-600 transition"><Icons.Trash /></button>
@@ -324,19 +324,19 @@
                                 </div>
                                 {cart.length > 0 && (
                                     <div className="pt-6 border-t mt-6 bg-white">
-                                        <div className="flex justify-between items-end mb-6 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                        <div className="flex justify-between items-end mb-6 bg-purple-50 p-4 rounded-2xl border border-purple-100">
                                             <span className="text-gray-500 font-extrabold uppercase text-xs tracking-widest">Total a Pagar</span>
-                                            <span className="text-3xl font-extrabold text-[#007cc2]">Q{total.toFixed(2)}</span>
+                                            <span className="text-3xl font-extrabold text-[#631A65]">Q{total.toFixed(2)}</span>
                                         </div>
-                                        <button onClick={() => setStep('form')} className="w-full bg-[#007cc2] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-blue-700 shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">Siguiente Paso <Icons.ChevronRight /></button>
+                                        <button onClick={() => setStep('form')} className="w-full bg-[#631A65] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-#BE2B86 shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">Siguiente Paso <Icons.ChevronRight /></button>
                                     </div>
                                 )}
                             </div>
                         ) : (
                             <form onSubmit={e => { e.preventDefault(); send(); }} className="p-8 space-y-6">
-                                <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Nombre completo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-                                <input required type="tel" className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Teléfono" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-                                <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#007cc2]" placeholder="Dirección de entrega" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                                <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#631A65]" placeholder="Nombre completo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                                <input required type="tel" className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#631A65]" placeholder="Teléfono" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                                <input required className="w-full border p-4 rounded-xl bg-gray-50 outline-none focus:border-[#631A65]" placeholder="Dirección de entrega" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
                                 <button type="submit" disabled={isSubmitting} className={`w-full text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg shadow-xl flex items-center justify-center gap-3 transition-transform ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#128C7E]'}`}>{isSubmitting ? 'Enviando...' : 'Enviar Pedido por WhatsApp'}</button>
                                 <button type="button" onClick={() => setStep('cart')} className="w-full text-gray-500 font-bold hover:underline">Volver al carrito</button>
                             </form>
@@ -370,7 +370,7 @@
                         <div className="relative inline-flex max-w-full max-h-full shadow-2xl bg-white rounded-xl">
                             <img src={page.imageUrl} alt="Página" onClick={handleImageClick} className="block max-w-full max-h-[85vh] w-auto h-auto cursor-crosshair rounded-xl" />
                             {pageHotspots.map(h => (
-                                <div key={h.id} className={`absolute flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] rounded-full ${selectedProd === h.productId ? 'bg-green-500 border-white scale-125 z-[60]' : 'bg-[#007cc2] border-white opacity-90'} w-10 h-10`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }} onClick={e => { e.stopPropagation(); setSelectedProd(h.productId); }}><Icons.Cart /></div>
+                                <div key={h.id} className={`absolute flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] rounded-full ${selectedProd === h.productId ? 'bg-green-500 border-white scale-125 z-[60]' : 'bg-[#631A65] border-white opacity-90'} w-10 h-10`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }} onClick={e => { e.stopPropagation(); setSelectedProd(h.productId); }}><Icons.Cart /></div>
                             ))}
                         </div>
                     </div>
@@ -381,7 +381,7 @@
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-gray-50">
                             {pageProducts.length === 0 ? <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p> : pageProducts.map(p => (
-                                <button key={p.id} onClick={() => setSelectedProd(p.id)} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md' : 'border-white hover:border-blue-200 bg-white shadow-sm'}`}>
+                                <button key={p.id} onClick={() => setSelectedProd(p.id)} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md' : 'border-white hover:border-purple-200 bg-white shadow-sm'}`}>
                                     <div><p className="font-extrabold text-lg">{p.code}</p><p className="text-[11px] font-bold text-gray-400">Q{p.price}</p></div>
                                     {pageHotspots.some(h => h.productId === p.id) && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
                                 </button>
@@ -393,11 +393,39 @@
         }
 
         function CatalogSelectionView({ catalogs, pages, onSelect }) {
+            const [isLoading, setIsLoading] = useState(true);
+
+            useEffect(() => {
+                // Le damos 1.5 segundos de gracia a Firebase para responder
+                const timer = setTimeout(() => setIsLoading(false), 1500);
+                return () => clearTimeout(timer);
+            }, []);
+
             const getThumbnail = (catId) => {
                 const catPages = pages.filter(p => p.catalogId === catId);
                 if (catPages.length === 0) return null;
                 const firstPage = catPages.find(p => p.pageNumber === 1) || catPages[0];
                 return firstPage.coverImage || firstPage.imageUrl;
+            };
+
+            if (catalogs.length === 0) {
+                if (isLoading) {
+                    return (
+                        <div className="flex flex-col items-center justify-center h-[60vh] text-[#631A65]">
+                            <Icons.Loader />
+                            <h2 className="text-lg font-bold mt-4 animate-pulse text-gray-600">Cargando catálogos...</h2>
+                        </div>
+                    );
+                }
+                return (
+                    <div className="flex flex-col items-center justify-center h-[60vh] text-center opacity-50">
+                        <Icons.Package />
+                        <h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo en preparación!</h2>
+                    </div>
+                );
+            }
+
+            return (
             };
             if (catalogs.length === 0) return <div className="flex flex-col items-center justify-center h-[60vh] text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo en preparación!</h2></div>;
             return (
@@ -406,11 +434,11 @@
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8 max-w-[1600px] mx-auto px-2 md:px-6">
                         {catalogs.map(cat => (
                             <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full">
-                                <div className="bg-white p-1 md:p-2 rounded-2xl shadow-xl border-4 border-transparent group-hover:border-[#007cc2] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden mb-4 relative">
+                                <div className="bg-white p-1 md:p-2 rounded-2xl shadow-xl border-4 border-transparent group-hover:border-[#631A65] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden mb-4 relative">
                                     {getThumbnail(cat.id) ? <img src={getThumbnail(cat.id)} className="w-full h-full object-cover rounded-xl" alt={cat.name} /> : <div className="flex flex-col items-center opacity-30 text-gray-800"><Icons.Package /><span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span></div>}
                                 </div>
-                                <h3 className="font-bold text-sm md:text-xl text-gray-800 group-hover:text-[#007cc2] transition text-center px-1 w-full truncate">{cat.name}</h3>
-                                <button className="mt-2 md:mt-4 bg-blue-50 text-[#007cc2] text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#007cc2] group-hover:text-white shadow-sm w-full md:w-auto">Ver Catálogo</button>
+                                <h3 className="font-bold text-sm md:text-xl text-gray-800 group-hover:text-[#631A65] transition text-center px-1 w-full truncate">{cat.name}</h3>
+                                <button className="mt-2 md:mt-4 bg-purple-50 text-[#631A65] text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#631A65] group-hover:text-white shadow-sm w-full md:w-auto">Ver Catálogo</button>
                             </div>
                         ))}
                     </div>
@@ -418,7 +446,7 @@
             );
         }
 
-        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, isMobile }) {
+        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, isMobile, searchQuery }) {
             const [activeH, setActiveH] = useState(null);
             const [playingVideo, setPlayingVideo] = useState(null);
             const [touchStart, setTouchStart] = useState(null);
@@ -463,24 +491,27 @@
                     
                     // Nueva lógica para saber si el popup va para arriba o para abajo
                     let verticalClass = h.y > 55 ? "bottom-12" : "top-12";
+                    
+                    // Lógica para detectar si este producto es el que se buscó
+                    const isMatched = searchQuery && p.code.toUpperCase().includes(searchQuery.trim().toUpperCase());
 
                     return (
-                        <div key={h.id} className={`absolute flex items-center gap-2 ${activeH === h.id ? 'z-50' : 'z-20'}`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
-                            <div onClick={e => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
+                        <div key={h.id} className={`absolute flex items-center gap-2 ${activeH === h.id || isMatched ? 'z-50' : 'z-20'}`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
+                            <div onClick={e => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className={`${isMatched ? 'bg-[#FFDA00] text-black scale-125 animate-bounce shadow-[0_0_20px_rgba(255,204,0,0.8)]' : 'bg-[#631A65] text-white hover:scale-110 animate-pulse-slow shadow-xl'} rounded-full p-2 md:p-3 border-2 border-white cursor-pointer transition`}><Icons.Cart /></div>
                             {p.youtubeUrl && <div onClick={e => { e.stopPropagation(); setPlayingVideo(p.youtubeUrl); }} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Youtube /></div>}
                             {activeH === h.id && (
                                 <div className={`absolute ${verticalClass} ${alignClass} bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2`} onClick={e => e.stopPropagation()}>
                                     <p className="text-[12px] font-extrabold text-gray-800 leading-none mb-1">{p.code}</p>
-                                    <p className="text-sm font-bold text-[#007cc2] mb-3">Q{p.price?.toFixed(2)}</p>
+                                    <p className="text-sm font-bold text-[#631A65] mb-3">Q{p.price?.toFixed(2)}</p>
                                     <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                                         {Object.entries(grouped).length > 0 ? Object.entries(grouped).map(([c, szs]) => (
                                             <div key={c} className="text-left border-t pt-2">
                                                 <p className="text-[10px] font-extrabold text-gray-500 uppercase mb-1.5">{c}:</p>
                                                 <div className="flex flex-wrap gap-1.5">
-                                                    {szs.map(s => <button key={s} onClick={() => { onAdd({ id: `${p.id}_${c}_${s}`, code: p.code, color: c, size: s, price: p.price }); setActiveH(null); }} className="bg-blue-50 text-[#007cc2] text-xs font-bold px-2.5 py-1 rounded hover:bg-[#007cc2] hover:text-white transition">{s}</button>)}
+                                                    {szs.map(s => <button key={s} onClick={() => { onAdd({ id: `${p.id}_${c}_${s}`, code: p.code, color: c, size: s, price: p.price }); setActiveH(null); }} className="bg-purple-50 text-[#631A65] text-xs font-bold px-2.5 py-1 rounded hover:bg-[#631A65] hover:text-white transition">{s}</button>)}
                                                 </div>
                                             </div>
-                                        )) : <button onClick={() => { onAdd({ id: p.id, code: p.code, color: '', size: '', price: p.price }); setActiveH(null); }} className="w-full bg-[#007cc2] text-white text-xs font-bold py-2.5 rounded hover:bg-blue-700">AGREGAR</button>}
+                                        )) : <button onClick={() => { onAdd({ id: p.id, code: p.code, color: '', size: '', price: p.price }); setActiveH(null); }} className="w-full bg-[#631A65] text-white text-xs font-bold py-2.5 rounded hover:bg-#BE2B86">AGREGAR</button>}
                                     </div>
                                 </div>
                             )}
@@ -491,7 +522,7 @@
             return (
                 <div className="flex flex-col flex-grow items-center justify-center relative w-full py-2 md:py-6" onClick={() => setActiveH(null)}>
                     <div className="relative flex items-center justify-center w-full flex-grow h-[70vh] md:h-[80vh] lg:h-[85vh] px-2 md:px-12 lg:px-20">
-                        <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-0 md:left-4 lg:left-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronLeft /></button>
+                        <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-0 md:left-4 lg:left-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronLeft /></button>
                         <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={e => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }} onTouchMove={e => setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={() => { if (!touchStart || !touchEnd) return; const dist = touchStart - touchEnd; if (dist > 50) move('n'); if (dist < -50) move('p'); }}>
                             <div className={`relative h-full bg-white overflow-hidden ${(!isMobile && currentIndex > 0) ? 'border-r border-gray-100' : ''}`}>
                                 {left && (<div className="h-full w-full relative"><img src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</div>)}
@@ -502,7 +533,7 @@
                                 </div>
                             )}
                         </div>
-                        <button onClick={() => move('n')} disabled={!(pages.length > currentIndex + nextStep)} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronRight /></button>
+                        <button onClick={() => move('n')} disabled={!(pages.length > currentIndex + nextStep)} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronRight /></button>
                     </div>
                     <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">Página {currentIndex + 1} {(!isMobile && right) ? `- ${currentIndex + 2}` : ''} de {pages.length}</div>
                     {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}
@@ -697,16 +728,16 @@
                     {adjustingPage && <HotspotAdjuster page={adjustingPage} products={products} hotspots={hotspots} onClose={() => setAdjustingPage(null)} />}
 
                     {/* Selector de catálogo + acciones */}
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-blue-50 p-4 rounded-2xl mb-8 gap-4">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-purple-50 p-4 rounded-2xl mb-8 gap-4">
                         <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
                             <span className="font-extrabold text-blue-900 text-sm">Catálogo:</span>
                             {catalogs.length > 0 ? (
-                                <select className="border-2 border-blue-200 rounded-xl text-sm font-bold bg-white py-2 px-4 focus:outline-none shadow-sm" value={activeCatalogId} onChange={e => setActiveCatalogId(e.target.value)}>
+                                <select className="border-2 border-purple-200 rounded-xl text-sm font-bold bg-white py-2 px-4 focus:outline-none shadow-sm" value={activeCatalogId} onChange={e => setActiveCatalogId(e.target.value)}>
                                     {catalogs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             ) : <span className="text-sm text-gray-500 font-medium">Ninguno</span>}
                             {activeCatalogId && (
-                                <button onClick={renameCatalog} className="flex items-center gap-1 text-xs font-bold text-[#007cc2] bg-white border border-blue-200 px-3 py-2 rounded-xl hover:bg-blue-50 transition shadow-sm">
+                                <button onClick={renameCatalog} className="flex items-center gap-1 text-xs font-bold text-[#631A65] bg-white border border-purple-200 px-3 py-2 rounded-xl hover:bg-purple-50 transition shadow-sm">
                                     <Icons.Edit2 /> Renombrar
                                 </button>
                             )}
@@ -716,7 +747,7 @@
                     {/* Tabs */}
                     <div className="flex gap-2 md:gap-4 border-b-2 border-gray-100 mb-8 overflow-x-auto pb-2 custom-scrollbar">
                         {['pdf', 'productos', 'pedidos', 'ajustes'].map(t => (
-                            <button key={t} onClick={() => setTab(t)} className={`capitalize px-4 py-2 rounded-xl transition whitespace-nowrap ${tab === t ? 'bg-[#007cc2] text-white font-bold shadow-md' : 'text-gray-500 font-semibold hover:bg-gray-50'}`}>
+                            <button key={t} onClick={() => setTab(t)} className={`capitalize px-4 py-2 rounded-xl transition whitespace-nowrap ${tab === t ? 'bg-[#631A65] text-white font-bold shadow-md' : 'text-gray-500 font-semibold hover:bg-gray-50'}`}>
                                 {t === 'pdf' ? 'Organizar' : t}
                             </button>
                         ))}
@@ -725,9 +756,9 @@
                     {/* ── TAB: ORGANIZAR PDF ── */}
                     {tab === 'pdf' && (
                         <div>
-                            <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-8 md:p-10 rounded-3xl text-center mb-10 relative transition hover:border-[#007cc2]">
+                            <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-8 md:p-10 rounded-3xl text-center mb-10 relative transition hover:border-[#631A65]">
                                 <input type="file" id="pdf" className="hidden" onChange={e => { const f = e.target.files[0]; if (!f) return; if (f.size > 30 * 1024 * 1024) return setGlobalMessage({ title: "PDF demasiado pesado", text: "Comprímelo a menos de 30MB.", type: "error" }); setPromptDialog({ title: "Nombre del catálogo", onSubmit: (n) => { if (n && n.trim()) processUpload(f, n.trim()); } }); e.target.value = ''; }} disabled={loading} accept="application/pdf" />
-                                <label htmlFor="pdf" className={`bg-[#007cc2] text-white px-8 py-4 rounded-full font-bold shadow-xl inline-flex items-center gap-2 transition-all ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700'}`}>{loading ? uploadProgress : '📄 Subir PDF'}</label>
+                                <label htmlFor="pdf" className={`bg-[#631A65] text-white px-8 py-4 rounded-full font-bold shadow-xl inline-flex items-center gap-2 transition-all ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-#BE2B86'}`}>{loading ? uploadProgress : '📄 Subir PDF'}</label>
 
                                 {/* ── MEJORA 1: botón agregar página en blanco ── */}
                                 {activeCatalogId && !loading && (
@@ -744,7 +775,7 @@
                                     <div key={p.id} className="relative group bg-white p-2 rounded-2xl border-2 border-gray-100 shadow-sm transition">
                                         <div className="aspect-[1/1.4] overflow-hidden rounded-xl relative">
                                             <img src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
-                                            {p.indexName && <div className="absolute top-0 left-0 bg-[#007cc2] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 truncate max-w-full">{p.indexName}</div>}
+                                            {p.indexName && <div className="absolute top-0 left-0 bg-[#631A65] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 truncate max-w-full">{p.indexName}</div>}
                                             {p.isBlank && <div className="absolute bottom-0 left-0 right-0 bg-gray-200 text-gray-500 text-[10px] font-bold text-center py-1">EN BLANCO</div>}
                                             <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20">
                                                 <button onClick={() => setPromptDialog({ title: "Índice", defaultValue: p.indexName, onSubmit: async t => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { indexName: t.trim() }) })} className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full w-3/4 shadow-lg hover:scale-105 transition">Índice</button>
@@ -776,16 +807,16 @@
                                             setEditingProduct(null);
                                         } catch (err) { }
                                     }} className="flex flex-col gap-5">
-                                        <div><label className="text-xs font-bold text-gray-400 uppercase">Código</label><input type="text" className="w-full border-2 p-3 rounded-xl bg-gray-50 font-bold focus:border-[#007cc2] outline-none" value={editingProduct.code || ''} onChange={e => setEditingProduct({ ...editingProduct, code: e.target.value })} required /></div>
-                                        <div><label className="text-xs font-bold text-gray-400 uppercase">Descripción</label><textarea className="w-full border-2 p-3 rounded-xl bg-gray-50 h-32 focus:border-[#007cc2] outline-none" value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} /></div>
+                                        <div><label className="text-xs font-bold text-gray-400 uppercase">Código</label><input type="text" className="w-full border-2 p-3 rounded-xl bg-gray-50 font-bold focus:border-[#631A65] outline-none" value={editingProduct.code || ''} onChange={e => setEditingProduct({ ...editingProduct, code: e.target.value })} required /></div>
+                                        <div><label className="text-xs font-bold text-gray-400 uppercase">Descripción</label><textarea className="w-full border-2 p-3 rounded-xl bg-gray-50 h-32 focus:border-[#631A65] outline-none" value={editingProduct.description || ''} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })} /></div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div><label className="text-xs font-bold text-gray-400 uppercase">Precio (Q)</label><input type="number" step="0.01" className="w-full border-2 p-3 rounded-xl bg-blue-50 font-extrabold text-blue-700 focus:border-[#007cc2] outline-none" value={editingProduct.price || ''} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} required /></div>
+                                            <div><label className="text-xs font-bold text-gray-400 uppercase">Precio (Q)</label><input type="number" step="0.01" className="w-full border-2 p-3 rounded-xl bg-purple-50 font-extrabold text-#BE2B86 focus:border-[#631A65] outline-none" value={editingProduct.price || ''} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} required /></div>
                                             {/* ── MEJORA 4: campo YouTube visible y claro ── */}
                                             <div><label className="text-xs font-bold text-red-500 uppercase flex items-center gap-1"><Icons.Youtube /> YouTube URL</label><input type="url" placeholder="https://youtube.com/..." className="w-full border-2 border-red-200 p-3 rounded-xl bg-red-50 text-xs focus:border-red-500 outline-none" value={editingProduct.youtubeUrl || ''} onChange={e => setEditingProduct({ ...editingProduct, youtubeUrl: e.target.value })} /></div>
                                         </div>
                                         <div className="flex gap-4 mt-4">
                                             <button type="button" onClick={() => setEditingProduct(null)} className="bg-gray-100 px-4 py-3.5 rounded-xl font-bold flex-1">Cancelar</button>
-                                            <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold flex-1">Guardar</button>
+                                            <button type="submit" className="bg-[#631A65] text-white px-4 py-3.5 rounded-xl font-bold flex-1">Guardar</button>
                                         </div>
                                     </form>
                                 </div>
@@ -795,21 +826,21 @@
                                         <div key={pageNum} className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
                                             <div className="bg-[#f8fafc] px-6 py-4 font-bold border-b border-gray-200 flex justify-between items-center">
                                                 <span className="text-lg">Página {pageNum}</span>
-                                                <span className="text-xs bg-white px-3 py-1.5 rounded-full text-[#007cc2] border border-blue-100 shadow-sm">{groupedProducts[pageNum].length} ítems</span>
+                                                <span className="text-xs bg-white px-3 py-1.5 rounded-full text-[#631A65] border border-purple-100 shadow-sm">{groupedProducts[pageNum].length} ítems</span>
                                             </div>
                                             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                 {groupedProducts[pageNum].map(p => (
-                                                    <div key={p.id} className="p-5 flex flex-col justify-between border-2 border-transparent hover:border-blue-100 rounded-2xl bg-gray-50 transition-all shadow-sm">
+                                                    <div key={p.id} className="p-5 flex flex-col justify-between border-2 border-transparent hover:border-purple-100 rounded-2xl bg-gray-50 transition-all shadow-sm">
                                                         <div>
                                                             <div className="flex justify-between items-start mb-3">
                                                                 <p className="font-extrabold text-gray-900 text-xl flex items-center gap-1">{p.code} {p.youtubeUrl && <span className="text-red-500 bg-red-100 p-1 rounded-full inline-flex"><Icons.Youtube /></span>}</p>
-                                                                <p className="text-sm font-extrabold text-white bg-[#007cc2] px-2.5 py-1 rounded-lg">Q{p.price}</p>
+                                                                <p className="text-sm font-extrabold text-white bg-[#631A65] px-2.5 py-1 rounded-lg">Q{p.price}</p>
                                                             </div>
                                                             <p className="text-xs text-gray-600 whitespace-pre-wrap mt-3">{p.description}</p>
                                                             {p.youtubeUrl && <p className="text-[10px] text-red-400 mt-2 truncate">▶ {p.youtubeUrl}</p>}
                                                         </div>
                                                         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
-                                                            <button onClick={() => setEditingProduct(p)} className="bg-white text-[#007cc2] p-2 rounded-full shadow border"><Icons.Edit2 /></button>
+                                                            <button onClick={() => setEditingProduct(p)} className="bg-white text-[#631A65] p-2 rounded-full shadow border"><Icons.Edit2 /></button>
                                                             <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id))} className="bg-white text-red-500 p-2 rounded-full shadow border"><Icons.Trash /></button>
                                                         </div>
                                                     </div>
@@ -867,15 +898,15 @@
                                     e.preventDefault();
                                     try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), { whatsapp: e.target.whatsapp.value }, { merge: true }); setGlobalMessage({ title: "✅ Guardado", text: "WhatsApp actualizado." }); } catch (err) { }
                                 }} className="flex flex-col gap-5">
-                                    <input name="whatsapp" type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl bg-gray-50 font-bold focus:border-[#007cc2] outline-none transition" defaultValue={settings?.whatsapp || ''} pattern="[0-9]{8,15}" placeholder="Ej: 50212345678" />
-                                    <button type="submit" className="bg-[#007cc2] text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-lg hover:bg-blue-700 transition">Guardar WhatsApp</button>
+                                    <input name="whatsapp" type="text" className="w-full border-2 border-gray-200 p-3 rounded-xl bg-gray-50 font-bold focus:border-[#631A65] outline-none transition" defaultValue={settings?.whatsapp || ''} pattern="[0-9]{8,15}" placeholder="Ej: 50212345678" />
+                                    <button type="submit" className="bg-[#631A65] text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-lg hover:bg-#BE2B86 transition">Guardar WhatsApp</button>
                                 </form>
                             </div>
                             {/* Cambiar PIN */}
                             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl">
                                 <h3 className="font-extrabold text-gray-800 mb-2 flex items-center gap-2"><Icons.Lock /> Contraseña de Administrador</h3>
                                 <p className="text-xs text-gray-500 mb-6">El PIN actual está activo. Cámbialo si es necesario.</p>
-                                <button onClick={changePin} className="bg-slate-800 text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-lg hover:bg-slate-900 transition flex items-center justify-center gap-2">
+                                <button onClick={changePin} className="bg-#290A2B text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-lg hover:bg-slate-900 transition flex items-center justify-center gap-2">
                                     <Icons.Lock /> Cambiar PIN de acceso
                                 </button>
                             </div>
@@ -958,13 +989,13 @@
                 else { setGlobalMessage({ title: "PIN Incorrecto", text: "Intenta de nuevo." }); }
             };
 
-            if (!ready) return <div className="h-screen flex items-center justify-center text-[#007cc2]"><Icons.Loader /></div>;
+            if (!ready) return <div className="h-screen flex items-center justify-center text-[#631A65]"><Icons.Loader /></div>;
 
             return (
                 <div className="min-h-screen flex flex-col bg-[#f3f4f6]" onClick={() => setShowIndexMenu(false)}>
                     {view === 'store' ? (
                         <header className="bg-white shadow-md p-3 md:p-4 flex justify-between items-center sticky top-0 z-30">
-                            <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#007cc2] cursor-pointer select-none" onClick={() => {
+                            <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#631A65] cursor-pointer select-none" onClick={() => {
                                 setSecretClicks(prev => {
                                     const next = prev + 1;
                                     if (next >= 6) { setShowLoginModal(true); return 0; }
@@ -975,7 +1006,7 @@
                             </div>
                             {!showCatalogList && (
                                 <div className="flex-1 flex justify-center items-center gap-2 md:gap-4 px-2 max-w-lg w-full">
-                                    <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#0a192f] px-3 py-2 rounded-full hover:bg-slate-800 transition whitespace-nowrap">⬅ Volver</button>
+                                    <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 py-2 rounded-full hover:bg-#290A2B transition whitespace-nowrap">⬅ Volver</button>
                                     
                                     {/* Barra de Búsqueda Inteligente */}
                                     <form onSubmit={e => {
@@ -993,23 +1024,23 @@
                                             setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${q}" en este catálogo.` });
                                         }
                                     }} className="relative flex items-center w-full flex-1">
-                                        <div className="absolute left-3 text-[#007cc2]"><Icons.Search /></div>
+                                        <div className="absolute left-3 text-[#631A65]"><Icons.Search /></div>
                                         <input
                                             type="text"
                                             placeholder="Buscar estilo..."
-                                            className="w-full bg-blue-50 text-sm font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#007cc2] transition-all border border-blue-100 shadow-inner placeholder-blue-300"
+                                            className="w-full bg-purple-50 text-sm font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#631A65] transition-all border border-purple-100 shadow-inner placeholder-blue-300"
                                             value={searchQuery}
                                             onChange={e => setSearchQuery(e.target.value)}
                                         />
                                     </form>
 
                                     <div className="relative hidden md:flex">
-                                        <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#0a192f] px-4 py-2 rounded-full flex items-center gap-1 hover:bg-slate-800 transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
+                                        <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#3A0F3C] px-4 py-2 rounded-full flex items-center gap-1 hover:bg-#290A2B transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
                                         {showIndexMenu && (
                                             <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
                                                 <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
                                                     {currentPages.filter(p => p.indexName).map(p => (
-                                                        <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
+                                                        <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-purple-50 hover:text-[#631A65] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -1018,8 +1049,8 @@
                                 </div>
                             )}
                             <div className="flex-1 flex items-center gap-2 justify-end">
-                                <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#007cc2] transition"><Icons.Share /></button>
-                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-blue-50 text-[#007cc2] rounded-full hover:bg-blue-100 transition">
+                                <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#631A65] transition"><Icons.Share /></button>
+                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-purple-50 text-[#631A65] rounded-full hover:bg-purple-100 transition">
                                     <Icons.Cart />
                                     {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s, i) => s + i.qty, 0)}</span>}
                                 </button>
@@ -1027,8 +1058,8 @@
                         </header>
                     ) : (
                         <header className="bg-white shadow-sm p-3 flex justify-between items-center sticky top-0 z-30 border-b px-4 md:px-8">
-                            <div className="font-extrabold text-[#0a192f] flex items-center gap-2">Admin Panel</div>
-                            <button onClick={() => { setView('store'); setShowCatalogList(true); }} className="text-sm font-bold text-white bg-[#007cc2] px-4 py-2 rounded-full hover:bg-blue-700 transition shadow-md">Tienda</button>
+                            <div className="font-extrabold text-[#3A0F3C] flex items-center gap-2">Admin Panel</div>
+                            <button onClick={() => { setView('store'); setShowCatalogList(true); }} className="text-sm font-bold text-white bg-[#631A65] px-4 py-2 rounded-full hover:bg-#BE2B86 transition shadow-md">Tienda</button>
                         </header>
                     )}
 
@@ -1036,7 +1067,7 @@
                         {view === 'store' ? (
                             showCatalogList
                                 ? <CatalogSelectionView catalogs={catalogs} pages={pages} onSelect={id => { setActiveCatalogId(id); setShowCatalogList(false); setCurrentIndex(0); }} />
-                                : <FlipbookView pages={currentPages} products={currentProducts} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} isMobile={isMobile} onAdd={v => setCart(prev => { const ex = prev.find(x => x.id === v.id); if (ex) return prev.map(x => x.id === v.id ? { ...x, qty: x.qty + 1 } : x); return [...prev, { ...v, qty: 1 }]; })} />
+                                : <FlipbookView searchQuery={searchQuery} pages={currentPages} products={currentProducts} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} isMobile={isMobile} onAdd={v => setCart(prev => { const ex = prev.find(x => x.id === v.id); if (ex) return prev.map(x => x.id === v.id ? { ...x, qty: x.qty + 1 } : x); return [...prev, { ...v, qty: 1 }]; })} />
                         ) : (
                             <div className="pt-6">
                                 <AdminView catalogs={catalogs} activeCatalogId={activeCatalogId} setActiveCatalogId={setActiveCatalogId} pages={pages} products={products} hotspots={hotspots} setView={setView} setGlobalMessage={setGlobalMessage} setConfirmDialog={setConfirmDialog} settings={settings} pinHash={pinHash} setPinHash={setPinHash} />
@@ -1052,10 +1083,10 @@
                             <div className="bg-white p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl">
                                 <h3 className="font-extrabold text-xl mb-4">Admin Login</h3>
                                 <form onSubmit={handleAdminLogin}>
-                                    <input type="password" autoFocus className="w-full border-2 p-3 rounded-2xl text-center text-xl mb-6 outline-none focus:border-[#007cc2]" value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
+                                    <input type="password" autoFocus className="w-full border-2 p-3 rounded-2xl text-center text-xl mb-6 outline-none focus:border-[#631A65]" value={pin} onChange={e => setPin(e.target.value)} placeholder="PIN..." />
                                     <div className="flex gap-2">
                                         <button type="button" onClick={() => { setShowLoginModal(false); setPin(''); }} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold hover:bg-gray-200 transition">Cerrar</button>
-                                        <button type="submit" className="flex-1 bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Entrar</button>
+                                        <button type="submit" className="flex-1 bg-[#631A65] text-white py-3 rounded-xl font-bold hover:bg-#BE2B86 transition">Entrar</button>
                                     </div>
                                 </form>
                             </div>
@@ -1067,7 +1098,7 @@
                             <div className="bg-white p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl">
                                 <h3 className="font-bold text-xl mb-2">{globalMessage.title}</h3>
                                 <p className="text-sm text-gray-600 mb-6">{globalMessage.text}</p>
-                                <button onClick={() => setGlobalMessage(null)} className="w-full bg-[#007cc2] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Entendido</button>
+                                <button onClick={() => setGlobalMessage(null)} className="w-full bg-[#631A65] text-white py-3 rounded-xl font-bold hover:bg-#BE2B86 transition">Entendido</button>
                             </div>
                         </div>
                     )}

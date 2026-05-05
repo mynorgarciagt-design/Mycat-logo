@@ -328,7 +328,7 @@
                                             <span className="text-gray-500 font-extrabold uppercase text-xs tracking-widest">Total a Pagar</span>
                                             <span className="text-3xl font-extrabold text-[#631A65]">Q{total.toFixed(2)}</span>
                                         </div>
-                                        <button onClick={() => setStep('form')} className="w-full bg-[#631A65] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-#BE2B86 shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">Siguiente Paso <Icons.ChevronRight /></button>
+                                        <button onClick={() => setStep('form')} className="w-full bg-[#631A65] text-white p-4 md:p-5 rounded-2xl font-extrabold text-lg hover:bg-#BE2B86 shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">Siguiente Paso <Icons.ChevronRight /></button><button onClick={() => { if(window.confirm('¿Seguro que deseas vaciar tu pedido?')) setCart([]); }} className="w-full text-red-400 text-xs font-bold hover:text-red-600 transition mt-4 py-2">Vaciar carrito</button>
                                     </div>
                                 )}
                             </div>
@@ -368,7 +368,7 @@
                     </div>
                     <div className="flex-1 flex items-center justify-center p-4 overflow-hidden relative">
                         <div className="relative inline-flex max-w-full max-h-full shadow-2xl bg-white rounded-xl">
-                            <img src={page.imageUrl} alt="Página" onClick={handleImageClick} className="block max-w-full max-h-[85vh] w-auto h-auto cursor-crosshair rounded-xl" />
+                            <img loading="lazy" src={page.imageUrl} alt="Página" onClick={handleImageClick} className="block max-w-full max-h-[85vh] w-auto h-auto cursor-crosshair rounded-xl" />
                             {pageHotspots.map(h => (
                                 <div key={h.id} className={`absolute flex items-center justify-center cursor-pointer transition-all shadow-xl border-[3px] rounded-full ${selectedProd === h.productId ? 'bg-green-500 border-white scale-125 z-[60]' : 'bg-[#631A65] border-white opacity-90'} w-10 h-10`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }} onClick={e => { e.stopPropagation(); setSelectedProd(h.productId); }}><Icons.Cart /></div>
                             ))}
@@ -432,7 +432,7 @@
                         {catalogs.map(cat => (
                             <div key={cat.id} onClick={() => onSelect(cat.id)} className="cursor-pointer group flex flex-col items-center w-full">
                                 <div className="bg-white p-1 md:p-2 rounded-2xl shadow-xl border-4 border-transparent group-hover:border-[#BE2B86] transition-all transform group-hover:-translate-y-2 w-full aspect-[1/1.4] flex items-center justify-center overflow-hidden mb-4 relative">
-                                    {getThumbnail(cat.id) ? <img src={getThumbnail(cat.id)} className="w-full h-full object-cover rounded-xl" alt={cat.name} /> : <div className="flex flex-col items-center opacity-30 text-gray-800"><Icons.Package /><span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span></div>}
+                                    {getThumbnail(cat.id) ? <img loading="lazy" src={getThumbnail(cat.id)} className="w-full h-full object-cover rounded-xl" alt={cat.name} /> : <div className="flex flex-col items-center opacity-30 text-gray-800"><Icons.Package /><span className="text-[10px] md:text-xs font-bold mt-2">Sin páginas</span></div>}
                                 </div>
                                 <h3 className="font-bold text-sm md:text-xl text-gray-800 group-hover:text-[#BE2B86] transition text-center px-1 w-full truncate">{cat.name}</h3>
                                 <button className="mt-2 md:mt-4 bg-purple-50 text-[#631A65] text-xs md:text-sm font-bold py-2.5 px-6 md:py-3 md:px-10 rounded-full group-hover:bg-[#BE2B86] group-hover:text-white shadow-sm w-full md:w-auto">Ver Catálogo</button>
@@ -447,8 +447,18 @@
             const [playingVideo, setPlayingVideo] = useState(null);
             const [touchStart, setTouchStart] = useState(null);
             const [touchEnd, setTouchEnd] = useState(null);
+            const [isHighlighting, setIsHighlighting] = useState(false); // Nuevo estado para el tiempo
             
             useEffect(() => setActiveH(null), [currentIndex]);
+
+            // Efecto que activa el salto por 3 segundos cuando cambia la búsqueda
+            useEffect(() => {
+                if (searchQuery && searchQuery.trim() !== '') {
+                    setIsHighlighting(true);
+                    const timer = setTimeout(() => setIsHighlighting(false), 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [searchQuery]);
             
             // Calculamos el paso dinámicamente: 1 en móvil, y en PC 1 si estamos en la portada, 2 para el resto.
             const nextStep = isMobile ? 1 : (currentIndex === 0 ? 1 : 2);
@@ -488,13 +498,13 @@
                     // Nueva lógica para saber si el popup va para arriba o para abajo
                     let verticalClass = h.y > 55 ? "bottom-12" : "top-12";
                     
-                    // Lógica para detectar si este producto es el que se buscó
-                    const isMatched = searchQuery && p.code.toUpperCase().includes(searchQuery.trim().toUpperCase());
+                    // Lógica para detectar si este producto es el que se buscó y si el tiempo sigue activo
+                    const isMatched = isHighlighting && searchQuery && p.code.toUpperCase().includes(searchQuery.trim().toUpperCase());
 
                     return (
                         <div key={h.id} className={`absolute flex items-center gap-2 ${activeH === h.id || isMatched ? 'z-50' : 'z-20'}`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
-                            <div onClick={e => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className={`${isMatched ? 'bg-[#FFDA00] text-black scale-125 animate-bounce shadow-[0_0_20px_rgba(255,204,0,0.8)]' : 'bg-[#631A65] text-white hover:scale-110 animate-pulse-slow shadow-xl'} rounded-full p-2 md:p-3 border-2 border-white cursor-pointer transition`}><Icons.Cart /></div>
-                            {p.youtubeUrl && <div onClick={e => { e.stopPropagation(); setPlayingVideo(p.youtubeUrl); }} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Youtube /></div>}
+                            <div onClick={e => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className={`${isMatched ? 'bg-[#FFDA00] text-black scale-125 animate-bounce shadow-[0_0_20px_rgba(255,218,0,0.8)]' : 'bg-[#631A65] text-white hover:scale-110 shadow-xl'} rounded-full p-2 md:p-3 border-2 border-white cursor-pointer transition`}><Icons.Cart /></div>
+                            {p.youtubeUrl && <div onClick={e => { e.stopPropagation(); setPlayingVideo(p.youtubeUrl); }} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition"><Icons.Youtube /></div>}
                             {activeH === h.id && (
                                 <div className={`absolute ${verticalClass} ${alignClass} bg-white rounded-xl shadow-2xl border border-gray-100 min-w-[160px] z-50 p-2`} onClick={e => e.stopPropagation()}>
                                     <p className="text-[12px] font-extrabold text-gray-800 leading-none mb-1">{p.code}</p>
@@ -504,7 +514,7 @@
                                             <div key={c} className="text-left border-t pt-2">
                                                 <p className="text-[10px] font-extrabold text-gray-500 uppercase mb-1.5">{c}:</p>
                                                 <div className="flex flex-wrap gap-1.5">
-                                                    {szs.map(s => <button key={s} onClick={() => { onAdd({ id: `${p.id}_${c}_${s}`, code: p.code, color: c, size: s, price: p.price }); setActiveH(null); }} className="bg-purple-50 text-[#631A65] text-xs font-bold px-2.5 py-1 rounded hover:bg-[#631A65] hover:text-white transition">{s}</button>)}
+                                                    {szs.map(s => <button key={s} onClick={() => { onAdd({ id: `${p.id}_${c}_${s}`, code: p.code, color: c, size: s, price: p.price }); setActiveH(null); }} className="bg-purple-50 text-[#631A65] text-xs font-bold px-2.5 py-1 rounded active:scale-90 hover:bg-[#631A65] hover:text-white transition">{s}</button>)}
                                                 </div>
                                             </div>
                                         )) : <button onClick={() => { onAdd({ id: p.id, code: p.code, color: '', size: '', price: p.price }); setActiveH(null); }} className="w-full bg-[#631A65] text-white text-xs font-bold py-2.5 rounded hover:bg-#BE2B86">AGREGAR</button>}
@@ -521,11 +531,11 @@
                         <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-0 md:left-4 lg:left-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronLeft /></button>
                         <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={e => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }} onTouchMove={e => setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={() => { if (!touchStart || !touchEnd) return; const dist = touchStart - touchEnd; if (dist > 50) move('n'); if (dist < -50) move('p'); }}>
                             <div className={`relative h-full bg-white overflow-hidden ${(!isMobile && currentIndex > 0) ? 'border-r border-gray-100' : ''}`}>
-                                {left && (<div className="h-full w-full relative"><img src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</div>)}
+                                {left && (<div className="h-full w-full relative"><img loading="lazy" src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</div>)}
                             </div>
                             {(!isMobile && currentIndex > 0) && (
                                 <div className="relative h-full bg-white overflow-hidden">
-                                    {right && (<div className="h-full w-full relative"><img src={right.coverImage || right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(right)}</div>)}
+                                    {right && (<div className="h-full w-full relative"><img loading="lazy" src={right.coverImage || right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(right)}</div>)}
                                 </div>
                             )}
                         </div>
@@ -770,7 +780,7 @@
                                 {currentPages.map(p => (
                                     <div key={p.id} className="relative group bg-white p-2 rounded-2xl border-2 border-gray-100 shadow-sm transition">
                                         <div className="aspect-[1/1.4] overflow-hidden rounded-xl relative">
-                                            <img src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
+                                            <img loading="lazy" src={p.coverImage || p.imageUrl} className="w-full h-full object-cover" />
                                             {p.indexName && <div className="absolute top-0 left-0 bg-[#631A65] text-white text-[10px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 truncate max-w-full">{p.indexName}</div>}
                                             {p.isBlank && <div className="absolute bottom-0 left-0 right-0 bg-gray-200 text-gray-500 text-[10px] font-bold text-center py-1">EN BLANCO</div>}
                                             <div className="absolute inset-0 bg-gray-900/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity z-20">
@@ -925,7 +935,10 @@
             const [products, setProducts] = useState([]);
             const [pages, setPages] = useState([]);
             const [hotspots, setHotspots] = useState([]);
-            const [cart, setCart] = useState([]);
+            const [cart, setCart] = useState(() => {
+                try { const guardado = window.localStorage.getItem('miCarrito'); return guardado ? JSON.parse(guardado) : []; } catch (e) { return []; }
+            });
+            useEffect(() => { window.localStorage.setItem('miCarrito', JSON.stringify(cart)); }, [cart]);
             const [isCartOpen, setIsCartOpen] = useState(false);
             const [currentIndex, setCurrentIndex] = useState(0);
             const [searchQuery, setSearchQuery] = useState('');
@@ -1046,7 +1059,7 @@
                             )}
                             <div className="flex-1 flex items-center gap-2 justify-end">
                                 <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#631A65] transition"><Icons.Share /></button>
-                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-purple-50 text-[#631A65] rounded-full hover:bg-purple-100 transition">
+                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 active:scale-90 bg-purple-50 text-[#631A65] rounded-full hover:bg-purple-100 transition">
                                     <Icons.Cart />
                                     {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s, i) => s + i.qty, 0)}</span>}
                                 </button>

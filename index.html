@@ -417,25 +417,34 @@
             const [playingVideo, setPlayingVideo] = useState(null);
             const [touchStart, setTouchStart] = useState(null);
             const [touchEnd, setTouchEnd] = useState(null);
+            
             useEffect(() => setActiveH(null), [currentIndex]);
-            const step = isMobile ? 1 : 2;
-            const move = (dir) => {
-                if (dir === 'n') setCurrentIndex(prev => Math.min(pages.length - 1, prev + step));
-                else setCurrentIndex(prev => Math.max(0, prev - step));
+            
+            // Calculamos el paso dinámicamente: 1 en móvil, y en PC 1 si estamos en la portada, 2 para el resto.
+            const nextStep = isMobile ? 1 : (currentIndex === 0 ? 1 : 2);
+            const prevStep = isMobile ? 1 : (currentIndex === 1 ? 1 : 2);
+
+            const move = (dir) => { 
+                if (dir === 'n') setCurrentIndex(prev => Math.min(pages.length - 1, prev + nextStep));
+                else setCurrentIndex(prev => Math.max(0, prev - prevStep));
             };
+
             useEffect(() => {
                 const handleKD = (e) => {
                     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-                    if (document.querySelector('.fixed.inset-0')) return;
-                    if (e.key === 'ArrowRight' && pages.length > currentIndex + step) move('n');
+                    if (document.querySelector('.fixed.inset-0')) return; 
+                    if (e.key === 'ArrowRight' && pages.length > currentIndex + nextStep) move('n');
                     else if (e.key === 'ArrowLeft' && currentIndex > 0) move('p');
                 };
                 window.addEventListener('keydown', handleKD);
                 return () => window.removeEventListener('keydown', handleKD);
-            }, [pages.length, step, currentIndex]);
+            }, [pages.length, nextStep, prevStep, currentIndex]);
+
             if (pages.length === 0) return (<div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo vacío!</h2></div>);
-            const left = pages[currentIndex];
-            const right = (!isMobile && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;
+            
+            const left = pages[currentIndex]; 
+            // La página derecha solo existe si NO estamos en móvil y NO estamos en la portada (currentIndex > 0)
+            const right = (!isMobile && currentIndex > 0 && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;
             const renderH = (pg) => {
                 if (!pg) return null;
                 return hotspots.filter(h => h.pageId === pg.id).map(h => {
@@ -474,16 +483,16 @@
                     <div className="relative flex items-center justify-center w-full flex-grow h-[70vh] md:h-[80vh] lg:h-[85vh] px-2 md:px-12 lg:px-20">
                         <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-0 md:left-4 lg:left-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronLeft /></button>
                         <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={e => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }} onTouchMove={e => setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={() => { if (!touchStart || !touchEnd) return; const dist = touchStart - touchEnd; if (dist > 50) move('n'); if (dist < -50) move('p'); }}>
-                            <div className={`relative h-full bg-white overflow-hidden ${!isMobile ? 'border-r border-gray-100' : ''}`}>
+                            <div className={`relative h-full bg-white overflow-hidden ${(!isMobile && currentIndex > 0) ? 'border-r border-gray-100' : ''}`}>
                                 {left && (<div className="h-full w-full relative"><img src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</div>)}
                             </div>
-                            {!isMobile && (
+                            {(!isMobile && currentIndex > 0) && (
                                 <div className="relative h-full bg-white overflow-hidden">
                                     {right && (<div className="h-full w-full relative"><img src={right.coverImage || right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(right)}</div>)}
                                 </div>
                             )}
                         </div>
-                        <button onClick={() => move('n')} disabled={!(pages.length > currentIndex + step)} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronRight /></button>
+                        <button onClick={() => move('n')} disabled={!(pages.length > currentIndex + nextStep)} className="absolute right-0 md:right-4 lg:right-8 z-10 p-2 md:p-4 disabled:opacity-10 text-[#007cc2] hover:bg-gray-100 transition bg-white rounded-full shadow-md border border-gray-100 hidden sm:block"><Icons.ChevronRight /></button>
                     </div>
                     <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">Página {currentIndex + 1} {(!isMobile && right) ? `- ${currentIndex + 2}` : ''} de {pages.length}</div>
                     {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}

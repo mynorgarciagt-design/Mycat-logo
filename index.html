@@ -236,12 +236,18 @@
         }
 
         function VideoModal({ videoUrl, onClose }) {
-            const embedUrl = videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
+            // Detectamos si es un short para cambiarle la forma a vertical
+            const isShort = videoUrl.includes('/shorts/');
+            
+            // Agregamos el reemplazo de "/shorts/" para que Youtube permita incrustarlo
+            const embedUrl = videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/').replace('/shorts/', '/embed/');
+            
             return (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[60]" onClick={onClose}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden relative" onClick={e => e.stopPropagation()}>
+                // Cambiamos bg-black/80 a bg-black/95 para oscurecer el fondo
+                <div className="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[60]" onClick={onClose}>
+                    <div className={`bg-white rounded-xl shadow-2xl w-full overflow-hidden relative ${isShort ? 'max-w-sm aspect-[9/16]' : 'max-w-3xl aspect-video'}`} onClick={e => e.stopPropagation()}>
                         <button onClick={onClose} className="absolute right-2 top-2 z-10 bg-white p-2 rounded-full shadow hover:bg-gray-100"><Icons.X /></button>
-                        <div className="aspect-video w-full bg-black">
+                        <div className="w-full h-full bg-black">
                             <iframe width="100%" height="100%" src={`${embedUrl}?autoplay=1`} frameBorder="0" allowFullScreen></iframe>
                         </div>
                     </div>
@@ -459,7 +465,7 @@
                     let verticalClass = h.y > 55 ? "bottom-12" : "top-12";
 
                     return (
-                        <div key={h.id} className="absolute z-20 flex items-center gap-2" style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
+                        <div key={h.id} className={`absolute flex items-center gap-2 ${activeH === h.id ? 'z-50' : 'z-20'}`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
                             <div onClick={e => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className="bg-[#007cc2] text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Cart /></div>
                             {p.youtubeUrl && <div onClick={e => { e.stopPropagation(); setPlayingVideo(p.youtubeUrl); }} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition animate-pulse-slow"><Icons.Youtube /></div>}
                             {activeH === h.id && (
@@ -975,7 +981,7 @@
                                             <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
                                                 <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
                                                     {currentPages.filter(p => p.indexName).map(p => (
-                                                        <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx % 2 !== 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
+                                                        <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-[#007cc2] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
                                                     ))}
                                                 </div>
                                             </div>

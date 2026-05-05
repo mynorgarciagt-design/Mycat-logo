@@ -193,43 +193,47 @@
             if (!desc) return []; 
             const lines = desc.split('\n').map(l => l.trim()).filter(l => l);
             let variants = []; 
-            let colors = []; 
             let globalSizes = [];
+            let currentColor = "";
             
             lines.forEach(l => {
                 const up = l.toUpperCase();
-                if (up.includes('TALLA')) {
-                    globalSizes = extractSizesFromString(up.replace(/TALLAS?:/i, ''));
-                } else if (l.includes('/')) {
-                    let cp = ""; 
-                    let szp = "";
-                    if (l.includes(' / ')) { 
-                        const idx = l.indexOf(' / '); 
-                        cp = l.substring(0, idx).trim(); 
-                        szp = l.substring(idx + 3).trim(); 
-                    } else { 
-                        const idx = l.indexOf('/'); 
-                        cp = l.substring(0, idx).trim(); 
-                        szp = l.substring(idx + 1).trim(); 
+                
+                // 1. Tallas globales explícitas
+                if (up.includes('TALLA') && up.includes(':')) {
+                    globalSizes = extractSizesFromString(up.replace(/.*TALLAS?:/i, ''));
+                } 
+                // 2. Línea que trae el color y la talla separados por barra "/"
+                else if (l.includes('/')) {
+                    const parts = l.split('/'); 
+                    let cp = parts[0].trim(); 
+                    let szp = parts.slice(1).join('/').trim(); 
+                    
+                    currentColor = cp.replace(/^\d+\s*/, ''); // Guarda el color sin el número (ej: "Negro")
+                    
+                    if (szp) {
+                        extractSizesFromString(szp).forEach(s => variants.push({ color: currentColor, size: s }));
                     }
-                    if (/NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(cp)) {
-                        if (szp) {
-                            extractSizesFromString(szp).forEach(s => variants.push({ color: cp, size: s }));
-                        } else {
-                            colors.push(l);
-                        }
-                    } else if (/NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(up)) {
-                        colors.push(l);
+                }
+                // 3. Si la línea son puros números o tallas (Ej: "39" o "38,39")
+                else if (/^[\d,.\s\-]+$/.test(up) || /^([SMLX]+[,.\s\-]*)+$/.test(up) || /\bAL\b/.test(up)) {
+                    const extracted = extractSizesFromString(up);
+                    if (currentColor) {
+                        extracted.forEach(s => variants.push({ color: currentColor, size: s }));
+                    } else {
+                        globalSizes = extracted;
                     }
-                } else if (/NEGRO|BLANCO|AZUL|BEIGE|CAMEL|CORAL|IVORY|VERDE|GRIS|MOSTAZA|MULTICOLOR|CELESTE/i.test(up)) {
-                        colors.push(l);
+                }
+                // 4. Si la línea tiene letras pero no cayó en lo de arriba, asumimos que es el color
+                else if (/[A-Z]/i.test(l)) {
+                    currentColor = l.replace(/^\d+\s*/, '');
+                    if (globalSizes.length > 0) {
+                        globalSizes.forEach(s => variants.push({ color: currentColor, size: s }));
+                    }
                 }
             });
 
-            if (colors.length > 0 && globalSizes.length > 0) {
-                colors.forEach(c => { globalSizes.forEach(s => variants.push({ color: c, size: s })); });
-            }
-
+            // Limpieza de duplicados
             const unique = []; 
             const seen = new Set();
             variants.forEach(v => { 
@@ -238,7 +242,6 @@
             });
             return unique;
         };
-
         const extractProducts = (items, pageNum, unscaledVp) => {
             const codes = []; 
             const prices = [];

@@ -973,10 +973,37 @@
                                 <Icons.Store /> <span className="hidden sm:inline">MyCatálogo</span>
                             </div>
                             {!showCatalogList && (
-                                <div className="flex-2 flex justify-center items-center gap-2 md:gap-4 mx-4">
-                                    <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#0a192f] px-3 py-2 rounded-full hover:bg-slate-800 transition">⬅ Volver</button>
+                                <div className="flex-1 flex justify-center items-center gap-2 md:gap-4 px-2 max-w-lg w-full">
+                                    <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#0a192f] px-3 py-2 rounded-full hover:bg-slate-800 transition whitespace-nowrap">⬅ Volver</button>
+                                    
+                                    {/* Barra de Búsqueda Inteligente */}
+                                    <form onSubmit={e => {
+                                        e.preventDefault();
+                                        if(!searchQuery.trim()) return;
+                                        const q = searchQuery.trim().toUpperCase();
+                                        const prod = currentProducts.find(p => p.code.toUpperCase().includes(q));
+                                        if(prod) {
+                                            let idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
+                                            if(idx !== -1) {
+                                                if (!isMobile && idx > 0 && idx % 2 === 0) idx--;
+                                                setCurrentIndex(Math.max(0, idx));
+                                            }
+                                        } else {
+                                            setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${q}" en este catálogo.` });
+                                        }
+                                    }} className="relative flex items-center w-full flex-1">
+                                        <div className="absolute left-3 text-[#007cc2]"><Icons.Search /></div>
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar estilo..."
+                                            className="w-full bg-blue-50 text-sm font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#007cc2] transition-all border border-blue-100 shadow-inner placeholder-blue-300"
+                                            value={searchQuery}
+                                            onChange={e => setSearchQuery(e.target.value)}
+                                        />
+                                    </form>
+
                                     <div className="relative hidden md:flex">
-                                        <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#0a192f] px-4 py-2 rounded-full flex items-center gap-1 hover:bg-slate-800 transition">Índice <Icons.ChevronDown /></button>
+                                        <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#0a192f] px-4 py-2 rounded-full flex items-center gap-1 hover:bg-slate-800 transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
                                         {showIndexMenu && (
                                             <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
                                                 <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">

@@ -514,26 +514,52 @@
             const groupedProducts = currentProducts.reduce((acc, p) => { const k = p.pageNumber || '1'; if (!acc[k]) acc[k] = []; acc[k].push(p); return acc; }, {});
 
             /* ── MEJORA 1: Agregar página en blanco ── */
-            const addBlankPage = async () => {
+            /* ── MEJORA 1: Agregar página en blanco ── */
+            const addBlankPage = () => {
                 if (!activeCatalogId) return;
                 const maxPage = currentPages.length > 0 ? Math.max(...currentPages.map(p => p.pageNumber)) : 0;
-                // Crear canvas blanco 800x1120 (proporción A4)
-                const canvas = document.createElement('canvas');
-                canvas.width = 800; canvas.height = 1120;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#e5e7eb';
-                ctx.font = 'bold 28px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Página en blanco', canvas.width / 2, canvas.height / 2 - 20);
-                ctx.font = '18px Inter, sans-serif';
-                ctx.fillText(`Pág. ${maxPage + 1}`, canvas.width / 2, canvas.height / 2 + 20);
-                const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), {
-                    imageUrl, storagePath: null, pageNumber: maxPage + 1, catalogId: activeCatalogId, isBlank: true
+                setPromptDialog({
+                    title: "Insertar página en blanco",
+                    subtitle: `Escribe la posición (1 a ${maxPage + 1}):`,
+                    defaultValue: (maxPage + 1).toString(),
+                    type: "number",
+                    onSubmit: async (pos) => {
+                        const targetPos = parseInt(pos);
+                        if (isNaN(targetPos) || targetPos < 1) return setGlobalMessage({ title: "Error", text: "Posición inválida.", type: "error" });
+
+                        // 1. Desplazar las páginas existentes hacia adelante usando un batch
+                        const pagesToShift = currentPages.filter(p => p.pageNumber >= targetPos);
+                        if (pagesToShift.length > 0) {
+                            for (let i = 0; i < pagesToShift.length; i += 400) {
+                                const b = writeBatch(db);
+                                pagesToShift.slice(i, i + 400).forEach(p => {
+                                    b.update(doc(db, 'artifacts', appId, 'public', 'data', 'pages', p.id), { pageNumber: p.pageNumber + 1 });
+                                });
+                                await b.commit();
+                            }
+                        }
+
+                        // 2. Crear el canvas blanco para la nueva página
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 800; canvas.height = 1120;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#e5e7eb';
+                        ctx.font = 'bold 28px Inter, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Página en blanco', canvas.width / 2, canvas.height / 2 - 20);
+                        ctx.font = '18px Inter, sans-serif';
+                        ctx.fillText(`Pág. ${targetPos}`, canvas.width / 2, canvas.height / 2 + 20);
+                        const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+                        
+                        // 3. Insertar la nueva página en Firebase
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pages'), {
+                            imageUrl, storagePath: null, pageNumber: targetPos, catalogId: activeCatalogId, isBlank: true
+                        });
+                        setGlobalMessage({ title: "✅ Listo", text: `Se agregó la página en blanco en la posición ${targetPos}.` });
+                    }
                 });
-                setGlobalMessage({ title: "✅ Listo", text: `Se agregó la página en blanco (Pág. ${maxPage + 1}).` });
             };
 
             const processUpload = async (f, catName) => {

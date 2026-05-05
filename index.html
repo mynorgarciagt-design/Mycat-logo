@@ -940,6 +940,15 @@
             });
             useEffect(() => { window.localStorage.setItem('miCarrito', JSON.stringify(cart)); }, [cart]);
             const [isCartOpen, setIsCartOpen] = useState(false);
+            const [cartAnim, setCartAnim] = useState(false);
+
+            useEffect(() => {
+                if (cart.length > 0) {
+                    setCartAnim(true);
+                    const timer = setTimeout(() => setCartAnim(false), 300);
+                    return () => clearTimeout(timer);
+                }
+            }, [cart]);
             const [currentIndex, setCurrentIndex] = useState(0);
             const [searchQuery, setSearchQuery] = useState('');
             const [showIndexMenu, setShowIndexMenu] = useState(false);
@@ -1059,7 +1068,7 @@
                             )}
                             <div className="flex-1 flex items-center gap-2 justify-end">
                                 <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#631A65] transition"><Icons.Share /></button>
-                                <button onClick={() => setIsCartOpen(true)} className="relative p-2 active:scale-90 bg-purple-50 text-[#631A65] rounded-full hover:bg-purple-100 transition">
+                                <button onClick={() => setIsCartOpen(true)} className={`relative p-2 active:scale-90 rounded-full transition-all duration-300 ${cartAnim ? 'bg-[#BE2B86] text-white scale-125 shadow-[0_0_15px_rgba(190,43,134,0.6)]' : 'bg-purple-50 text-[#631A65] hover:bg-purple-100'}`}>
                                     <Icons.Cart />
                                     {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{cart.reduce((s, i) => s + i.qty, 0)}</span>}
                                 </button>

@@ -1073,10 +1073,9 @@
                                         if(prod) {
                                             let idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
                                             if(idx !== -1) {
-                                                if(idx !== -1) {
-    if (!isMobile && idx > 0 && idx % 2 !== 0) idx--;
-    setCurrentIndex(Math.max(0, idx));
-}
+                                                if (!isMobile && idx > 0 && idx % 2 === 0) idx--;
+                                                setCurrentIndex(Math.max(0, idx));
+                                            }
                                         } else {
                                             setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${rawInput}" en este catálogo.` });
                                         }
@@ -1103,10 +1102,7 @@
                                                 <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
                                                     <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
                                                         {currentPages.filter(p => p.indexName).map(p => (
-                                                            <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if(idx !== -1) {
-    if (!isMobile && idx > 0 && idx % 2 !== 0) idx--;
-    setCurrentIndex(Math.max(0, idx));
-} setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-purple-50 hover:text-[#631A65] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
+                                                            <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-purple-50 hover:text-[#631A65] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
                                                         ))}
                                                     </div>
                                                 </div>

@@ -459,7 +459,7 @@
                 </div>
             );
         }
-        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, isMobile, searchQuery }) {
+        function FlipbookView({ pages, products, hotspots, currentIndex, setCurrentIndex, onAdd, isMobile, searchQuery, searchTrigger }) {
             const [activeH, setActiveH] = useState(null);
             const [playingVideo, setPlayingVideo] = useState(null);
             const [touchStart, setTouchStart] = useState(null);
@@ -468,14 +468,14 @@
             
             useEffect(() => setActiveH(null), [currentIndex]);
 
-            // Efecto que activa el salto por 3 segundos cuando cambia la búsqueda
+            // Efecto que activa el salto por 3 segundos cuando cambia la búsqueda o se fuerza el trigger
             useEffect(() => {
                 if (searchQuery && searchQuery.trim() !== '') {
                     setIsHighlighting(true);
                     const timer = setTimeout(() => setIsHighlighting(false), 3000);
                     return () => clearTimeout(timer);
                 }
-            }, [searchQuery]);
+            }, [searchQuery, searchTrigger]);
             
             // Calculamos el paso dinámicamente: 1 en móvil, y en PC 1 si estamos en la portada, 2 para el resto.
             const nextStep = isMobile ? 1 : (currentIndex === 0 ? 1 : 2);
@@ -969,6 +969,7 @@
             const [currentIndex, setCurrentIndex] = useState(0);
             const [searchInput, setSearchInput] = useState('');
             const [submittedQuery, setSubmittedQuery] = useState('');
+            const [searchTrigger, setSearchTrigger] = useState(0);
             const [isSearchFocused, setIsSearchFocused] = useState(false);
             const [showIndexMenu, setShowIndexMenu] = useState(false);
             const [showShareModal, setShowShareModal] = useState(false);
@@ -1047,15 +1048,14 @@
                                             <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 py-2 rounded-full hover:bg-[#290A2B] transition whitespace-nowrap">⬅ Volver</button>
                                         )}
                                         
-                                        {/* Barra de Búsqueda Inteligente */}
+                                       {/* Barra de Búsqueda Inteligente */}
                                         <form onSubmit={e => {
                                             e.preventDefault();
                                             if(!searchInput.trim()) return;
-                                            // Limpiamos los espacios y activamos el salto visual aquí (al dar Enter)
                                             const q = searchInput.trim().toUpperCase().replace(/\s+/g, '');
                                             setSubmittedQuery(q); 
+                                            setSearchTrigger(prev => prev + 1); // Disparamos la animación siempre
                                             
-                                            // Primero buscamos el código exacto, si no, uno que lo contenga (a prueba de espacios)
                                             const prod = currentProducts.find(p => p.code.toUpperCase().replace(/\s+/g, '') === q) || 
                                                          currentProducts.find(p => p.code.toUpperCase().replace(/\s+/g, '').includes(q));
                                             
@@ -1070,18 +1070,22 @@
                                             }
                                             document.activeElement.blur();
                                         }} className="relative flex items-center w-full flex-1 transition-all duration-300">
-                                            <div className="absolute left-3 text-[#631A65]"><Icons.Search /></div>
+                                            <div className="absolute left-3 text-[#631A65] pointer-events-none"><Icons.Search /></div>
                                             <input
-                                                type="text"
+                                                type="search"
+                                                enterKeyHint="search"
                                                 placeholder="Buscar estilo..."
-                                                className="w-full bg-purple-50 text-sm font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#631A65] transition-all border border-purple-100 shadow-inner placeholder-blue-300"
+                                                className="w-full bg-purple-50 text-[16px] font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-12 outline-none focus:bg-white focus:ring-2 focus:ring-[#631A65] transition-all border border-purple-100 shadow-inner placeholder-blue-300"
                                                 value={searchInput}
                                                 onChange={e => setSearchInput(e.target.value)}
                                                 onFocus={() => setIsSearchFocused(true)}
                                                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 150)}
                                             />
+                                            {/* Botón físico de enviar dentro de la barra */}
+                                            <button type="submit" className="absolute right-1 bg-[#631A65] text-white p-1.5 rounded-full active:scale-90 hover:bg-[#BE2B86] transition-all shadow-md">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                            </button>
                                         </form>
-
                                         {(!isMobile || !isSearchFocused) && (
                                             <div className="relative flex">
                                                 <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 md:px-4 py-2 rounded-full flex items-center gap-1 hover:bg-[#290A2B] transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
@@ -1117,7 +1121,7 @@
                         {view === 'store' ? (
                             showCatalogList
                                 ? <CatalogSelectionView catalogs={catalogs} pages={pages} onSelect={id => { setActiveCatalogId(id); setShowCatalogList(false); setCurrentIndex(0); }} />
-                                : <FlipbookView searchQuery={submittedQuery} pages={currentPages} products={currentProducts} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} isMobile={isMobile} onAdd={v => setCart(prev => { const ex = prev.find(x => x.id === v.id); if (ex) return prev.map(x => x.id === v.id ? { ...x, qty: x.qty + 1 } : x); return [...prev, { ...v, qty: 1 }]; })} />
+                                : <FlipbookView searchQuery={submittedQuery} searchTrigger={searchTrigger} pages={currentPages} products={currentProducts} hotspots={hotspots} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} isMobile={isMobile} onAdd={v => setCart(prev => { const ex = prev.find(x => x.id === v.id); if (ex) return prev.map(x => x.id === v.id ? { ...x, qty: x.qty + 1 } : x); return [...prev, { ...v, qty: 1 }]; })} />
                         ) : (
                             <div className="pt-6">
                                 <AdminView catalogs={catalogs} activeCatalogId={activeCatalogId} setActiveCatalogId={setActiveCatalogId} pages={pages} products={products} hotspots={hotspots} setView={setView} setGlobalMessage={setGlobalMessage} setConfirmDialog={setConfirmDialog} settings={settings} pinHash={pinHash} setPinHash={setPinHash} />

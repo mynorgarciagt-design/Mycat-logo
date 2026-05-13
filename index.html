@@ -311,8 +311,8 @@
                 }
             };
             return (
-                <div className="fixed inset-0 bg-black/60 z-40 flex justify-end">
-                    <div className="bg-white w-full max-w-md h-full p-6 md:p-8 flex flex-col shadow-2xl">
+                <div className="fixed inset-0 bg-black/60 z-40 flex justify-end" onClick={onClose}>
+                    <div className="bg-white w-full max-w-md h-full p-6 md:p-8 flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-8 border-b pb-4">
                             <h2 className="font-extrabold text-2xl flex items-center gap-2 text-gray-800"><Icons.Cart /> Tu Pedido</h2>
                             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition"><Icons.X /></button>
@@ -1043,65 +1043,66 @@
                                 <Icons.Store /> <span className="hidden sm:inline">MyCatálogo</span>
                             </div>
                             {!showCatalogList && (
-                                    <div className="flex-1 flex justify-center items-center gap-2 md:gap-4 px-2 max-w-lg w-full transition-all duration-300">
-                                        {(!isMobile || !isSearchFocused) && (
-                                            <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 py-2 rounded-full hover:bg-[#290A2B] transition whitespace-nowrap">⬅ Volver</button>
-                                        )}
+                                <div className={`flex transition-all duration-300 items-center gap-2 md:gap-4 ${isMobile && isSearchFocused ? 'absolute inset-x-2 top-2 z-50 bg-white p-2 shadow-2xl rounded-2xl border border-purple-100' : 'flex-1 justify-center px-2 max-w-lg w-full'}`}>
+                                    {(!isMobile || !isSearchFocused) && (
+                                        <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 py-2 rounded-full hover:bg-[#290A2B] transition whitespace-nowrap">⬅ Volver</button>
+                                    )}
+                                    
+                                    {/* Barra de Búsqueda Inteligente */}
+                                    <form onSubmit={e => {
+                                        e.preventDefault();
+                                        if(!searchInput.trim()) return;
+                                        const q = searchInput.trim().toUpperCase().replace(/\s+/g, '');
+                                        setSubmittedQuery(q); 
+                                        setSearchTrigger(prev => prev + 1); // Disparamos la animación siempre
                                         
-                                       {/* Barra de Búsqueda Inteligente */}
-                                        <form onSubmit={e => {
-                                            e.preventDefault();
-                                            if(!searchInput.trim()) return;
-                                            const q = searchInput.trim().toUpperCase().replace(/\s+/g, '');
-                                            setSubmittedQuery(q); 
-                                            setSearchTrigger(prev => prev + 1); // Disparamos la animación siempre
-                                            
-                                            const prod = currentProducts.find(p => p.code.toUpperCase().replace(/\s+/g, '') === q) || 
-                                                         currentProducts.find(p => p.code.toUpperCase().replace(/\s+/g, '').includes(q));
-                                            
-                                            if(prod) {
-                                                let idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
-                                                if(idx !== -1) {
-                                                    if (!isMobile && idx > 0 && idx % 2 === 0) idx--;
-                                                    setCurrentIndex(Math.max(0, idx));
-                                                }
-                                            } else {
-                                                setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${searchInput}" en este catálogo.` });
+                                        const prod = currentProducts.find(p => p.code.toUpperCase().replace(/\s+/g, '') === q) || 
+                                                     currentProducts.find(p => p.code.toUpperCase().replace(/\s+/g, '').includes(q));
+                                        
+                                        if(prod) {
+                                            let idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
+                                            if(idx !== -1) {
+                                                if (!isMobile && idx > 0 && idx % 2 === 0) idx--;
+                                                setCurrentIndex(Math.max(0, idx));
                                             }
-                                            document.activeElement.blur();
-                                        }} className="relative flex items-center w-full flex-1 transition-all duration-300">
-                                            <div className="absolute left-3 text-[#631A65] pointer-events-none"><Icons.Search /></div>
-                                            <input
-                                                type="search"
-                                                enterKeyHint="search"
-                                                placeholder="Buscar estilo..."
-                                                className="w-full bg-purple-50 text-[16px] font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-12 outline-none focus:bg-white focus:ring-2 focus:ring-[#631A65] transition-all border border-purple-100 shadow-inner placeholder-blue-300"
-                                                value={searchInput}
-                                                onChange={e => setSearchInput(e.target.value)}
-                                                onFocus={() => setIsSearchFocused(true)}
-                                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 150)}
-                                            />
-                                            {/* Botón físico de enviar dentro de la barra */}
-                                            <button type="submit" className="absolute right-1 bg-[#631A65] text-white p-1.5 rounded-full active:scale-90 hover:bg-[#BE2B86] transition-all shadow-md">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                                            </button>
-                                        </form>
-                                        {(!isMobile || !isSearchFocused) && (
-                                            <div className="relative flex">
-                                                <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 md:px-4 py-2 rounded-full flex items-center gap-1 hover:bg-[#290A2B] transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
-                                                {showIndexMenu && (
-                                                    <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
-                                                        <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
-                                                            {currentPages.filter(p => p.indexName).map(p => (
-                                                                <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-purple-50 hover:text-[#631A65] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
-                                                            ))}
-                                                        </div>
+                                        } else {
+                                            setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${searchInput}" en este catálogo.` });
+                                        }
+                                        document.activeElement.blur();
+                                    }} className="relative flex items-center w-full flex-1 transition-all duration-300">
+                                        <div className="absolute left-3 text-[#631A65] pointer-events-none"><Icons.Search /></div>
+                                        <input
+                                            type="search"
+                                            enterKeyHint="search"
+                                            placeholder="Buscar estilo..."
+                                            className="w-full bg-purple-50 text-[16px] font-extrabold text-gray-800 rounded-full py-2 pl-9 pr-12 outline-none focus:bg-white focus:ring-2 focus:ring-[#631A65] transition-all border border-purple-100 shadow-inner placeholder-purple-300"
+                                            value={searchInput}
+                                            onChange={e => setSearchInput(e.target.value)}
+                                            onFocus={() => setIsSearchFocused(true)}
+                                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                        />
+                                        {/* Botón físico de enviar dentro de la barra (con solución para no robar foco) */}
+                                        <button type="submit" onTouchStart={e => e.stopPropagation()} onMouseDown={e => e.preventDefault()} className="absolute right-1 bg-[#631A65] text-white p-1.5 rounded-full active:scale-90 hover:bg-[#BE2B86] transition-all shadow-md">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        </button>
+                                    </form>
+
+                                    {(!isMobile || !isSearchFocused) && (
+                                        <div className="relative flex">
+                                            <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 md:px-4 py-2 rounded-full flex items-center gap-1 hover:bg-[#290A2B] transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>
+                                            {showIndexMenu && (
+                                                <div className="absolute right-0 mt-10 w-56 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
+                                                    <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
+                                                        {currentPages.filter(p => p.indexName).map(p => (
+                                                            <button key={p.id} onClick={() => { let idx = currentPages.findIndex(x => x.id === p.id); if (!isMobile && idx > 0 && idx % 2 === 0) idx--; setCurrentIndex(Math.max(0, idx)); setShowIndexMenu(false); }} className="w-full text-left px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-purple-50 hover:text-[#631A65] rounded-lg transition border-b last:border-b-0">{p.indexName}</button>
+                                                        ))}
                                                     </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <div className="flex-1 flex items-center gap-2 justify-end">
                                 <button onClick={() => setShowShareModal(true)} className="text-gray-400 hover:text-[#631A65] transition"><Icons.Share /></button>
                                 <button onClick={() => setIsCartOpen(true)} className={`relative p-2 active:scale-90 rounded-full transition-all duration-300 ${cartAnim ? 'bg-[#BE2B86] text-white scale-125 shadow-[0_0_15px_rgba(190,43,134,0.6)]' : 'bg-purple-50 text-[#631A65] hover:bg-purple-100'}`}>

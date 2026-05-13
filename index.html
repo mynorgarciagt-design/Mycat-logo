@@ -477,7 +477,6 @@
                 }
             }, [searchQuery, searchTrigger]);
             
-            // Calculamos el paso dinámicamente: 1 en móvil, y en PC 1 si estamos en la portada, 2 para el resto.
             const nextStep = isMobile ? 1 : (currentIndex === 0 ? 1 : 2);
             const prevStep = isMobile ? 1 : (currentIndex === 1 ? 1 : 2);
 
@@ -500,8 +499,8 @@
             if (pages.length === 0) return (<div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo vacío!</h2></div>);
             
             const left = pages[currentIndex]; 
-            // La página derecha solo existe si NO estamos en móvil y NO estamos en la portada (currentIndex > 0)
             const right = (!isMobile && currentIndex > 0 && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;
+            
             const renderH = (pg) => {
                 if (!pg) return null;
                 return hotspots.filter(h => h.pageId === pg.id).map(h => {
@@ -512,14 +511,12 @@
                     let alignClass = "left-1/2 -translate-x-1/2";
                     if (h.x < 20) alignClass = "left-0"; else if (h.x > 80) alignClass = "right-0";
                     
-                    // Nueva lógica para saber si el popup va para arriba o para abajo
                     let verticalClass = h.y > 55 ? "bottom-12" : "top-12";
                     
-                   // Lógica a prueba de caracteres invisibles del iPhone
-                    const isMatched = highlightedId && p.code.toUpperCase().replace(/[^A-Z0-9]/g, '').includes(highlightedId);
+                    // Lógica infalible de coincidencia
+                    const isMatched = highlightedId && p.code && p.code.toUpperCase().replace(/[^A-Z0-9]/g, '').includes(highlightedId);
 
                     return (
-                        // El truco de la KEY: si hay match, le sumamos el gatillo para que React REINICIE la animación siempre
                         <div key={`${h.id}_${isMatched ? searchTrigger : 'off'}`} className={`absolute flex items-center gap-2 ${activeH === h.id || isMatched ? 'z-50' : 'z-20'}`} style={{ left: `${h.x}%`, top: `${h.y}%`, transform: 'translate(-50%, -50%)' }}>
                             <div onClick={e => { e.stopPropagation(); setActiveH(activeH === h.id ? null : h.id); }} className={`${isMatched ? 'bg-[#FFDA00] text-black scale-125 animate-bounce shadow-[0_0_20px_rgba(255,218,0,0.8)]' : 'bg-[#631A65] text-white hover:scale-110 shadow-xl'} rounded-full p-2 md:p-3 border-2 border-white cursor-pointer transition`}><Icons.Cart /></div>
                             {p.youtubeUrl && <div onClick={e => { e.stopPropagation(); setPlayingVideo(p.youtubeUrl); }} className="bg-red-600 text-white rounded-full p-2 md:p-3 shadow-xl border-2 border-white cursor-pointer hover:scale-110 transition"><Icons.Youtube /></div>}
@@ -1049,35 +1046,37 @@
                                         <button onClick={() => setShowCatalogList(true)} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 py-2 rounded-full hover:bg-[#290A2B] transition whitespace-nowrap">⬅ Volver</button>
                                     )}
                                     
-                                   {/* Barra de Búsqueda Inteligente y Blindada */}
                                     <form onSubmit={e => {
                                         e.preventDefault();
                                         const rawInput = searchInput || '';
                                         if(!rawInput.trim()) return;
                                         
-                                        // 1. Apagar teclado y encoger barra
                                         document.activeElement.blur();
                                         setIsSearchFocused(false);
 
-                                        // 2. Limpiar texto (A prueba de espacios invisibles del iPhone)
                                         const q = rawInput.toUpperCase().replace(/[^A-Z0-9]/g, '');
                                         if(!q) return;
-                                        
-                                        setSubmittedQuery(q); 
-                                        setSearchTrigger(Date.now()); // Gatillo para obligar a la animación
-                                        
-                                        // 3. Buscar producto (Exacto primero, luego aproximado)
+
                                         const prod = currentProducts.find(p => (p.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '') === q) || 
                                                      currentProducts.find(p => (p.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').includes(q));
                                         
                                         if(prod) {
-                                            let idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
+                                            let idx = -1;
+                                            const hot = hotspots.find(h => h.productId === prod.id);
+                                            if (hot) {
+                                                idx = currentPages.findIndex(x => x.id === hot.pageId);
+                                            } else {
+                                                idx = currentPages.findIndex(x => x.pageNumber === prod.pageNumber);
+                                            }
+
                                             if(idx !== -1) {
                                                 if (!isMobile && idx > 0 && idx % 2 === 0) idx--;
                                                 setCurrentIndex(Math.max(0, idx));
                                             }
+                                            setSubmittedQuery(q); 
+                                            setSearchTrigger(Date.now());
                                         } else {
-                                            setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${rawInput}" en este catálogo.` });
+                                            setGlobalMessage({ title: "Oops...", text: `No encontramos el estilo "${rawInput}".` });
                                         }
                                     }} className="relative flex items-center w-full flex-1 transition-all duration-300">
                                         <div className="absolute left-3 text-[#631A65] pointer-events-none"><Icons.Search /></div>
@@ -1091,10 +1090,11 @@
                                             onFocus={() => setIsSearchFocused(true)}
                                             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                                         />
-                                        <button type="submit" onMouseDown={e => e.preventDefault()} onTouchStart={e => e.stopPropagation()} className="absolute right-1 bg-[#631A65] text-white p-1.5 rounded-full active:scale-90 hover:bg-[#BE2B86] transition-all shadow-md">
+                                        <button type="submit" className="absolute right-1 bg-[#631A65] text-white p-1.5 rounded-full active:scale-90 hover:bg-[#BE2B86] transition-all shadow-md">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                                         </button>
                                     </form>
+
                                     {(!isMobile || !isSearchFocused) && (
                                         <div className="relative flex">
                                             <button onClick={e => { e.stopPropagation(); setShowIndexMenu(!showIndexMenu); }} className="text-xs font-bold text-white bg-[#3A0F3C] px-3 md:px-4 py-2 rounded-full flex items-center gap-1 hover:bg-[#290A2B] transition whitespace-nowrap">Índice <Icons.ChevronDown /></button>

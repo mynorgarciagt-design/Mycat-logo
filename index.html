@@ -648,12 +648,16 @@
                         await new Promise(r => setTimeout(r, 10));
                         const pg = await pdf.getPage(i);
                         const unscaledVp = pg.getViewport({ scale: 1.0 });
-                        const vp = pg.getViewport({ scale: 1.2 });
+                        
+                        // MEJORA DE CALIDAD: Subimos la resolución (scale) de 1.2 a 1.8
+                        const vp = pg.getViewport({ scale: 1.8 }); 
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d', { willReadFrequently: true });
                         canvas.width = vp.width; canvas.height = vp.height;
                         try { await pg.render({ canvasContext: ctx, viewport: vp }).promise; } catch (e) { }
-                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7));
+                        
+                        // MEJORA DE CALIDAD: Subimos la nitidez del JPEG de 0.7 a 0.85
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85)); 
                         let finalImageUrl = "", storagePath = null;
                         if (!skipStorage) {
                             try {

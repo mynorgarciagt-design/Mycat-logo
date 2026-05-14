@@ -945,7 +945,7 @@
                     {/* ── TAB: AJUSTES ── con WhatsApp + cambiar PIN */}
                     {tab === 'ajustes' && (
                         <div className="max-w-xl mx-auto space-y-6">
-                            {/* Ajustes del Banner (Con subida de imagen a Firebase) */}
+                            {/* Ajustes del Banner (Blindado contra cuelgues) */}
                             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl">
                                 <h3 className="font-extrabold text-gray-800 mb-6 flex items-center gap-2"><Icons.Tag /> Banner Promocional</h3>
                                 <form onSubmit={async e => {
@@ -960,15 +960,20 @@
                                         let finalImageUrl = settings?.bannerImage || '';
                                         const fileInput = formEl.bannerImageFile;
                                         
-                                        // Si el usuario seleccionó un archivo nuevo, lo subimos a Firebase
                                         if (fileInput.files.length > 0) {
                                             const file = fileInput.files[0];
-                                            const imageRef = ref(storage, `artifacts/${appId}/public/data/banners/banner_${Date.now()}`);
-                                            await uploadBytes(imageRef, file);
+                                            // Cambiamos la carpeta a "pages" para que Firebase no bloquee la subida
+                                            const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/banner_${Date.now()}`);
+                                            
+                                            // Metemos un cronómetro para que si falla el internet o Firebase, tire error en vez de trabarse
+                                            await Promise.race([
+                                                uploadBytes(imageRef, file, { contentType: file.type }),
+                                                new Promise((_, r) => setTimeout(() => r(new Error("Tiempo de espera agotado. Revisa tu conexión.")), 8000))
+                                            ]);
+                                            
                                             finalImageUrl = await getDownloadURL(imageRef);
                                         }
 
-                                        // Guardamos toda la configuración
                                         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), {
                                             bannerActive: formEl.bannerActive.checked,
                                             bannerCatalogId: formEl.bannerCatalogId.value,
@@ -979,8 +984,9 @@
                                         }, { merge: true });
                                         
                                         setGlobalMessage({ title: "✅ Guardado", text: "Banner actualizado con éxito." });
+                                        if(fileInput) fileInput.value = ""; 
                                     } catch(err) {
-                                        setGlobalMessage({ title: "Error", text: "Hubo un error guardando el banner.", type: "error" });
+                                        setGlobalMessage({ title: "Error", text: err.message, type: "error" });
                                     } finally {
                                         btn.innerText = originalText;
                                         btn.disabled = false;

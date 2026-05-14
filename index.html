@@ -39,6 +39,10 @@
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        
+        // MAGIA DE VELOCIDAD: Encendemos la memoria caché local para re-cargas instantáneas
+        db.enablePersistence().catch(function(err) { console.log("Caché local en pausa", err); });
+        
         const storage = firebase.storage();
         const finalAppId = (typeof __app_id !== 'undefined' && __app_id) ? __app_id : "mycatalogo-8ff18";
         const initialToken = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) ? __initial_auth_token : null;

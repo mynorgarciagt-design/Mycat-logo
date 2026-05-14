@@ -945,22 +945,46 @@
                     {/* ── TAB: AJUSTES ── con WhatsApp + cambiar PIN */}
                     {tab === 'ajustes' && (
                         <div className="max-w-xl mx-auto space-y-6">
-                            {/* Ajustes del Banner */}
+                            {/* Ajustes del Banner (Con subida de imagen a Firebase) */}
                             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl">
                                 <h3 className="font-extrabold text-gray-800 mb-6 flex items-center gap-2"><Icons.Tag /> Banner Promocional</h3>
                                 <form onSubmit={async e => {
                                     e.preventDefault();
+                                    const formEl = e.target;
+                                    const btn = formEl.querySelector('button[type="submit"]');
+                                    const originalText = btn.innerText;
+                                    btn.innerText = "Subiendo imagen y guardando... ⏳";
+                                    btn.disabled = true;
+
                                     try {
+                                        let finalImageUrl = settings?.bannerImage || '';
+                                        const fileInput = formEl.bannerImageFile;
+                                        
+                                        // Si el usuario seleccionó un archivo nuevo, lo subimos a Firebase
+                                        if (fileInput.files.length > 0) {
+                                            const file = fileInput.files[0];
+                                            const imageRef = ref(storage, `artifacts/${appId}/public/data/banners/banner_${Date.now()}`);
+                                            await uploadBytes(imageRef, file);
+                                            finalImageUrl = await getDownloadURL(imageRef);
+                                        }
+
+                                        // Guardamos toda la configuración
                                         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), {
-                                            bannerActive: e.target.bannerActive.checked,
-                                            bannerCatalogId: e.target.bannerCatalogId.value,
-                                            bannerPage: parseInt(e.target.bannerPage.value) || 1,
-                                            bannerImage: e.target.bannerImage.value,
-                                            bannerTitle: e.target.bannerTitle.value,
-                                            bannerSubtitle: e.target.bannerSubtitle.value
+                                            bannerActive: formEl.bannerActive.checked,
+                                            bannerCatalogId: formEl.bannerCatalogId.value,
+                                            bannerPage: parseInt(formEl.bannerPage.value) || 1,
+                                            bannerImage: finalImageUrl,
+                                            bannerTitle: formEl.bannerTitle.value,
+                                            bannerSubtitle: formEl.bannerSubtitle.value
                                         }, { merge: true });
+                                        
                                         setGlobalMessage({ title: "✅ Guardado", text: "Banner actualizado con éxito." });
-                                    } catch(err) {}
+                                    } catch(err) {
+                                        setGlobalMessage({ title: "Error", text: "Hubo un error guardando el banner.", type: "error" });
+                                    } finally {
+                                        btn.innerText = originalText;
+                                        btn.disabled = false;
+                                    }
                                 }} className="flex flex-col gap-4">
                                     <div className="flex items-center gap-2 mb-2 bg-purple-50 p-3 rounded-xl border border-purple-100">
                                         <input type="checkbox" name="bannerActive" id="bannerActive" defaultChecked={settings?.bannerActive || false} className="w-5 h-5 accent-[#631A65] cursor-pointer" />
@@ -970,13 +994,16 @@
                                         <div><label className="text-[10px] font-bold text-gray-400 uppercase">Catálogo a mostrar</label><select name="bannerCatalogId" defaultValue={settings?.bannerCatalogId || ''} className="w-full border-2 p-3 rounded-xl bg-gray-50 outline-none focus:border-[#631A65] font-bold text-xs"><option value="">Ninguno</option>{catalogs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
                                         <div><label className="text-[10px] font-bold text-gray-400 uppercase">Página destino</label><input type="number" name="bannerPage" defaultValue={settings?.bannerPage || ''} placeholder="Ej: 5" className="w-full border-2 p-3 rounded-xl bg-gray-50 outline-none focus:border-[#631A65] font-bold text-xs" /></div>
                                     </div>
-                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">Link de la Imagen (URL)</label><input type="url" name="bannerImage" defaultValue={settings?.bannerImage || ''} placeholder="https://..." className="w-full border-2 p-3 rounded-xl bg-gray-50 outline-none focus:border-[#631A65] font-bold text-xs" /></div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Subir Imagen del Banner</label>
+                                        <input type="file" name="bannerImageFile" accept="image/*" className="w-full border-2 p-2 rounded-xl bg-gray-50 outline-none focus:border-[#631A65] font-bold text-xs cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-[#631A65] hover:file:bg-purple-100" />
+                                        {settings?.bannerImage && <p className="text-[10px] text-green-600 mt-2 font-bold">✓ Ya hay una imagen en el sistema. (Sube otra para reemplazarla)</p>}
+                                    </div>
                                     <div><label className="text-[10px] font-bold text-gray-400 uppercase">Título (Opcional)</label><input type="text" name="bannerTitle" defaultValue={settings?.bannerTitle || ''} placeholder="¡Gran Oferta!" className="w-full border-2 p-3 rounded-xl bg-gray-50 outline-none focus:border-[#631A65] font-bold text-xs" /></div>
                                     <div><label className="text-[10px] font-bold text-gray-400 uppercase">Subtítulo (Opcional)</label><input type="text" name="bannerSubtitle" defaultValue={settings?.bannerSubtitle || ''} placeholder="Toca aquí para ver" className="w-full border-2 p-3 rounded-xl bg-gray-50 outline-none focus:border-[#631A65] font-bold text-xs" /></div>
-                                    <button type="submit" className="bg-[#631A65] text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-lg hover:bg-[#BE2B86] transition mt-2">Guardar Configuración del Banner</button>
+                                    <button type="submit" className="bg-[#631A65] text-white px-4 py-3.5 rounded-xl font-bold w-full shadow-lg hover:bg-[#BE2B86] transition mt-2 disabled:opacity-50">Guardar Configuración del Banner</button>
                                 </form>
                             </div>
-
                             {/* WhatsApp */}
                             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl">
                                 <h3 className="font-extrabold text-gray-800 mb-6 flex items-center gap-2"><Icons.Phone /> WhatsApp de Ventas</h3>

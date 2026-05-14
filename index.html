@@ -1068,8 +1068,13 @@
             const [settings, setSettings] = useState({ whatsapp: WHATSAPP_NUMBER });
             const [pinHash, setPinHash] = useState(DEFAULT_PIN_HASH);
             const [catalogs, setCatalogs] = useState([]);
-            const [activeCatalogId, setActiveCatalogId] = useState('');
-            const [showCatalogList, setShowCatalogList] = useState(true);
+            // Verificamos si compartieron un link con una página en específico
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlCat = urlParams.get('c');
+            const urlPage = urlParams.get('p');
+
+            const [activeCatalogId, setActiveCatalogId] = useState(() => urlCat || window.localStorage.getItem('myCat_cat') || '');
+            const [showCatalogList, setShowCatalogList] = useState(() => urlCat ? false : window.localStorage.getItem('myCat_showList') !== 'false');
             const [products, setProducts] = useState([]);
             const [pages, setPages] = useState([]);
             const [hotspots, setHotspots] = useState([]);
@@ -1087,7 +1092,20 @@
                     return () => clearTimeout(timer);
                 }
             }, [cart]);
-            const [currentIndex, setCurrentIndex] = useState(0);
+            const [currentIndex, setCurrentIndex] = useState(() => urlPage ? parseInt(urlPage) : (parseInt(window.localStorage.getItem('myCat_page')) || 0));
+
+            // MAGIA: Guardar la página actual para que no se pierda al recargar, y actualizar el URL para compartir
+            useEffect(() => {
+                window.localStorage.setItem('myCat_cat', activeCatalogId);
+                window.localStorage.setItem('myCat_showList', showCatalogList);
+                window.localStorage.setItem('myCat_page', currentIndex);
+                
+                if (!showCatalogList && activeCatalogId) {
+                    window.history.replaceState(null, '', `?c=${activeCatalogId}&p=${currentIndex}`);
+                } else {
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
+            }, [activeCatalogId, showCatalogList, currentIndex]);
             const [searchInput, setSearchInput] = useState('');
             const [submittedQuery, setSubmittedQuery] = useState('');
             const [searchTrigger, setSearchTrigger] = useState(0);

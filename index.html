@@ -363,7 +363,7 @@
             );
         }
 
-        function HotspotAdjuster({ page, products, hotspots, onClose }) {
+        function HotspotAdjuster({ page, products, hotspots, onClose, onEditProduct }) {
             const [selectedProd, setSelectedProd] = useState(null);
             const { db, appId, collection, addDoc, updateDoc, doc } = window.fb;
             const pageProducts = products.filter(p => p.pageNumber === page.pageNumber && p.catalogId === page.catalogId);
@@ -398,10 +398,17 @@
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-gray-50">
                             {pageProducts.length === 0 ? <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p> : pageProducts.map(p => (
-                                <button key={p.id} onClick={() => setSelectedProd(p.id)} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md' : 'border-white hover:border-purple-200 bg-white shadow-sm'}`}>
-                                    <div><p className="font-extrabold text-lg">{p.code}</p><p className="text-[11px] font-bold text-gray-400">Q{p.price}</p></div>
-                                    {pageHotspots.some(h => h.productId === p.id) && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
-                                </button>
+                                <div key={p.id} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md' : 'border-white hover:border-purple-200 bg-white shadow-sm'}`}>
+                                    <div className="flex-1 cursor-pointer" onClick={() => setSelectedProd(p.id)}>
+                                        <p className="font-extrabold text-lg">{p.code}</p>
+                                        <p className="text-[11px] font-bold text-gray-400">Q{p.price}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={(e) => { e.stopPropagation(); onEditProduct(p); }} className="bg-white border text-[#631A65] p-1.5 rounded-full hover:bg-purple-50 transition shadow-sm" title="Editar Producto"><Icons.Edit2 /></button>
+                                        {pageHotspots.some(h => h.productId === p.id) && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
+                                    </div>
+                                </div>
+                            ))}
                             ))}
                         </div>
                     </div>
@@ -786,7 +793,7 @@
             return (
                 <div className="bg-white p-4 md:p-8 rounded-[30px] shadow-2xl border border-gray-100 relative">
                     {promptDialog && <PromptModal dialog={promptDialog} onClose={() => setPromptDialog(null)} />}
-                    {adjustingPage && <HotspotAdjuster page={adjustingPage} products={products} hotspots={hotspots} onClose={() => setAdjustingPage(null)} />}
+                    {adjustingPage && <HotspotAdjuster page={adjustingPage} products={products} hotspots={hotspots} onClose={() => setAdjustingPage(null)} onEditProduct={(p) => { setAdjustingPage(null); setTab('productos'); setEditingProduct(p); }} />}
 
                     {/* Selector de catálogo + acciones */}
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-purple-50 p-4 rounded-2xl mb-8 gap-4">

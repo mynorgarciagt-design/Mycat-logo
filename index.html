@@ -467,7 +467,14 @@
             const [touchEnd, setTouchEnd] = useState(null);
             const [highlightedId, setHighlightedId] = useState(null); 
             const [bannerDismissed, setBannerDismissed] = useState(false);
+            const [isInitialLoading, setIsInitialLoading] = useState(true); // Control de carga
             const shouldShowBanner = settings?.bannerActive && pages.length > 0 && settings?.bannerCatalogId === pages[0].catalogId && !bannerDismissed;
+
+            // Le damos 8 segundos de gracia a Firebase para descargar las páginas compartidas
+            useEffect(() => {
+                const t = setTimeout(() => setIsInitialLoading(false), 8000);
+                return () => clearTimeout(t);
+            }, []);
             
             useEffect(() => setActiveH(null), [currentIndex]);
 
@@ -499,7 +506,10 @@
                 return () => window.removeEventListener('keydown', handleKD);
             }, [pages.length, nextStep, prevStep, currentIndex]);
 
-            if (pages.length === 0) return (<div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo vacío!</h2></div>);
+            if (pages.length === 0) {
+                if (isInitialLoading) return <div className="flex-grow flex flex-col items-center justify-center text-[#631A65]"><Icons.Loader /><h2 className="text-lg font-bold mt-4 animate-pulse text-gray-600">Cargando catálogo...</h2></div>;
+                return <div className="flex-grow flex flex-col items-center justify-center text-center opacity-50"><Icons.Package /><h2 className="text-2xl font-bold mt-4 text-gray-800">¡Catálogo vacío!</h2></div>;
+            }
             
             const left = pages[currentIndex]; 
             const right = (!isMobile && currentIndex > 0 && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;

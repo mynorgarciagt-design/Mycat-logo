@@ -966,7 +966,7 @@
                     {/* ── TAB: AJUSTES ── con WhatsApp + cambiar PIN */}
                     {tab === 'ajustes' && (
                         <div className="max-w-xl mx-auto space-y-6">
-                            {/* Ajustes del Banner (Con Plan B Infalible) */}
+                            {/* Ajustes del Banner (Limpio y Directo) */}
                             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-2xl">
                                 <h3 className="font-extrabold text-gray-800 mb-6 flex items-center gap-2"><Icons.Tag /> Banner Promocional</h3>
                                 <form onSubmit={async e => {
@@ -981,43 +981,12 @@
                                         let finalImageUrl = settings?.bannerImage || '';
                                         const fileInput = formEl.bannerImageFile;
                                         
+                                        // Storage ya funciona al 100%, subimos la foto directo sin rodeos
                                         if (fileInput.files.length > 0) {
                                             const file = fileInput.files[0];
-                                            
-                                            // 1. Convertimos la imagen a Base64 y la comprimimos (igual que el PDF)
-                                            const dataUrl = await new Promise((resolve, reject) => {
-                                                const reader = new FileReader();
-                                                reader.onload = (ev) => {
-                                                    const img = new Image();
-                                                    img.onload = () => {
-                                                        const canvas = document.createElement('canvas');
-                                                        let w = img.width, h = img.height;
-                                                        // Limitamos el tamaño por seguridad
-                                                        if (w > 1200) { h = Math.round((1200 / w) * h); w = 1200; }
-                                                        canvas.width = w; canvas.height = h;
-                                                        const ctx = canvas.getContext('2d');
-                                                        ctx.drawImage(img, 0, 0, w, h);
-                                                        resolve(canvas.toDataURL('image/jpeg', 0.8));
-                                                    };
-                                                    img.onerror = reject;
-                                                    img.src = ev.target.result;
-                                                };
-                                                reader.onerror = reject;
-                                                reader.readAsDataURL(file);
-                                            });
-
-                                            try {
-                                                // 2. Intentamos subirla de la forma tradicional
-                                                const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/banner_${Date.now()}.jpg`);
-                                                await Promise.race([
-                                                    window.fb.uploadString(imageRef, dataUrl, 'data_url'),
-                                                    new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), 5000))
-                                                ]);
-                                                finalImageUrl = await getDownloadURL(imageRef);
-                                            } catch (storageErr) {
-                                                // 3. ¡EL TRUCO SALVAVIDAS! Si Firebase lo bloquea, usamos el Base64 directamente
-                                                finalImageUrl = dataUrl;
-                                            }
+                                            const imageRef = ref(storage, `artifacts/${appId}/public/data/pages/banner_${Date.now()}`);
+                                            await uploadBytes(imageRef, file);
+                                            finalImageUrl = await getDownloadURL(imageRef);
                                         }
 
                                         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'contact'), {
@@ -1032,7 +1001,7 @@
                                         setGlobalMessage({ title: "✅ Guardado", text: "Banner actualizado con éxito." });
                                         if(fileInput) fileInput.value = ""; 
                                     } catch(err) {
-                                        setGlobalMessage({ title: "Error", text: "No se pudo guardar la configuración.", type: "error" });
+                                        setGlobalMessage({ title: "Error", text: "No se pudo guardar. Intenta de nuevo.", type: "error" });
                                     } finally {
                                         btn.innerText = originalText;
                                         btn.disabled = false;

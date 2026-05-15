@@ -411,16 +411,22 @@
                                     
                                     try {
                                         const newProdId = "manual_" + Date.now();
-                                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', newProdId), {
+                                        
+                                        // Forma clásica de Firebase (la que usa tu tienda)
+                                        // Nota: Si usás una variable global diferente para el ID, el error nos lo va a chivatear.
+                                        await db.collection('artifacts').doc('mycatalogo-8ff18').collection('public').doc('data').collection('products').doc(newProdId).set({
                                             catalogId: page.catalogId,
                                             pageId: page.id,
                                             code: code.toUpperCase(),
                                             price: priceStr,
-                                            details: "" // Aquí le pueden meter las tallas después con el lapicito
+                                            details: ""
                                         });
+                                        
                                         alert("✅ Producto creado.\n\nAhora dale clic en la lista de abajo y toca la foto para ubicar su carrito.");
                                     } catch (e) {
-                                        alert("Hubo un error al crear el producto.");
+                                        // Esto nos va a tirar el error EXACTO en la cara
+                                        alert("El error exacto es: " + e.message);
+                                        console.error(e);
                                     }
                                 }} className="w-full bg-[#631A65] text-white font-bold p-3 rounded-xl shadow-md hover:bg-[#BE2B86] transition flex justify-center items-center gap-2">
                                     ➕ Agregar Carrito Manual

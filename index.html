@@ -1152,7 +1152,12 @@
             const handleAdminLogin = async e => {
                 e.preventDefault();
                 const hex = await hashPin(pin);
-                if (hex === pinHash) { setView('admin'); setShowLoginModal(false); setPin(''); }
+                if (hex === pinHash) { 
+                    window.sessionStorage.setItem('isAdmin', 'true');
+                    setView('admin'); 
+                    setShowLoginModal(false); 
+                    setPin(''); 
+                }
                 else { setGlobalMessage({ title: "PIN Incorrecto", text: "Intenta de nuevo." }); }
             };
 
@@ -1165,7 +1170,11 @@
                             <div className="flex-1 flex items-center gap-2 text-xl font-extrabold text-[#631A65] cursor-pointer select-none" onClick={() => {
                                 setSecretClicks(prev => {
                                     const next = prev + 1;
-                                    if (next >= 6) { setShowLoginModal(true); return 0; }
+                                    if (next >= 6) { 
+                                        if (window.sessionStorage.getItem('isAdmin') === 'true') { setView('admin'); } 
+                                        else { setShowLoginModal(true); }
+                                        return 0; 
+                                    }
                                     return next;
                                 });
                             }}>
@@ -1254,7 +1263,10 @@
                     ) : (
                         <header className="bg-white shadow-sm p-3 flex justify-between items-center sticky top-0 z-30 border-b px-4 md:px-8">
                             <div className="font-extrabold text-[#3A0F3C] flex items-center gap-2">Admin Panel</div>
-                            <button onClick={() => { setView('store'); setShowCatalogList(true); }} className="text-sm font-bold text-white bg-[#631A65] px-4 py-2 rounded-full hover:bg-#BE2B86 transition shadow-md">Tienda</button>
+                            <div className="flex gap-2">
+                                <button onClick={() => { window.sessionStorage.removeItem('isAdmin'); setView('store'); setShowCatalogList(true); }} className="text-sm font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full hover:bg-red-100 transition shadow-sm border border-red-100 hidden sm:block">Cerrar Sesión</button>
+                                <button onClick={() => { setView('store'); setShowCatalogList(true); }} className="text-sm font-bold text-white bg-[#631A65] px-4 py-2 rounded-full hover:bg-#BE2B86 transition shadow-md">Tienda</button>
+                            </div>
                         </header>
                     )}
 

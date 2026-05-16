@@ -419,9 +419,10 @@
                                         await db.collection('artifacts').doc('mycatalogo-8ff18').collection('public').doc('data').collection('products').doc(newProdId).set({
                                             catalogId: page.catalogId,
                                             pageId: page.id,
+                                            pageNumber: page.pageNumber, // ¡ESTA ES LA LLAVE MÁGICA QUE FALTABA!
                                             code: code.toUpperCase(),
-                                            price: priceStr,
-                                            details: ""
+                                            price: parseFloat(priceStr) || 0, // Lo guardamos como número para evitar clavos
+                                            description: "" // Usamos 'description' igual que el resto del sistema
                                         });
                                         alert("✅ Producto creado.\n\nAhora dale clic en la lista de abajo y toca la foto para ubicar su carrito.");
                                     } catch (e) {
@@ -558,6 +559,10 @@
             const left = pages[currentIndex]; 
             const right = (!isMobile && currentIndex > 0 && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;
             
+            // TRUCO ANTI-LAG: Identificamos las páginas que siguen para cargarlas en secreto
+            const nextLeft = pages[currentIndex + nextStep];
+            const nextRight = (!isMobile && pages.length > currentIndex + nextStep + 1) ? pages[currentIndex + nextStep + 1] : null;
+            
             const renderH = (pg) => {
                 if (!pg) return null;
                 return hotspots.filter(h => h.pageId === pg.id).map(h => {
@@ -626,11 +631,11 @@
                     <div className="relative flex items-center justify-center w-full flex-grow h-[70vh] md:h-[80vh] lg:h-[85vh] px-2 md:px-12 lg:px-20">                        <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-1 md:left-4 lg:left-8 z-10 p-1 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white/95 rounded-full shadow-lg border border-purple-200"><Icons.ChevronLeft /></button>
                         <div className="inline-flex bg-white shadow-2xl h-full max-w-full rounded-lg md:rounded-xl overflow-hidden border border-gray-200" onTouchStart={e => { if (e.touches.length > 1) { setTouchStart(null); return; } setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }} onTouchMove={e => { if (e.touches.length > 1) { setTouchEnd(null); return; } setTouchEnd(e.targetTouches[0].clientX); }} onTouchEnd={() => { if (!touchStart || !touchEnd) return; const dist = touchStart - touchEnd; if (dist > 50) move('n'); if (dist < -50) move('p'); setTouchStart(null); setTouchEnd(null); }}>
                             <div className={`relative h-full bg-white overflow-hidden ${(!isMobile && currentIndex > 0) ? 'border-r border-gray-100' : ''}`}>
-                                {left && (<div className="h-full w-full relative"><img loading="lazy" src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</div>)}
+                                {left && (<div className="h-full w-full relative"><img src={left.coverImage || left.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(left)}</div>)}
                             </div>
                             {(!isMobile && currentIndex > 0) && (
                                 <div className="relative h-full bg-white overflow-hidden">
-                                    {right && (<div className="h-full w-full relative"><img loading="lazy" src={right.coverImage || right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(right)}</div>)}
+                                    {right && (<div className="h-full w-full relative"><img src={right.coverImage || right.imageUrl} className="block h-full w-auto max-w-full object-contain pointer-events-none" />{renderH(right)}</div>)}
                                 </div>
                             )}
                         </div>
@@ -638,6 +643,12 @@
                     </div>
                     <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">Página {currentIndex + 1} {(!isMobile && right) ? `- ${currentIndex + 2}` : ''} de {pages.length}</div>
                     {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}
+                    
+                    {/* TRUCO ANTI-LAG: Pre-cargamos invisibles las 2 páginas siguientes */}
+                    <div className="hidden">
+                        {nextLeft && <img src={nextLeft.coverImage || nextLeft.imageUrl} alt="preload" />}
+                        {nextRight && <img src={nextRight.coverImage || nextRight.imageUrl} alt="preload" />}
+                    </div>
                 </div>
             );
         }
@@ -1144,8 +1155,8 @@
             const urlCat = urlParams.get('c');
             const urlPage = urlParams.get('p');
 
-            const [activeCatalogId, setActiveCatalogId] = useState(() => urlCat || window.localStorage.getItem('myCat_cat') || '');
-            const [showCatalogList, setShowCatalogList] = useState(() => urlCat ? false : window.localStorage.getItem('myCat_showList') !== 'false');
+            const [activeCatalogId, setActiveCatalogId] = useState(() => urlCat || window.sessionStorage.getItem('myCat_cat') || '');
+            const [showCatalogList, setShowCatalogList] = useState(() => urlCat ? false : window.sessionStorage.getItem('myCat_showList') !== 'false');
             const [products, setProducts] = useState([]);
             const [pages, setPages] = useState([]);
             const [hotspots, setHotspots] = useState([]);
@@ -1163,13 +1174,13 @@
                     return () => clearTimeout(timer);
                 }
             }, [cart]);
-            const [currentIndex, setCurrentIndex] = useState(() => urlPage ? parseInt(urlPage) : (parseInt(window.localStorage.getItem('myCat_page')) || 0));
+            const [currentIndex, setCurrentIndex] = useState(() => urlPage ? parseInt(urlPage) : (parseInt(window.sessionStorage.getItem('myCat_page')) || 0));
 
             // MAGIA: Guardar la página actual para que no se pierda al recargar, y actualizar el URL para compartir
             useEffect(() => {
-                window.localStorage.setItem('myCat_cat', activeCatalogId);
-                window.localStorage.setItem('myCat_showList', showCatalogList);
-                window.localStorage.setItem('myCat_page', currentIndex);
+                window.sessionStorage.setItem('myCat_cat', activeCatalogId);
+                window.sessionStorage.setItem('myCat_showList', showCatalogList);
+                window.sessionStorage.setItem('myCat_page', currentIndex);
                 
                 if (!showCatalogList && activeCatalogId) {
                     window.history.replaceState(null, '', `?c=${activeCatalogId}&p=${currentIndex}`);

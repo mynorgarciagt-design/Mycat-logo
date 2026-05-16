@@ -150,7 +150,8 @@
         };
         const extractSizesFromString = (str) => {
             const sizes = new Set();
-            let cleanStr = str.toUpperCase().replace(/Y/g, ',').trim();
+            // CORRECCIÓN: Reemplazamos la 'Y' solo si está suelta, para no fregar palabras como "MAYO"
+            let cleanStr = str.toUpperCase().replace(/\bY\b/g, ',').trim();
             if (cleanStr.includes(' AL ')) {
                 const parts = cleanStr.split(' AL ');
                 if (parts.length === 2) {
@@ -165,28 +166,43 @@
             }
             return Array.from(sizes);
         };
+
         const getVariants = (desc) => {
             if (!desc) return [];
             const lines = desc.split('\n').map(l => l.trim()).filter(l => l);
             let variants = [], globalSizes = [], currentColor = "";
+
             lines.forEach(l => {
                 const up = l.toUpperCase();
+                
+                // TRUCO MAGISTRAL ANTI-BOBOS: Escaneamos la línea. Si quitando números, comas y conectores (Y, AL, S,M,L) queda vacía, ¡es una línea de tallas puras!
+                const testStr = up.replace(/\b(Y|AL|S|M|L|XL|XXL)\b/g, '').replace(/[\d,.\s\-]/g, '');
+                const isSizeLine = (testStr.length === 0 && up.length > 0);
+
                 if (up.includes('TALLA') && up.includes(':')) {
-                    globalSizes = extractSizesFromString(up.replace(/.*TALLAS?:/i, ''));
+                    const extracted = extractSizesFromString(up.replace(/.*TALLAS?:/i, ''));
+                    globalSizes = [...globalSizes, ...extracted];
                 } else if (l.includes('/')) {
                     const parts = l.split('/');
                     let cp = parts[0].trim(), szp = parts.slice(1).join('/').trim();
-                    currentColor = cp.replace(/^\d+\s*/, '');
+                    currentColor = cp.replace(/^\d+[\s.-]*/, '').trim(); // Le vuela el "01 " del código al inicio del color
                     if (szp) extractSizesFromString(szp).forEach(s => variants.push({ color: currentColor, size: s }));
-                } else if (/^[\d,.\s\-]+$/.test(up) || /^([SMLX]+[,.\s\-]*)+$/.test(up) || /\bAL\b/.test(up)) {
+                } else if (isSizeLine) {
                     const extracted = extractSizesFromString(up);
                     if (currentColor) extracted.forEach(s => variants.push({ color: currentColor, size: s }));
-                    else globalSizes = extracted;
-                } else if (/[A-Z]/i.test(l)) {
-                    currentColor = l.replace(/^\d+\s*/, '');
-                    if (globalSizes.length > 0) globalSizes.forEach(s => variants.push({ color: currentColor, size: s }));
+                    else globalSizes = [...globalSizes, ...extracted];
+                } else {
+                    // Si no es talla, lo agarramos como el nuevo color para las tallas que vengan abajo
+                    const posibleColor = l.replace(/^\d+[\s.-]*/, '').trim();
+                    if (posibleColor.length > 1) currentColor = posibleColor;
                 }
             });
+            
+            // Salvavidas por si el formato solo traía tallas pero no decía el color
+            if (variants.length === 0 && globalSizes.length > 0) {
+                globalSizes.forEach(s => variants.push({ color: currentColor || 'Único', size: s }));
+            }
+
             const unique = [], seen = new Set();
             variants.forEach(v => { const k = `${v.color}-${v.size}`; if (!seen.has(k)) { seen.add(k); unique.push(v); } });
             return unique;

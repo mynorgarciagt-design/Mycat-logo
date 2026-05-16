@@ -150,23 +150,35 @@
         };
         const extractSizesFromString = (str) => {
             const sizes = new Set();
-            // CORRECCIÓN: Reemplazamos la 'Y' solo si está suelta, para no fregar palabras como "MAYO"
+            // Cambiamos las "Y" por comas
             let cleanStr = str.toUpperCase().replace(/\bY\b/g, ',').trim();
-            if (cleanStr.includes(' AL ')) {
-                const parts = cleanStr.split(' AL ');
-                if (parts.length === 2) {
-                    const start = parts[0].trim(), end = parts[1].trim();
-                    if (start.includes('/') && end.includes('/')) generateJeansRange(start, end).forEach(s => sizes.add(s));
-                    else generateShoeRange(start, end).forEach(s => sizes.add(s));
+            
+            // PRIMER PASO MAGISTRAL: Partimos todo por comas (Ej: ["33 AL 35", "37 AL 39", "40"])
+            const groups = cleanStr.split(',');
+            
+            groups.forEach(group => {
+                let g = group.trim();
+                if (!g) return;
+                
+                // SEGUNDO PASO: Evaluamos cada pedacito por separado
+                if (g.includes(' AL ')) {
+                    const parts = g.split(' AL ');
+                    if (parts.length === 2) {
+                        const start = parts[0].trim(), end = parts[1].trim();
+                        if (start.includes('/') && end.includes('/')) generateJeansRange(start, end).forEach(s => sizes.add(s));
+                        else generateShoeRange(start, end).forEach(s => sizes.add(s));
+                    }
+                } else if (/S|M|L|XL|XXL/i.test(g)) {
+                    // Si trae letras separadas por espacios
+                    g.split(/\s+/).forEach(p => { if (p) sizes.add(p); });
+                } else {
+                    // Si son números sueltos
+                    g.split(/\s+/).forEach(p => { if (p) sizes.add(p); });
                 }
-            } else if (!cleanStr.includes(',') && /S|M|L|XL|XXL/i.test(cleanStr)) {
-                cleanStr.split(/\s+/).forEach(p => { if (p) sizes.add(p); });
-            } else {
-                cleanStr.split(',').forEach(p => { p = p.trim(); if (p) sizes.add(p); });
-            }
+            });
+            
             return Array.from(sizes);
         };
-
         const getVariants = (desc) => {
             if (!desc) return [];
             const lines = desc.split('\n').map(l => l.trim()).filter(l => l);
@@ -634,7 +646,9 @@
                 });
             };
             return (
-                <div className="flex flex-col flex-grow items-center justify-center relative w-full py-2 md:py-6" onClick={() => setActiveH(null)}>
+                return (
+                // 1. Candado Anti-Tembladera: h-[calc(100dvh-75px)] y overflow-hidden matan el scroll vertical
+                <div className="flex flex-col flex-1 items-center justify-center relative w-full py-2 h-[calc(100dvh-75px)] overflow-hidden overscroll-none" onClick={() => setActiveH(null)}>
                     {shouldShowBanner && (
                         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setBannerDismissed(true)}>
                             <div className="relative bg-white rounded-3xl overflow-hidden shadow-2xl max-w-lg w-full transform transition-all" onClick={e => e.stopPropagation()}>
@@ -654,47 +668,49 @@
                             </div>
                         </div>
                     )}
-                    <div className="relative flex items-center justify-center w-full flex-grow h-[70vh] md:h-[80vh] lg:h-[85vh] px-2 md:px-12 lg:px-20">
-                            <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-1 md:left-4 lg:left-8 z-10 p-1 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white/95 rounded-full shadow-lg border border-purple-200"><Icons.ChevronLeft /></button>
-                            
-                            {/* Ajustes Anti-iPhone: w-full en móviles y select-none */}
-                            <div className="inline-flex bg-white shadow-2xl h-full max-w-full w-full sm:w-auto rounded-lg md:rounded-xl overflow-hidden border border-gray-200 select-none" 
-                                 style={{ touchAction: 'pan-y pinch-zoom' }} 
-                                 onTouchStart={e => { if (e.touches.length > 1) { setTouchStart(null); return; } setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }} 
-                                 onTouchMove={e => { if (e.touches.length > 1) { setTouchEnd(null); return; } setTouchEnd(e.targetTouches[0].clientX); }} 
-                                 onTouchEnd={() => { 
-                                     if (!touchStart || !touchEnd) return; 
-                                     if (window.visualViewport && window.visualViewport.scale > 1.1) { setTouchStart(null); setTouchEnd(null); return; }
-                                     const dist = touchStart - touchEnd; 
-                                     if (dist > 80) move('n'); 
-                                     if (dist < -80) move('p'); 
-                                     setTouchStart(null); setTouchEnd(null); 
-                                 }}>
-                                <div className={`relative h-full w-full sm:w-auto bg-white overflow-hidden flex justify-center ${(!isMobile && currentIndex > 0) ? 'border-r border-gray-100' : ''}`}>
-                                    {/* Ajuste Anti-iPhone: draggable="false" y w-full */}
-                                    {left && (<div className="h-full w-full relative"><img src={left.coverImage || left.imageUrl} draggable="false" className="block w-full h-full object-contain pointer-events-none" />{renderH(left)}</div>)}
-                                </div>
-                                {(!isMobile && currentIndex > 0) && (
-                                    <div className="relative h-full w-full sm:w-auto bg-white overflow-hidden flex justify-center">
-                                        {/* Ajuste Anti-iPhone: draggable="false" y w-full */}
-                                        {right && (<div className="h-full w-full relative"><img src={right.coverImage || right.imageUrl} draggable="false" className="block w-full h-full object-contain pointer-events-none" />{renderH(right)}</div>)}
-                                    </div>
-                                )}
+                    
+                    {/* 2. Flex-1 y min-h-0 para forzar a la foto a llenar el espacio sin empujar. px-0 le quita los bordes grises en cel */}
+                    <div className="relative flex items-center justify-center w-full flex-1 min-h-0 px-0 sm:px-2 md:px-12 lg:px-20">
+                        <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-1 md:left-4 lg:left-8 z-10 p-1 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white/95 rounded-full shadow-lg border border-purple-200"><Icons.ChevronLeft /></button>
+                        
+                        {/* 3. Bloqueo de selección (select-none) */}
+                        <div className="inline-flex bg-white shadow-2xl h-full max-w-full w-full sm:w-auto rounded-lg md:rounded-xl overflow-hidden border border-gray-200 select-none" 
+                             style={{ touchAction: 'pan-y pinch-zoom' }} 
+                             onTouchStart={e => { if (e.touches.length > 1) { setTouchStart(null); return; } setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }} 
+                             onTouchMove={e => { if (e.touches.length > 1) { setTouchEnd(null); return; } setTouchEnd(e.targetTouches[0].clientX); }} 
+                             onTouchEnd={() => { 
+                                 if (!touchStart || !touchEnd) return; 
+                                 if (window.visualViewport && window.visualViewport.scale > 1.1) { setTouchStart(null); setTouchEnd(null); return; }
+                                 const dist = touchStart - touchEnd; 
+                                 if (dist > 80) move('n'); 
+                                 if (dist < -80) move('p'); 
+                                 setTouchStart(null); setTouchEnd(null); 
+                             }}>
+                            <div className={`relative h-full w-full sm:w-auto bg-white overflow-hidden flex justify-center ${(!isMobile && currentIndex > 0) ? 'border-r border-gray-100' : ''}`}>
+                                {/* 4. Draggable = false para matar a los fantasmas */}
+                                {left && (<div className="h-full w-full relative"><img src={left.coverImage || left.imageUrl} draggable="false" className="block w-full h-full object-contain pointer-events-none" />{renderH(left)}</div>)}
                             </div>
-                            
-                            <button onClick={() => move('n')} disabled={!(pages.length > currentIndex + nextStep)} className="absolute right-1 md:right-4 lg:right-8 z-10 p-1 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white/95 rounded-full shadow-lg border border-purple-200"><Icons.ChevronRight /></button>
+                            {(!isMobile && currentIndex > 0) && (
+                                <div className="relative h-full w-full sm:w-auto bg-white overflow-hidden flex justify-center">
+                                    {right && (<div className="h-full w-full relative"><img src={right.coverImage || right.imageUrl} draggable="false" className="block w-full h-full object-contain pointer-events-none" />{renderH(right)}</div>)}
+                                </div>
+                            )}
                         </div>
-                    <div className="mt-4 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">Página {currentIndex + 1} {(!isMobile && right) ? `- ${currentIndex + 2}` : ''} de {pages.length}</div>
+                        
+                        <button onClick={() => move('n')} disabled={!(pages.length > currentIndex + nextStep)} className="absolute right-1 md:right-4 lg:right-8 z-10 p-1 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white/95 rounded-full shadow-lg border border-purple-200"><Icons.ChevronRight /></button>
+                    </div>
+                    
+                    <div className="mt-2 text-gray-400 text-xs font-bold bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100 shrink-0">Página {currentIndex + 1} {(!isMobile && right) ? `- ${currentIndex + 2}` : ''} de {pages.length}</div>
+                    
                     {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}
                     
-                    {/* TRUCO ANTI-LAG: Pre-cargamos invisibles las 2 páginas siguientes */}
-                    <div className="hidden">
+                    {/* TRUCO ANTI-LAG iOS: opacity-0 engaña a Safari */}
+                    <div className="absolute opacity-0 pointer-events-none w-0 h-0 overflow-hidden">
                         {nextLeft && <img src={nextLeft.coverImage || nextLeft.imageUrl} alt="preload" />}
                         {nextRight && <img src={nextRight.coverImage || nextRight.imageUrl} alt="preload" />}
                     </div>
                 </div>
             );
-        }
 
         /* ── ADMIN VIEW con las 5 mejoras ── */
         function AdminView({ catalogs, activeCatalogId, setActiveCatalogId, pages, products, hotspots, setView, setGlobalMessage, setConfirmDialog, settings, pinHash, setPinHash }) {

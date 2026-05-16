@@ -550,10 +550,9 @@
             const [touchEnd, setTouchEnd] = useState(null);
             const [highlightedId, setHighlightedId] = useState(null); 
             const [bannerDismissed, setBannerDismissed] = useState(false);
-            const [isInitialLoading, setIsInitialLoading] = useState(true); // Control de carga
+            const [isInitialLoading, setIsInitialLoading] = useState(true);
             const shouldShowBanner = settings?.bannerActive && pages.length > 0 && settings?.bannerCatalogId === pages[0].catalogId && !bannerDismissed;
 
-            // Le damos 8 segundos de gracia a Firebase para descargar las páginas compartidas
             useEffect(() => {
                 const t = setTimeout(() => setIsInitialLoading(false), 8000);
                 return () => clearTimeout(t);
@@ -561,7 +560,6 @@
             
             useEffect(() => setActiveH(null), [currentIndex]);
 
-            // Efecto súper estable: memoriza qué estamos buscando y lo apaga a los 3 seg.
             useEffect(() => {
                 if (searchQuery && searchTrigger > 0) {
                     setHighlightedId(searchQuery);
@@ -597,7 +595,6 @@
             const left = pages[currentIndex]; 
             const right = (!isMobile && currentIndex > 0 && pages.length > currentIndex + 1) ? pages[currentIndex + 1] : null;
             
-            // TRUCO ANTI-LAG: Identificamos las páginas que siguen para cargarlas en secreto
             const nextLeft = pages[currentIndex + nextStep];
             const nextRight = (!isMobile && pages.length > currentIndex + nextStep + 1) ? pages[currentIndex + nextStep + 1] : null;
             
@@ -613,7 +610,6 @@
                     
                     let verticalClass = h.y > 55 ? "bottom-12" : "top-12";
                     
-                    // Lógica infalible de coincidencia y agotado
                     const isMatched = highlightedId && p.code && p.code.toUpperCase().replace(/[^A-Z0-9]/g, '').includes(highlightedId);
                     const agotado = p.isAgotado === true;
 
@@ -645,9 +641,9 @@
                     );
                 });
             };
+            
             return (
-                // 1. Candado Anti-Tembladera: h-[calc(100dvh-75px)] y overflow-hidden matan el scroll vertical
-                <div className="flex flex-col flex-1 items-center justify-center relative w-full py-2 overflow-hidden overscroll-none" onClick={() => setActiveH(null)}>
+                <div className="flex flex-col items-center justify-center relative w-full py-2 h-[calc(100dvh-75px)] overflow-hidden overscroll-none" onClick={() => setActiveH(null)}>
                     {shouldShowBanner && (
                         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setBannerDismissed(true)}>
                             <div className="relative bg-white rounded-3xl overflow-hidden shadow-2xl max-w-lg w-full transform transition-all" onClick={e => e.stopPropagation()}>
@@ -668,12 +664,10 @@
                         </div>
                     )}
                     
-                    {/* 2. Flex-1 y min-h-0 para forzar a la foto a llenar el espacio sin empujar. px-0 le quita los bordes grises en cel */}
                     <div className="relative flex items-center justify-center w-full flex-1 min-h-0 px-0 sm:px-2 md:px-12 lg:px-20">
                         <button onClick={() => move('p')} disabled={currentIndex === 0} className="absolute left-1 md:left-4 lg:left-8 z-10 p-1 md:p-4 disabled:opacity-10 text-[#631A65] hover:bg-gray-100 transition bg-white/95 rounded-full shadow-lg border border-purple-200"><Icons.ChevronLeft /></button>
                         
-                        {/* 3. Bloqueo de selección (select-none) */}
-                        <div className="inline-flex bg-white shadow-2xl max-h-full max-w-full w-full sm:w-auto rounded-lg md:rounded-xl overflow-hidden border border-gray-200 select-none" 
+                        <div className="inline-flex bg-white shadow-2xl h-full max-h-full max-w-full w-full sm:w-auto rounded-lg md:rounded-xl overflow-hidden border border-gray-200 select-none" 
                              style={{ touchAction: 'pan-y pinch-zoom' }} 
                              onTouchStart={e => { if (e.touches.length > 1) { setTouchStart(null); return; } setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }} 
                              onTouchMove={e => { if (e.touches.length > 1) { setTouchEnd(null); return; } setTouchEnd(e.targetTouches[0].clientX); }} 
@@ -686,12 +680,11 @@
                                  setTouchStart(null); setTouchEnd(null); 
                              }}>
                             <div className={`relative h-full w-full sm:w-auto bg-white overflow-hidden flex justify-center ${(!isMobile && currentIndex > 0) ? 'border-r border-gray-100' : ''}`}>
-                                {/* 4. Draggable = false para matar a los fantasmas */}
-                                {left && (<div className="w-full relative flex items-center justify-center"><img src={left.coverImage || left.imageUrl} draggable="false" className="block w-auto h-auto max-w-full max-h-full object-contain pointer-events-none" />{renderH(left)}</div>)}
+                                {left && (<div className="w-full h-full relative flex items-center justify-center"><img src={left.coverImage || left.imageUrl} draggable="false" className="block w-auto h-auto max-w-full max-h-full object-contain pointer-events-none" />{renderH(left)}</div>)}
                             </div>
                             {(!isMobile && currentIndex > 0) && (
                                 <div className="relative h-full w-full sm:w-auto bg-white overflow-hidden flex justify-center">
-                                    {right && (<div className="w-full relative flex items-center justify-center"><img src={right.coverImage || right.imageUrl} draggable="false" className="block w-auto h-auto max-w-full max-h-full object-contain pointer-events-none" />{renderH(right)}</div>)}
+                                    {right && (<div className="w-full h-full relative flex items-center justify-center"><img src={right.coverImage || right.imageUrl} draggable="false" className="block w-auto h-auto max-w-full max-h-full object-contain pointer-events-none" />{renderH(right)}</div>)}
                                 </div>
                             )}
                         </div>
@@ -703,14 +696,13 @@
                     
                     {playingVideo && <VideoModal videoUrl={playingVideo} onClose={() => setPlayingVideo(null)} />}
                     
-                    {/* TRUCO ANTI-LAG iOS: opacity-0 engaña a Safari */}
                     <div className="absolute opacity-0 pointer-events-none w-0 h-0 overflow-hidden">
                         {nextLeft && <img src={nextLeft.coverImage || nextLeft.imageUrl} alt="preload" />}
                         {nextRight && <img src={nextRight.coverImage || nextRight.imageUrl} alt="preload" />}
                     </div>
                 </div>
             );
-          }  
+        } 
         /* ── ADMIN VIEW con las 5 mejoras ── */
         function AdminView({ catalogs, activeCatalogId, setActiveCatalogId, pages, products, hotspots, setView, setGlobalMessage, setConfirmDialog, settings, pinHash, setPinHash }) {
             const [tab, setTab] = useState('pdf');

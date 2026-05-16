@@ -648,7 +648,6 @@
             return (
                 // 1. Candado Anti-Tembladera: h-[calc(100dvh-75px)] y overflow-hidden matan el scroll vertical
                 <div className="flex flex-col flex-1 items-center justify-center relative w-full py-2 h-[calc(100dvh-75px)] overflow-hidden overscroll-none" onClick={() => setActiveH(null)}>
-                <div className="flex flex-col flex-1 items-center justify-center relative w-full py-2 h-[calc(100dvh-75px)] overflow-hidden overscroll-none" onClick={() => setActiveH(null)}>
                     {shouldShowBanner && (
                         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setBannerDismissed(true)}>
                             <div className="relative bg-white rounded-3xl overflow-hidden shadow-2xl max-w-lg w-full transform transition-all" onClick={e => e.stopPropagation()}>

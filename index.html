@@ -369,7 +369,8 @@
 
         function HotspotAdjuster({ page, products, hotspots, onClose, onEditProduct }) {
             const [selectedProd, setSelectedProd] = useState(null);
-            const { db, appId, collection, addDoc, updateDoc, doc } = window.fb;
+            // Agregamos deleteDoc a las herramientas
+            const { db, appId, collection, addDoc, updateDoc, doc, deleteDoc } = window.fb; 
             const pageProducts = products.filter(p => p.pageNumber === page.pageNumber && p.catalogId === page.catalogId);
             const pageHotspots = hotspots.filter(h => h.pageId === page.id);
             
@@ -405,7 +406,6 @@
                             <button onClick={onClose} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition"><Icons.X /></button>
                         </div>
                         
-                        {/* CAJITA CON SCROLL INDEPENDIENTE */}
                         <div className="flex-1 overflow-y-auto p-3 bg-gray-50 custom-scrollbar pb-24 overscroll-contain">
                             <div className="mb-4">
                                 <button onClick={async () => {
@@ -419,10 +419,10 @@
                                         await db.collection('artifacts').doc('mycatalogo-8ff18').collection('public').doc('data').collection('products').doc(newProdId).set({
                                             catalogId: page.catalogId,
                                             pageId: page.id,
-                                            pageNumber: page.pageNumber, // ¡ESTA ES LA LLAVE MÁGICA QUE FALTABA!
+                                            pageNumber: page.pageNumber,
                                             code: code.toUpperCase(),
-                                            price: parseFloat(priceStr) || 0, // Lo guardamos como número para evitar clavos
-                                            description: "" // Usamos 'description' igual que el resto del sistema
+                                            price: parseFloat(priceStr) || 0,
+                                            description: ""
                                         });
                                         alert("✅ Producto creado.\n\nAhora dale clic en la lista de abajo y toca la foto para ubicar su carrito.");
                                     } catch (e) {
@@ -443,6 +443,16 @@
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button onClick={(e) => { e.stopPropagation(); onEditProduct(p); }} className="bg-white border text-[#631A65] p-1.5 rounded-full hover:bg-purple-50 transition shadow-sm" title="Editar Producto"><Icons.Edit2 /></button>
+                                            {/* NUEVO BOTÓN DE BASURERO QUE BORRA PRODUCTO E ICONO */}
+                                            <button onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if(window.confirm("¿Eliminar este producto y su icono del catálogo?")) {
+                                                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id));
+                                                    const hToDel = hotspots.filter(h => h.productId === p.id);
+                                                    for (const h of hToDel) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id)); }
+                                                    if(selectedProd === p.id) setSelectedProd(null);
+                                                }
+                                            }} className="bg-white border text-red-500 p-1.5 rounded-full hover:bg-red-50 transition shadow-sm" title="Eliminar Producto e Icono"><Icons.Trash /></button>
                                             {pageHotspots.some(h => h.productId === p.id) && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
                                         </div>
                                     </div>
@@ -960,7 +970,7 @@
                                                         </div>
                                                         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
                                                             <button onClick={() => setEditingProduct(p)} className="bg-white text-[#631A65] p-2 rounded-full shadow border"><Icons.Edit2 /></button>
-                                                            <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id))} className="bg-white text-red-500 p-2 rounded-full shadow border"><Icons.Trash /></button>
+                                                            <button onClick={async () => { if(window.confirm("¿Seguro que deseas eliminar este producto y sus iconos del PDF?")) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id)); const hToDel = hotspots.filter(h => h.productId === p.id); for(const h of hToDel){ await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', h.id)); } } }} className="bg-white text-red-500 p-2 rounded-full shadow border"><Icons.Trash /></button>
                                                         </div>
                                                     </div>
                                                 ))}

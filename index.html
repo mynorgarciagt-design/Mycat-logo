@@ -372,6 +372,7 @@
             const { db, appId, collection, addDoc, updateDoc, doc } = window.fb;
             const pageProducts = products.filter(p => p.pageNumber === page.pageNumber && p.catalogId === page.catalogId);
             const pageHotspots = hotspots.filter(h => h.pageId === page.id);
+            
             const handleImageClick = async (e) => {
                 if (!selectedProd) return alert("⚠️ Selecciona un producto primero.");
                 const rect = e.target.getBoundingClientRect();
@@ -381,12 +382,14 @@
                 if (ex) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'hotspots', ex.id), { x, y });
                 else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'hotspots'), { pageId: page.id, productId: selectedProd, x, y, catalogId: page.catalogId });
             };
+
             return (
                 <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col md:flex-row overflow-hidden">
-                    <div className="p-4 flex justify-between items-center md:hidden bg-gray-900 border-b border-gray-800">
+                    <div className="p-4 flex justify-between items-center md:hidden bg-gray-900 border-b border-gray-800 shrink-0">
                         <h3 className="text-white font-bold text-sm">Ajustar Pág {page.pageNumber}</h3>
                         <button onClick={onClose} className="text-white bg-red-500 px-4 py-1.5 rounded-full text-xs font-bold">Cerrar</button>
                     </div>
+                    
                     <div className="flex-1 flex items-center justify-center p-4 overflow-hidden relative">
                         <div className="relative inline-flex max-w-full max-h-full shadow-2xl bg-white rounded-xl">
                             <img loading="lazy" src={page.imageUrl} alt="Página" onClick={handleImageClick} className="block max-w-full max-h-[85vh] w-auto h-auto cursor-crosshair rounded-xl" />
@@ -395,13 +398,15 @@
                             ))}
                         </div>
                     </div>
-                    <div className="w-full md:w-80 bg-white flex flex-col shadow-2xl">
-                        <div className="p-5 border-b hidden md:flex justify-between items-center bg-gray-50">
+                    
+                    <div className="w-full md:w-80 bg-white flex flex-col shadow-2xl h-full max-h-screen">
+                        <div className="p-5 border-b hidden md:flex justify-between items-center bg-gray-50 shrink-0">
                             <h3 className="font-extrabold text-gray-800">Iconos</h3>
                             <button onClick={onClose} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition"><Icons.X /></button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-gray-50">
-                            {/* Botón para crear productos manualmente */}
+                        
+                        {/* CAJITA CON SCROLL INDEPENDIENTE */}
+                        <div className="flex-1 overflow-y-auto p-3 bg-gray-50 custom-scrollbar pb-24 overscroll-contain">
                             <div className="mb-4">
                                 <button onClick={async () => {
                                     const code = window.prompt("1. Ingresa el CÓDIGO del nuevo producto (Ej: OFERTA-01):");
@@ -411,9 +416,6 @@
                                     
                                     try {
                                         const newProdId = "manual_" + Date.now();
-                                        
-                                        // Forma clásica de Firebase (la que usa tu tienda)
-                                        // Nota: Si usás una variable global diferente para el ID, el error nos lo va a chivatear.
                                         await db.collection('artifacts').doc('mycatalogo-8ff18').collection('public').doc('data').collection('products').doc(newProdId).set({
                                             catalogId: page.catalogId,
                                             pageId: page.id,
@@ -421,10 +423,8 @@
                                             price: priceStr,
                                             details: ""
                                         });
-                                        
                                         alert("✅ Producto creado.\n\nAhora dale clic en la lista de abajo y toca la foto para ubicar su carrito.");
                                     } catch (e) {
-                                        // Esto nos va a tirar el error EXACTO en la cara
                                         alert("El error exacto es: " + e.message);
                                         console.error(e);
                                     }
@@ -433,20 +433,20 @@
                                 </button>
                             </div>
                             
-                            {/* Lista de productos */}
-                            {pageProducts.length === 0 ? <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p> : pageProducts.map(p => (
-                                <div key={p.id} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md' : 'border-white hover:border-purple-200 bg-white shadow-sm'}`}>
-                                    <div className="flex-1 cursor-pointer" onClick={() => setSelectedProd(p.id)}>
-                                        <p className="font-extrabold text-lg">{p.code}</p>
-                                        <p className="text-[11px] font-bold text-gray-400">Q{p.price}</p>
+                            <div className="flex flex-col gap-2">
+                                {pageProducts.length === 0 ? <p className="text-center text-sm text-gray-500 mt-10 font-bold">No hay productos aquí.</p> : pageProducts.map(p => (
+                                    <div key={p.id} className={`w-full text-left p-3 rounded-xl border-2 transition-all flex justify-between items-center ${selectedProd === p.id ? 'border-green-500 bg-green-50 shadow-md' : 'border-white hover:border-purple-200 bg-white shadow-sm'}`}>
+                                        <div className="flex-1 cursor-pointer" onClick={() => setSelectedProd(p.id)}>
+                                            <p className="font-extrabold text-lg">{p.code}</p>
+                                            <p className="text-[11px] font-bold text-gray-400">Q{p.price}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={(e) => { e.stopPropagation(); onEditProduct(p); }} className="bg-white border text-[#631A65] p-1.5 rounded-full hover:bg-purple-50 transition shadow-sm" title="Editar Producto"><Icons.Edit2 /></button>
+                                            {pageHotspots.some(h => h.productId === p.id) && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={(e) => { e.stopPropagation(); onEditProduct(p); }} className="bg-white border text-[#631A65] p-1.5 rounded-full hover:bg-purple-50 transition shadow-sm" title="Editar Producto"><Icons.Edit2 /></button>
-                                        {pageHotspots.some(h => h.productId === p.id) && <span className="text-white bg-green-500 p-1.5 rounded-full shadow-sm"><Icons.Check /></span>}
-                                    </div>
-                                </div>
-                            ))}
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
